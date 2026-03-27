@@ -2163,6 +2163,195 @@ const LowStockNotificationPanel = ({ open, onClose, lowStockItems, onAddToGrocer
   );
 };
 
+// ─── Top Rated Page (proper component so hooks work) ─────────────────────────
+const MEAT_KEYWORDS = ["chicken","beef","pork","lamb","turkey","fish","salmon","tuna","shrimp","bacon","sausage","steak","mutton","crab","lobster","meat","ham","pepperoni","prawn","anchovy","sardine","duck","venison"];
+const isVegRecipe = (title, overview = "") => !MEAT_KEYWORDS.some(k => (title + " " + overview).toLowerCase().includes(k));
+
+const TopRatedPage = ({ API, recipeRatings, savedRecipes, trFilter, setTrFilter, fetchDetails, setRating, setPage, cardSx }) => {
+  const [communityRatings, setCommunityRatings] = useState([]);
+  const [communityLoading, setCommunityLoading] = useState(true);
+  const [trView, setTrView] = useState("community");
+
+  useEffect(() => {
+    setCommunityLoading(true);
+    fetch(`${API}/top-rated`)
+      .then(r => r.json())
+      .then(data => setCommunityRatings(data.recipes || []))
+      .catch(() => {})
+      .finally(() => setCommunityLoading(false));
+  }, [API]);
+
+  const myRated = Object.keys(recipeRatings)
+    .filter(t => recipeRatings[t] > 0)
+    .map(title => {
+      const saved = savedRecipes.find(r => r._title === title);
+      return { title, rating: recipeRatings[title], overview: saved?.overview || "" };
+    })
+    .sort((a, b) => b.rating - a.rating);
+
+  const baseList = trView === "community" ? communityRatings : myRated;
+  const displayList = baseList.filter(r => {
+    if (trFilter === "veg")    return isVegRecipe(r.title, r.overview || "");
+    if (trFilter === "nonveg") return !isVegRecipe(r.title, r.overview || "");
+    return true;
+  });
+
+  const totalRaters = communityRatings.reduce((sum, r) => sum + (r.totalRatings || 0), 0);
+
+  return (
+    <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #f0eedc 45%, #f5f2ea 100%)", position: "relative", overflow: "hidden" }}>
+      <Box sx={{ position: "fixed", top: 60, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,158,11,0.13) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none", zIndex: 0 }} />
+      <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.25, backgroundImage: "radial-gradient(circle, #c49a3c 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
+
+      {/* Header */}
+      <Box sx={{ position: "relative", zIndex: 1, overflow: "hidden", background: "linear-gradient(125deg, #161410 0%, #1e2b1a 40%, #3a5c30 70%, #4a6e3a 100%)", px: { xs: 4, md: 6 }, py: 4.5 }}>
+        <Box sx={{ position: "absolute", inset: 0, opacity: 0.06, backgroundImage: "repeating-linear-gradient(135deg, #d4aa4a 0px, #d4aa4a 1px, transparent 1px, transparent 18px)" }} />
+        <Box sx={{ position: "relative", zIndex: 1 }}>
+          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, background: "rgba(251,191,36,0.2)", border: "1px solid rgba(251,191,36,0.4)", borderRadius: "100px", px: 2, py: 0.5, mb: 2 }}>
+            <Box sx={{ width: 6, height: 6, borderRadius: "50%", background: "#d4aa4a", boxShadow: "0 0 6px #d4aa4a" }} />
+            <Typography sx={{ color: "#e8d48a", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Fridgely Community</Typography>
+          </Box>
+          <Typography sx={{ fontWeight: 900, fontSize: { xs: "1.8rem", md: "2.4rem" }, letterSpacing: "-1.5px", color: "#fff", lineHeight: 1.1, mb: 1 }}>⭐ Top Rated Recipes</Typography>
+          <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.95rem" }}>
+            {trView === "community"
+              ? `Rated by ${totalRaters} cook${totalRaters !== 1 ? "s" : ""} across the Fridgely community`
+              : `${myRated.length} recipe${myRated.length !== 1 ? "s" : ""} rated by you`}
+          </Typography>
+        </Box>
+      </Box>
+
+      <Box p={4} maxWidth={980} mx="auto" sx={{ position: "relative", zIndex: 1 }}>
+        {/* View toggle */}
+        <Box display="flex" gap={1} mb={3} sx={{ background: "#fff", borderRadius: 3, p: 1, border: "1px solid #e8d48a", width: "fit-content" }}>
+          {[
+            { key: "community", label: "🌍 Community Picks", sublabel: `${communityRatings.length} recipes` },
+            { key: "mine",      label: "⭐ My Ratings",       sublabel: `${myRated.length} rated` },
+          ].map(opt => (
+            <Box key={opt.key} onClick={() => setTrView(opt.key)} sx={{
+              px: 2.5, py: 1, borderRadius: 2, cursor: "pointer",
+              background: trView === opt.key ? "linear-gradient(135deg, #c49a3c, #a8822e)" : "transparent",
+              transition: "all 0.18s",
+            }}>
+              <Typography sx={{ color: trView === opt.key ? "#fff" : "#374151", fontWeight: 800, fontSize: "0.82rem" }}>{opt.label}</Typography>
+              <Typography sx={{ color: trView === opt.key ? "rgba(255,255,255,0.65)" : "#9ca3af", fontSize: "0.65rem", fontWeight: 600 }}>{opt.sublabel}</Typography>
+            </Box>
+          ))}
+        </Box>
+
+        {/* Veg filter */}
+        <Box display="flex" gap={1} mb={3}>
+          {[{ key: "all", label: "🍽️ All" }, { key: "veg", label: "🌱 Veg" }, { key: "nonveg", label: "🥩 Non-Veg" }].map(opt => (
+            <Box key={opt.key} onClick={() => setTrFilter(opt.key)} sx={{
+              px: 1.8, py: 0.7, borderRadius: 2, cursor: "pointer",
+              background: trFilter === opt.key ? "#f0f4ec" : "#fff",
+              border: `1.5px solid ${trFilter === opt.key ? "#6b8c5a" : "#e5e7eb"}`,
+              color: trFilter === opt.key ? "#5a7a48" : "#6b7280",
+              fontWeight: 700, fontSize: "0.78rem", transition: "all 0.15s",
+            }}>{opt.label}</Box>
+          ))}
+        </Box>
+
+        {/* Stats */}
+        {trView === "community" && communityRatings.length > 0 && (
+          <Grid container spacing={2} mb={3.5}>
+            {[
+              { label: "Recipes rated",  val: communityRatings.length, icon: "🍽️", color: "#b8714e", bg: "rgba(184,113,78,0.1)" },
+              { label: "Total ratings",  val: totalRaters,              icon: "⭐", color: "#c49a3c", bg: "rgba(196,154,60,0.1)" },
+              { label: "Avg community ★", val: communityRatings.length ? (communityRatings.reduce((s,r) => s + r.avgRating, 0) / communityRatings.length).toFixed(1) : "—", icon: "📊", color: "#6b8c5a", bg: "rgba(107,140,90,0.1)" },
+              { label: "Top rated",      val: communityRatings[0]?.avgRating ? `${communityRatings[0].avgRating}★` : "—", icon: "🥇", color: "#eab308", bg: "rgba(234,179,8,0.1)" },
+            ].map((s, i) => (
+              <Grid item xs={6} md={3} key={i}>
+                <Box sx={{ background: s.bg, borderRadius: 3, p: 2, textAlign: "center", border: "1px solid rgba(0,0,0,0.06)" }}>
+                  <Typography sx={{ fontSize: "1.4rem", mb: 0.5 }}>{s.icon}</Typography>
+                  <Typography sx={{ color: s.color, fontWeight: 900, fontSize: "1.4rem", lineHeight: 1.2, mb: 0.3 }}>{s.val}</Typography>
+                  <Typography sx={{ color: "#6b7280", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</Typography>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        )}
+
+        {trView === "community" && communityLoading && (
+          <Box display="flex" alignItems="center" gap={2} py={6} justifyContent="center">
+            <CircularProgress size={22} sx={{ color: "#c49a3c" }} />
+            <Typography color="text.secondary">Loading community ratings…</Typography>
+          </Box>
+        )}
+
+        {!communityLoading && displayList.length === 0 && (
+          <Box textAlign="center" py={10}>
+            <Typography fontSize="3rem" mb={2}>{trView === "community" ? "🌍" : "⭐"}</Typography>
+            <Typography fontWeight={700} fontSize="1rem" color="#374151" mb={1}>
+              {trView === "community" ? "No community ratings yet" : "You haven't rated any recipes yet"}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mb={3} maxWidth={340} mx="auto">
+              {trView === "community" ? "Be the first! Rate any recipe — it shows up here for everyone." : "Cook something, rate it, and it'll appear here."}
+            </Typography>
+            <Button variant="contained" onClick={() => setPage("recipes")}
+              sx={{ background: "linear-gradient(135deg, #c49a3c, #a8822e)", borderRadius: 2, fontWeight: 700 }}>
+              Find Something to Cook →
+            </Button>
+          </Box>
+        )}
+
+        {!communityLoading && displayList.length > 0 && (
+          <Grid container spacing={2.5}>
+            {displayList.map((r, i) => {
+              const myRatingForThis = recipeRatings[r.title] || 0;
+              const isSaved = savedRecipes.some(s => s._title === r.title);
+              return (
+                <Grid item xs={12} sm={6} md={4} key={r.title}>
+                  <Card sx={{ ...cardSx, "&:hover": { transform: "translateY(-4px)", boxShadow: "0 8px 24px rgba(245,158,11,0.18)", borderColor: "#e8d48a" } }}>
+                    <Box onClick={() => fetchDetails(r.title)}>
+                      <Box sx={{ position: "relative", height: 155, overflow: "hidden" }}>
+                        <RecipeImage title={r.title} height={155} />
+                        {i < 3 && (
+                          <Box sx={{ position: "absolute", top: 10, left: 10, background: i === 0 ? "#c49a3c" : i === 1 ? "#9ca3af" : "#b45309", color: "#fff", borderRadius: "8px", px: 1.2, py: 0.4, fontSize: "0.7rem", fontWeight: 800 }}>
+                            {i === 0 ? "🥇 #1" : i === 1 ? "🥈 #2" : "🥉 #3"}
+                          </Box>
+                        )}
+                        {isSaved && (
+                          <Box sx={{ position: "absolute", top: i < 3 ? 38 : 10, left: 10, background: "rgba(34,197,94,0.88)", borderRadius: "8px", px: 1, py: 0.25, fontSize: "0.62rem", fontWeight: 800, color: "#fff" }}>💾 Saved</Box>
+                        )}
+                        <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 60%)" }} />
+                      </Box>
+                      <CardContent sx={{ p: 2, pb: 1 }}>
+                        <Typography fontWeight={800} fontSize="0.95rem" color="#1a1a1a" mb={0.5} lineHeight={1.3}>{r.title}</Typography>
+                        {trView === "community" && (
+                          <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                            <Box display="flex" gap={0.2}>
+                              {[1,2,3,4,5].map(s => (
+                                <Box key={s} sx={{ fontSize: "0.75rem", color: s <= Math.round(r.avgRating) ? "#c49a3c" : "#e5e7eb" }}>★</Box>
+                              ))}
+                            </Box>
+                            <Typography sx={{ color: "#c49a3c", fontSize: "0.72rem", fontWeight: 800 }}>{r.avgRating}</Typography>
+                            <Typography sx={{ color: "#9ca3af", fontSize: "0.68rem" }}>({r.totalRatings} rating{r.totalRatings !== 1 ? "s" : ""})</Typography>
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Box>
+                    <Box px={2} pb={1.5} display="flex" alignItems="center" justifyContent="space-between" onClick={e => e.stopPropagation()}>
+                      <Box>
+                        <Typography sx={{ fontSize: "0.62rem", color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.3 }}>Your rating</Typography>
+                        <StarRating value={myRatingForThis} onChange={(v) => setRating(r.title, v)} size={16} />
+                      </Box>
+                      {myRatingForThis > 0 && (
+                        <Box sx={{ background: "#fef9e7", border: "1px solid #e8d48a", borderRadius: 1.5, px: 1, py: 0.4 }}>
+                          <Typography sx={{ color: "#c49a3c", fontWeight: 900, fontSize: "0.78rem" }}>{myRatingForThis}/5 ⭐</Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Card>
+                </Grid>
+              );
+            })}
+          </Grid>
+        )}
+      </Box>
+    </Box>
+  );
+};
+
 // ─── Auth Screen ─────────────────────────────────────────────────────────────
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
@@ -5635,210 +5824,19 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         })()}
 
         {/* ══ TOP RATED ══ */}
-        {page === "toprated" && (() => {
-          const MEAT_KEYWORDS = ["chicken","beef","pork","lamb","turkey","fish","salmon","tuna","shrimp","bacon","sausage","steak","mutton","crab","lobster","meat","ham","pepperoni","prawn","anchovy","sardine","duck","venison"];
-          const isVeg = (title, overview = "") => !MEAT_KEYWORDS.some(k => (title + " " + overview).toLowerCase().includes(k));
-
-          // ── Community top rated state ──
-          const [communityRatings, setCommunityRatings] = React.useState([]);
-          const [communityLoading, setCommunityLoading] = React.useState(true);
-          const [trView, setTrView] = React.useState("community"); // "community" | "mine"
-
-          React.useEffect(() => {
-            setCommunityLoading(true);
-            fetch(`${API}/top-rated`)
-              .then(r => r.json())
-              .then(data => setCommunityRatings(data.recipes || []))
-              .catch(() => {})
-              .finally(() => setCommunityLoading(false));
-          }, []);
-
-          // My rated recipes
-          const myRated = Object.keys(recipeRatings)
-            .filter(t => recipeRatings[t] > 0)
-            .map(title => {
-              const saved = savedRecipes.find(r => r._title === title);
-              return { title, rating: recipeRatings[title], overview: saved?.overview || "", veg: isVeg(title, saved?.overview || "") };
-            })
-            .sort((a, b) => b.rating - a.rating);
-
-          const filtered = (trView === "community" ? communityRatings : myRated).filter(r => {
-            if (trFilter === "veg")    return isVeg(r.title, r.overview || "");
-            if (trFilter === "nonveg") return !isVeg(r.title, r.overview || "");
-            return true;
-          });
-
-          const displayList = filtered;
-          const totalRaters = communityRatings.reduce((sum, r) => sum + (r.totalRatings || 0), 0);
-
-          return (
-            <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #f0eedc 45%, #f5f2ea 100%)", position: "relative", overflow: "hidden" }}>
-              <Box sx={{ position: "fixed", top: 60, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,158,11,0.13) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none", zIndex: 0 }} />
-              <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.25, backgroundImage: "radial-gradient(circle, #c49a3c 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
-
-              {/* Header */}
-              <Box sx={{ position: "relative", zIndex: 1, overflow: "hidden", background: "linear-gradient(125deg, #161410 0%, #1e2b1a 40%, #3a5c30 70%, #4a6e3a 100%)", px: { xs: 4, md: 6 }, py: 4.5 }}>
-                <Box sx={{ position: "absolute", inset: 0, opacity: 0.06, backgroundImage: "repeating-linear-gradient(135deg, #d4aa4a 0px, #d4aa4a 1px, transparent 1px, transparent 18px)" }} />
-                <Box sx={{ position: "relative", zIndex: 1 }}>
-                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, background: "rgba(251,191,36,0.2)", border: "1px solid rgba(251,191,36,0.4)", borderRadius: "100px", px: 2, py: 0.5, mb: 2 }}>
-                    <Box sx={{ width: 6, height: 6, borderRadius: "50%", background: "#d4aa4a", boxShadow: "0 0 6px #d4aa4a" }} />
-                    <Typography sx={{ color: "#e8d48a", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Fridgely Community</Typography>
-                  </Box>
-                  <Typography sx={{ fontWeight: 900, fontSize: { xs: "1.8rem", md: "2.4rem" }, letterSpacing: "-1.5px", color: "#fff", lineHeight: 1.1, mb: 1 }}>⭐ Top Rated Recipes</Typography>
-                  <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.95rem" }}>
-                    {trView === "community"
-                      ? `Rated by ${totalRaters} cook${totalRaters !== 1 ? "s" : ""} across the Fridgely community`
-                      : `${myRated.length} recipe${myRated.length !== 1 ? "s" : ""} rated by you`}
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Box p={4} maxWidth={980} mx="auto" sx={{ position: "relative", zIndex: 1 }}>
-
-                {/* View toggle — Community vs Mine */}
-                <Box display="flex" gap={1} mb={3} sx={{ background: "#fff", borderRadius: 3, p: 1, border: "1px solid #e8d48a", width: "fit-content" }}>
-                  {[
-                    { key: "community", label: "🌍 Community Picks", sublabel: `${communityRatings.length} recipes` },
-                    { key: "mine",      label: "⭐ My Ratings",       sublabel: `${myRated.length} rated` },
-                  ].map(opt => (
-                    <Box key={opt.key} onClick={() => setTrView(opt.key)} sx={{
-                      px: 2.5, py: 1, borderRadius: 2, cursor: "pointer",
-                      background: trView === opt.key ? "linear-gradient(135deg, #c49a3c, #a8822e)" : "transparent",
-                      transition: "all 0.18s",
-                    }}>
-                      <Typography sx={{ color: trView === opt.key ? "#fff" : "#374151", fontWeight: 800, fontSize: "0.82rem" }}>{opt.label}</Typography>
-                      <Typography sx={{ color: trView === opt.key ? "rgba(255,255,255,0.65)" : "#9ca3af", fontSize: "0.65rem", fontWeight: 600 }}>{opt.sublabel}</Typography>
-                    </Box>
-                  ))}
-                </Box>
-
-                {/* Veg filter */}
-                <Box display="flex" gap={1} mb={3}>
-                  {[
-                    { key: "all",    label: "🍽️ All" },
-                    { key: "veg",    label: "🌱 Veg" },
-                    { key: "nonveg", label: "🥩 Non-Veg" },
-                  ].map(opt => (
-                    <Box key={opt.key} onClick={() => setTrFilter(opt.key)} sx={{
-                      px: 1.8, py: 0.7, borderRadius: 2, cursor: "pointer",
-                      background: trFilter === opt.key ? "#f0f4ec" : "#fff",
-                      border: `1.5px solid ${trFilter === opt.key ? "#6b8c5a" : "#e5e7eb"}`,
-                      color: trFilter === opt.key ? "#5a7a48" : "#6b7280",
-                      fontWeight: 700, fontSize: "0.78rem", transition: "all 0.15s",
-                    }}>
-                      {opt.label}
-                    </Box>
-                  ))}
-                </Box>
-
-                {/* Community stats bar */}
-                {trView === "community" && communityRatings.length > 0 && (
-                  <Grid container spacing={2} mb={3.5}>
-                    {[
-                      { label: "Recipes rated",    val: communityRatings.length,                                                          icon: "🍽️", color: "#b8714e", bg: "rgba(184,113,78,0.1)"  },
-                      { label: "Total ratings",    val: totalRaters,                                                                       icon: "⭐", color: "#c49a3c", bg: "rgba(196,154,60,0.1)"  },
-                      { label: "Avg community ★",  val: communityRatings.length ? (communityRatings.reduce((s,r) => s + r.avgRating, 0) / communityRatings.length).toFixed(1) : "—", icon: "📊", color: "#6b8c5a", bg: "rgba(107,140,90,0.1)" },
-                      { label: "Top rated",        val: communityRatings[0]?.avgRating ? `${communityRatings[0].avgRating}★` : "—",       icon: "🥇", color: "#eab308", bg: "rgba(234,179,8,0.1)"  },
-                    ].map((s, i) => (
-                      <Grid item xs={6} md={3} key={i}>
-                        <Box sx={{ background: s.bg, borderRadius: 3, p: 2, textAlign: "center", border: "1px solid rgba(0,0,0,0.06)" }}>
-                          <Typography sx={{ fontSize: "1.4rem", mb: 0.5 }}>{s.icon}</Typography>
-                          <Typography sx={{ color: s.color, fontWeight: 900, fontSize: "1.4rem", lineHeight: 1.2, mb: 0.3 }}>{s.val}</Typography>
-                          <Typography sx={{ color: "#6b7280", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</Typography>
-                        </Box>
-                      </Grid>
-                    ))}
-                  </Grid>
-                )}
-
-                {/* Loading */}
-                {trView === "community" && communityLoading && (
-                  <Box display="flex" alignItems="center" gap={2} py={6} justifyContent="center">
-                    <CircularProgress size={22} sx={{ color: "#c49a3c" }} />
-                    <Typography color="text.secondary">Loading community ratings…</Typography>
-                  </Box>
-                )}
-
-                {/* Empty states */}
-                {!communityLoading && displayList.length === 0 && (
-                  <Box textAlign="center" py={10}>
-                    <Typography fontSize="3rem" mb={2}>{trView === "community" ? "🌍" : "⭐"}</Typography>
-                    <Typography fontWeight={700} fontSize="1rem" color="#374151" mb={1}>
-                      {trView === "community" ? "No community ratings yet" : "You haven't rated any recipes yet"}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" mb={3} maxWidth={340} mx="auto">
-                      {trView === "community"
-                        ? "Be the first! Rate any recipe you try — it shows up here for everyone."
-                        : "Open any recipe, cook it, and give it stars. They'll appear here sorted by rating."}
-                    </Typography>
-                    <Button variant="contained" onClick={() => setPage("recipes")}
-                      sx={{ background: "linear-gradient(135deg, #c49a3c, #a8822e)", borderRadius: 2, fontWeight: 700 }}>
-                      Find Something to Cook →
-                    </Button>
-                  </Box>
-                )}
-
-                {/* Recipe grid */}
-                {!communityLoading && displayList.length > 0 && (
-                  <Grid container spacing={2.5}>
-                    {displayList.map((r, i) => {
-                      const myRatingForThis = recipeRatings[r.title] || 0;
-                      const isSaved = savedRecipes.some(s => s._title === r.title);
-                      return (
-                        <Grid item xs={12} sm={6} md={4} key={r.title}>
-                          <Card sx={{ ...cardSx, "&:hover": { transform: "translateY(-4px)", boxShadow: "0 8px 24px rgba(245,158,11,0.18)", borderColor: "#e8d48a" } }}>
-                            <Box onClick={() => fetchDetails(r.title)}>
-                              <Box sx={{ position: "relative", height: 155, overflow: "hidden" }}>
-                                <RecipeImage title={r.title} height={155} />
-                                {/* Rank badge */}
-                                {i < 3 && (
-                                  <Box sx={{ position: "absolute", top: 10, left: 10, background: i === 0 ? "#c49a3c" : i === 1 ? "#9ca3af" : "#b45309", color: "#fff", borderRadius: "8px", px: 1.2, py: 0.4, fontSize: "0.7rem", fontWeight: 800 }}>
-                                    {i === 0 ? "🥇 #1" : i === 1 ? "🥈 #2" : "🥉 #3"}
-                                  </Box>
-                                )}
-                                {isSaved && (
-                                  <Box sx={{ position: "absolute", top: i < 3 ? 38 : 10, left: 10, background: "rgba(34,197,94,0.88)", borderRadius: "8px", px: 1, py: 0.25, fontSize: "0.62rem", fontWeight: 800, color: "#fff" }}>💾 Saved</Box>
-                                )}
-                                <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 60%)" }} />
-                              </Box>
-                              <CardContent sx={{ p: 2, pb: 1 }}>
-                                <Typography fontWeight={800} fontSize="0.95rem" color="#1a1a1a" mb={0.5} lineHeight={1.3}>{r.title}</Typography>
-                                {/* Community rating display */}
-                                {trView === "community" && (
-                                  <Box display="flex" alignItems="center" gap={1} mb={0.5}>
-                                    <Box display="flex" gap={0.2}>
-                                      {[1,2,3,4,5].map(s => (
-                                        <Box key={s} sx={{ fontSize: "0.75rem", color: s <= Math.round(r.avgRating) ? "#c49a3c" : "#e5e7eb" }}>★</Box>
-                                      ))}
-                                    </Box>
-                                    <Typography sx={{ color: "#c49a3c", fontSize: "0.72rem", fontWeight: 800 }}>{r.avgRating}</Typography>
-                                    <Typography sx={{ color: "#9ca3af", fontSize: "0.68rem" }}>({r.totalRatings} rating{r.totalRatings !== 1 ? "s" : ""})</Typography>
-                                  </Box>
-                                )}
-                              </CardContent>
-                            </Box>
-                            {/* My personal rating row */}
-                            <Box px={2} pb={1.5} display="flex" alignItems="center" justifyContent="space-between" onClick={e => e.stopPropagation()}>
-                              <Box>
-                                <Typography sx={{ fontSize: "0.62rem", color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.3 }}>Your rating</Typography>
-                                <StarRating value={myRatingForThis} onChange={(v) => setRating(r.title, v)} size={16} />
-                              </Box>
-                              {myRatingForThis > 0 && (
-                                <Box sx={{ background: "#fef9e7", border: "1px solid #e8d48a", borderRadius: 1.5, px: 1, py: 0.4, textAlign: "center" }}>
-                                  <Typography sx={{ color: "#c49a3c", fontWeight: 900, fontSize: "0.78rem" }}>{myRatingForThis}/5 ⭐</Typography>
-                                </Box>
-                              )}
-                            </Box>
-                          </Card>
-                        </Grid>
-                      );
-                    })}
-                  </Grid>
-                )}
-              </Box>
-            </Box>
-          );
-        })()}
+        {page === "toprated" && (
+          <TopRatedPage
+            API={API}
+            recipeRatings={recipeRatings}
+            savedRecipes={savedRecipes}
+            trFilter={trFilter}
+            setTrFilter={setTrFilter}
+            fetchDetails={fetchDetails}
+            setRating={setRating}
+            setPage={setPage}
+            cardSx={cardSx}
+          />
+        )}
 
         {/* ── RECIPE HISTORY PAGE ── */}
         {page === "history" && (() => {
