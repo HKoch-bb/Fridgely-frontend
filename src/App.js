@@ -1454,26 +1454,26 @@ const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
 // ─── Onboarding Flow ──────────────────────────────────────────────────────────
 const ONBOARDING_STEPS = [
   {
-    title: "Welcome to Fridgely 🧊",
-    desc: "Open your fridge. Look at what's there. That's your starting point — and Fridgely makes it enough.",
-    icon: "🧊",
+    title: "Welcome to Mise 👋",
+    desc: "Let's take a quick tour to get you cooking smarter. Takes about 20 seconds.",
+    icon: "🍳",
     highlight: null,
   },
   {
-    title: "Type what you've got",
-    desc: "No need for a full pantry. Drop in whatever ingredients you have and hit go — Fridgely handles the rest.",
-    icon: "🥚",
+    title: "Add Ingredients",
+    desc: "Type what's in your fridge with quantity and unit, then hit Generate Recipes to see what you can cook!",
+    icon: "📦",
     highlight: "recipes",
   },
   {
-    title: "Save the ones you love",
-    desc: "Found a keeper? Save it, rate it, jot down your tweaks. Build a personal cookbook over time.",
+    title: "Save & Rate Recipes",
+    desc: "Star any recipe you love and leave personal notes. Access everything in Saved Recipes.",
     icon: "⭐",
     highlight: "saved",
   },
   {
-    title: "Plan your whole week",
-    desc: "Head to Meal Planner — Fridgely builds a full 5-day menu from whatever's already in your kitchen.",
+    title: "Plan Your Week",
+    desc: "Head to Meal Planner to auto-generate a full 5-day plan. You can even build a shopping list from it!",
     icon: "📅",
     highlight: "planner",
   },
@@ -1529,7 +1529,7 @@ const OnboardingFlow = ({ onFinish, setPage }) => {
               borderRadius: 2, fontWeight: 700, flex: 1,
               boxShadow: "0 4px 16px rgba(107,140,90,0.3)",
             }}>
-            {isLast ? "Let's see what I can cook 🧊" : "Next →"}
+            {isLast ? "Let's cook! 🚀" : "Next →"}
           </Button>
         </Box>
       </Box>
@@ -2163,11 +2163,199 @@ const LowStockNotificationPanel = ({ open, onClose, lowStockItems, onAddToGrocer
   );
 };
 
+// ─── Auth Screen ─────────────────────────────────────────────────────────────
+const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
+
+const AuthScreen = ({ onAuth }) => {
+  const [mode, setMode] = useState("login");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async () => {
+    if (!email.trim() || !password.trim()) return setError("Please fill in all fields");
+    if (mode === "signup" && !name.trim()) return setError("Please enter your name");
+    setLoading(true); setError("");
+    try {
+      const res = await fetch(`${API_BASE}/auth/${mode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(mode === "signup" ? { name: name.trim(), email, password } : { email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      localStorage.setItem("fridgely_token", data.token);
+      onAuth(data.token, data.user);
+    } catch (err) { setError(err.message); }
+    setLoading(false);
+  };
+
+  return (
+    <Box sx={{
+      minHeight: "100vh",
+      background: "linear-gradient(145deg, #0d0f0a 0%, #141210 50%, #1a1e14 100%)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      px: 2,
+    }}>
+      {/* Background pattern */}
+      <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", opacity: 0.04, backgroundImage: "radial-gradient(circle, #6b8c5a 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+      <Box sx={{ position: "fixed", top: "20%", right: "15%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(107,140,90,0.12) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none" }} />
+
+      <Box sx={{
+        width: "100%", maxWidth: 420,
+        background: "rgba(255,255,255,0.04)",
+        backdropFilter: "blur(24px)",
+        border: "1px solid rgba(255,255,255,0.1)",
+        borderRadius: 4,
+        p: { xs: 3.5, sm: 5 },
+        boxShadow: "0 32px 80px rgba(0,0,0,0.6)",
+        animation: "authIn 0.4s cubic-bezier(0.34,1.56,0.64,1)",
+        "@keyframes authIn": { from: { opacity: 0, transform: "translateY(20px) scale(0.96)" }, to: { opacity: 1, transform: "translateY(0) scale(1)" } },
+      }}>
+        {/* Logo */}
+        <Box display="flex" alignItems="center" gap={1.5} mb={4}>
+          <Box sx={{
+            width: 44, height: 44, borderRadius: 2.5,
+            background: "linear-gradient(145deg, #4a7a3a, #5a7c4a)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: "0 6px 20px rgba(107,140,90,0.5)",
+          }}>
+            <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
+              <rect x="4" y="2" width="12" height="16" rx="2" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8"/>
+              <rect x="4" y="7.5" width="12" height="0.8" fill="rgba(255,255,255,0.4)"/>
+              <rect x="6" y="4.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
+              <rect x="6" y="10.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
+              <circle cx="13.5" cy="13.5" r="1" fill="#86efac"/>
+            </svg>
+          </Box>
+          <Box>
+            <Typography sx={{ fontWeight: 900, fontSize: "1.3rem", color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1 }}>Fridgely</Typography>
+            <Typography sx={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.35)", lineHeight: 1 }}>Cook what you've got.</Typography>
+          </Box>
+        </Box>
+
+        {/* Title */}
+        <Typography sx={{ fontWeight: 800, fontSize: "1.4rem", color: "#fff", mb: 0.5 }}>
+          {mode === "login" ? "Welcome back 👋" : "Create your account"}
+        </Typography>
+        <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", mb: 3.5 }}>
+          {mode === "login" ? "Sign in to access your pantry and saved recipes." : "Your kitchen, your history — all in one place."}
+        </Typography>
+
+        {/* Fields */}
+        {mode === "signup" && (
+          <Box mb={2}>
+            <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", mb: 0.8 }}>Your name</Typography>
+            <input
+              value={name} onChange={e => setName(e.target.value)}
+              placeholder="e.g. Hemanth"
+              onKeyDown={e => e.key === "Enter" && submit()}
+              style={{
+                width: "100%", padding: "12px 14px", borderRadius: 10,
+                background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+                color: "#fff", fontSize: "0.9rem", outline: "none", boxSizing: "border-box",
+                fontFamily: "inherit",
+              }}
+              onFocus={e => e.target.style.borderColor = "#6b8c5a"}
+              onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
+            />
+          </Box>
+        )}
+
+        <Box mb={2}>
+          <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", mb: 0.8 }}>Email</Typography>
+          <input
+            type="email" value={email} onChange={e => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            onKeyDown={e => e.key === "Enter" && submit()}
+            style={{
+              width: "100%", padding: "12px 14px", borderRadius: 10,
+              background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+              color: "#fff", fontSize: "0.9rem", outline: "none", boxSizing: "border-box",
+              fontFamily: "inherit",
+            }}
+            onFocus={e => e.target.style.borderColor = "#6b8c5a"}
+            onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
+          />
+        </Box>
+
+        <Box mb={3}>
+          <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", mb: 0.8 }}>Password</Typography>
+          <Box sx={{ position: "relative" }}>
+            <input
+              type={showPass ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
+              placeholder={mode === "signup" ? "At least 6 characters" : "Your password"}
+              onKeyDown={e => e.key === "Enter" && submit()}
+              style={{
+                width: "100%", padding: "12px 44px 12px 14px", borderRadius: 10,
+                background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+                color: "#fff", fontSize: "0.9rem", outline: "none", boxSizing: "border-box",
+                fontFamily: "inherit",
+              }}
+              onFocus={e => e.target.style.borderColor = "#6b8c5a"}
+              onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
+            />
+            <Box onClick={() => setShowPass(p => !p)} sx={{
+              position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+              cursor: "pointer", color: "rgba(255,255,255,0.3)", fontSize: "0.8rem",
+              "&:hover": { color: "rgba(255,255,255,0.7)" },
+            }}>
+              {showPass ? "Hide" : "Show"}
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Error */}
+        {error && (
+          <Box mb={2} px={2} py={1} sx={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 2 }}>
+            <Typography sx={{ color: "#fca5a5", fontSize: "0.82rem", fontWeight: 600 }}>⚠ {error}</Typography>
+          </Box>
+        )}
+
+        {/* Submit */}
+        <Box
+          onClick={!loading ? submit : undefined}
+          sx={{
+            width: "100%", py: 1.6, borderRadius: "12px", cursor: loading ? "not-allowed" : "pointer",
+            background: loading ? "rgba(107,140,90,0.4)" : "linear-gradient(135deg, #5a7c4a, #4a6a3a)",
+            boxShadow: loading ? "none" : "0 8px 28px rgba(107,140,90,0.4)",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5,
+            transition: "all 0.2s",
+            "&:hover": !loading ? { transform: "translateY(-1px)", boxShadow: "0 12px 36px rgba(107,140,90,0.5)" } : {},
+            mb: 3,
+          }}
+        >
+          {loading
+            ? <CircularProgress size={18} sx={{ color: "#fff" }} />
+            : <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem" }}>
+                {mode === "login" ? "Sign in to Fridgely →" : "Create account →"}
+              </Typography>
+          }
+        </Box>
+
+        {/* Toggle */}
+        <Box textAlign="center">
+          <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem" }}>
+            {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+            <Box component="span"
+              onClick={() => { setMode(m => m === "login" ? "signup" : "login"); setError(""); }}
+              sx={{ color: "#a8c298", fontWeight: 700, cursor: "pointer", "&:hover": { color: "#6b8c5a" } }}>
+              {mode === "login" ? "Sign up free" : "Sign in"}
+            </Box>
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
- // const API = "http://localhost:5000";
- const API = process.env.REACT_APP_API_URL || "http://localhost:5000"; 
- const [page, setPage] = useState("home");
+  const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const [page, setPage] = useState("home");
 
   // ── Toast system ──
   const [toasts, setToasts] = useState([]);
@@ -2177,6 +2365,64 @@ export default function App() {
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3500);
   }, []);
   const removeToast = useCallback((id) => setToasts(prev => prev.filter(t => t.id !== id)), []);
+
+  // ── Auth ──
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem("fridgely_token") || null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const authHeaders = useCallback(() => ({
+    "Content-Type": "application/json",
+    ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+  }), [authToken]);
+
+  const apiFetch = useCallback((path, opts = {}) =>
+    fetch(`${API}${path}`, { ...opts, headers: { ...authHeaders(), ...(opts.headers || {}) } }),
+  [API, authHeaders]);
+
+  const hydrateFromUser = useCallback((u) => {
+    if (u.pantryItems?.length)   setPantryItems(u.pantryItems);
+    if (u.savedRecipes?.length)  setSavedRecipes(u.savedRecipes);
+    if (u.groceryList?.length)   setGroceryList(u.groceryList);
+    if (u.recipeHistory?.length) setRecipeHistory(u.recipeHistory);
+    if (u.recipeRatings && Object.keys(u.recipeRatings).length) setRecipeRatings(u.recipeRatings);
+    if (u.recipeNotes  && Object.keys(u.recipeNotes).length)   setRecipeNotes(u.recipeNotes);
+    if (u.language)              setLanguage(u.language);
+  }, []); // eslint-disable-line
+
+  const handleAuth = useCallback((token, user) => {
+    setAuthToken(token);
+    setCurrentUser(user);
+    hydrateFromUser(user);
+    setAuthLoading(false);
+  }, [hydrateFromUser]);
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("fridgely_token");
+    setAuthToken(null); setCurrentUser(null);
+    setPantryItems([]); setSavedRecipes([]); setGroceryList([]);
+    setRecipeHistory([]); setRecipeRatings({}); setRecipeNotes({});
+    showToast("Signed out — see you soon! 👋", "success");
+  }, [showToast]);
+
+  // Verify token on mount
+  useEffect(() => {
+    if (!authToken) { setAuthLoading(false); return; }
+    fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${authToken}` } })
+      .then(r => r.json())
+      .then(data => {
+        if (data.user) { setCurrentUser(data.user); hydrateFromUser(data.user); }
+        else { localStorage.removeItem("fridgely_token"); setAuthToken(null); }
+      })
+      .catch(() => { localStorage.removeItem("fridgely_token"); setAuthToken(null); })
+      .finally(() => setAuthLoading(false));
+  }, []); // eslint-disable-line
+
+  // Track page activity
+  useEffect(() => {
+    if (!authToken || !page) return;
+    apiFetch("/user/activity", { method: "POST", body: JSON.stringify({ page }) }).catch(() => {});
+  }, [page, authToken]); // eslint-disable-line
 
   // ── Language ──
   const [language, setLanguage] = useState(() => localStorage.getItem("cm_lang") || "English");
@@ -2296,11 +2542,12 @@ export default function App() {
   const [notifPanelOpen, setNotifPanelOpen] = useState(false);
   // Track which items we've already shown an auto-toast for (avoid repeat toasts)
   const notifToastedRef = React.useRef(new Set());
+  const syncTimeout = React.useRef({});
 
   // ── Chef Chat widget ──
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
-    { role: "assistant", content: "Hey! I'm Fridgely 🧊 Tell me what's in your kitchen right now — even a handful of things — and I'll find something genuinely good to cook." }
+    { role: "assistant", content: "Hey! I'm your personal chef 🧑‍🍳 Ask me anything — recipes, substitutions, cooking tips, or what to make with what's in your pantry." }
   ]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
@@ -2373,6 +2620,24 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("groceryList", JSON.stringify(groceryList));
   }, [groceryList]);
+
+  // ── DB Sync Effects (debounced, only when logged in) ──
+  const dbSync = useCallback((key, path, body) => {
+    if (!authToken) return;
+    clearTimeout(syncTimeout.current[key]);
+    syncTimeout.current[key] = setTimeout(() => {
+      apiFetch(path, { method: "PUT", body: JSON.stringify(body) }).catch(() => {});
+    }, 800);
+  }, [authToken, apiFetch]);
+
+  useEffect(() => { dbSync("pantry",   "/user/pantry",        { pantryItems });   }, [pantryItems]);   // eslint-disable-line
+  useEffect(() => { dbSync("saved",    "/user/saved-recipes", { savedRecipes });  }, [savedRecipes]);  // eslint-disable-line
+  useEffect(() => { dbSync("grocery",  "/user/grocery",       { groceryList });   }, [groceryList]);   // eslint-disable-line
+  useEffect(() => { dbSync("history",  "/user/history",       { recipeHistory }); }, [recipeHistory]); // eslint-disable-line
+  useEffect(() => { dbSync("notes",    "/user/notes",         { recipeNotes });   }, [recipeNotes]);   // eslint-disable-line
+  useEffect(() => {
+    if (authToken && language) apiFetch("/user/language", { method: "PUT", body: JSON.stringify({ language }) }).catch(() => {});
+  }, [language]); // eslint-disable-line
 
   // ── Low-stock: computed items + auto-toast when qty drops low ──
   const lowStockItems = React.useMemo(
@@ -2565,9 +2830,12 @@ export default function App() {
     showToast("Recipe removed", "success");
   };
 
-  const setRating = (title, rating) => {
+  const setRating = useCallback((title, rating) => {
     setRecipeRatings(prev => ({ ...prev, [title]: rating }));
-  };
+    if (authToken) {
+      apiFetch("/user/rating", { method: "POST", body: JSON.stringify({ recipe: title, rating }) }).catch(() => {});
+    }
+  }, [authToken, apiFetch]);
 
   const saveNote = (title, note) => {
     setRecipeNotes(prev => ({ ...prev, [title]: note }));
@@ -2635,10 +2903,10 @@ const exportMealPlanPDF = (plan, title = "Weekly Meal Plan") => {
   doc.setFontSize(8);
   doc.text("CM", 17, 13, { align: "center" });
   doc.setFontSize(14);
-  doc.text("Fridgely", 27, 10);
+  doc.text("Mise", 27, 10);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.text("Cook what you've got.", 27, 16);
+  doc.text("Cook with intention.", 27, 16);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.text(title, pageW - 12, 10, { align: "right" });
@@ -2763,7 +3031,7 @@ const exportMealPlanPDF = (plan, title = "Weekly Meal Plan") => {
     doc.setFontSize(7);
     doc.setTextColor(160, 160, 160);
     doc.setFont("helvetica", "normal");
-    doc.text("Generated by Fridgely", 10, finalY + 10);
+    doc.text("Generated by Mise", 10, finalY + 10);
     doc.text("Page 1", pageW - 10, finalY + 10, { align: "right" });
   }
 
@@ -2795,10 +3063,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
   doc.setFontSize(9);
   doc.text("CM", margin + 8, 14.5, { align: "center" });
   doc.setFontSize(15);
-  doc.text("Fridgely", margin + 20, 12);
+  doc.text("Mise", margin + 20, 12);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.text("Cook what you've got.", margin + 20, 19);
+  doc.text("Cook with intention.", margin + 20, 19);
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   doc.setFontSize(7.5);
   doc.text(today, pageW - margin, 15, { align: "right" });
@@ -2986,8 +3254,8 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   doc.setTextColor(160, 160, 160);
-  doc.text("Generated by Fridgely", margin, y + 7);
-  doc.text("fridgely.app", pageW - margin, y + 7, { align: "right" });
+  doc.text("Generated by Mise", margin, y + 7);
+  doc.text("mise.app", pageW - margin, y + 7, { align: "right" });
 
   const safeName = (recipe._title || recipe.title || "recipe").replace(/[\s/\\?%*:|"<>]/g, "_");
   doc.save(safeName + "_recipe.pdf");
@@ -3116,6 +3384,24 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
     { muiIcon: <StarIcon sx={{ fontSize: 20 }} />, label: "Top Rated Recipes", key: "toprated" },
     { muiIcon: <HistoryIcon sx={{ fontSize: 20 }} />, label: "Recipe History", key: "history" },
   ];
+
+  // ── Auth gate ──
+  if (authLoading) return (
+    <Box sx={{ minHeight: "100vh", background: "#141210", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ width: 44, height: 44, borderRadius: 2.5, background: "linear-gradient(145deg, #4a7a3a, #5a7c4a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 20px rgba(107,140,90,0.5)", animation: "pulse 1.5s ease-in-out infinite", "@keyframes pulse": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.5 } } }}>
+        <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
+          <rect x="4" y="2" width="12" height="16" rx="2" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8"/>
+          <rect x="4" y="7.5" width="12" height="0.8" fill="rgba(255,255,255,0.4)"/>
+          <rect x="6" y="4.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
+          <rect x="6" y="10.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
+          <circle cx="13.5" cy="13.5" r="1" fill="#86efac"/>
+        </svg>
+      </Box>
+      <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" }}>Loading Fridgely…</Typography>
+    </Box>
+  );
+
+  if (!authToken) return <AuthScreen onAuth={handleAuth} />;
 
   return (
     <Box display="flex" sx={{ background: "#f5f1eb", minHeight: "100vh" }}>
@@ -3424,7 +3710,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   boxShadow: "0 0 12px rgba(107,140,90,0.4)",
                 }}>🧑‍🍳</Box>
                 <Box>
-                  <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.88rem", lineHeight: 1.2 }}>Fridgely AI</Typography>
+                  <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.88rem", lineHeight: 1.2 }}>ChefMind AI</Typography>
                   <Box display="flex" alignItems="center" gap={0.5}>
                     <Box sx={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e" }} />
                     <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.65rem" }}>
@@ -3437,7 +3723,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                 <Tooltip title="Clear chat">
                   <IconButton
                     size="small"
-                    onClick={() => setChatMessages([{ role: "assistant", content: "Hey! I'm Fridgely 🧊 Tell me what's in your kitchen right now — even a handful of things — and I'll find something genuinely good to cook." }])}
+                    onClick={() => setChatMessages([{ role: "assistant", content: "Hey! I'm your personal chef 🧑‍🍳 Ask me anything — recipes, substitutions, cooking tips, or what to make with what's in your pantry." }])}
                     sx={{ color: "rgba(255,255,255,0.3)", "&:hover": { color: "#fff" }, p: 0.5 }}
                   >
                     <AutorenewIcon sx={{ fontSize: 15 }} />
@@ -3509,10 +3795,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
             {chatMessages.length === 1 && !chatLoading && (
               <Box sx={{ px: 2, pb: 1, display: "flex", flexWrap: "wrap", gap: 0.7, flexShrink: 0 }}>
                 {[
-                  "What can I make right now?",
-                  "I have very little — surprise me",
-                  "Help me use up what's in my fridge",
-                  "Something quick, under 20 minutes",
+                  "What can I cook with my pantry?",
+                  "Suggest a quick dinner",
+                  "I have eggs and rice — ideas?",
+                  "How do I fix an over-salted dish?",
                 ].map(s => (
                   <Box key={s} onClick={() => { setChatInput(s); }}
                     sx={{
@@ -3619,10 +3905,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           {!chatOpen ? (
             <Box>
               <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.85rem", lineHeight: 1.25, letterSpacing: "-0.1px", whiteSpace: "nowrap" }}>
-                Your Kitchen Buddy
+                Your Chef Buddy
               </Typography>
               <Typography sx={{ color: "rgba(255,255,255,0.6)", fontSize: "0.68rem", fontWeight: 500, lineHeight: 1.2, whiteSpace: "nowrap" }}>
-                Got ingredients? Let's cook 🧊
+                Ask me anything ✨
               </Typography>
             </Box>
           ) : (
@@ -3654,30 +3940,16 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
             <Box display="flex" alignItems="center" gap={1}>
               <Box sx={{
                 width: 34, height: 34, borderRadius: 2, flexShrink: 0,
-                background: "linear-gradient(145deg, #4a7a3a 0%, #5a7c4a 50%, #3d6b2a 100%)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 4px 14px rgba(107,140,90,0.45), inset 0 1px 0 rgba(255,255,255,0.15)",
-                overflow: "hidden", position: "relative",
-              }}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  {/* Fridge body */}
-                  <rect x="4" y="2" width="12" height="16" rx="2" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8"/>
-                  {/* Freezer divider */}
-                  <rect x="4" y="7.5" width="12" height="0.8" fill="rgba(255,255,255,0.4)"/>
-                  {/* Freezer handle */}
-                  <rect x="6" y="4.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
-                  {/* Fridge handle */}
-                  <rect x="6" y="10.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
-                  {/* Little glow dot — fresh food indicator */}
-                  <circle cx="13.5" cy="13.5" r="1" fill="#86efac"/>
-                </svg>
-              </Box>
+                background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)",
+                display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", fontWeight: 900, color: "#fff",
+                boxShadow: "0 4px 12px rgba(107,140,90,0.35)",
+              }}>M</Box>
               <Box>
                 <Typography sx={{ fontWeight: 900, fontSize: "1.1rem", color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1 }}>
-                  Fridgely
+                  Mise
                 </Typography>
                 <Typography sx={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.3)", lineHeight: 1 }}>
-                  Cook what you've got.
+                  Cook with intention.
                 </Typography>
               </Box>
             </Box>
@@ -3685,19 +3957,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           {!sidebarOpen && (
             <Box sx={{
               width: 34, height: 34, borderRadius: 2,
-              background: "linear-gradient(145deg, #4a7a3a 0%, #5a7c4a 50%, #3d6b2a 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 4px 14px rgba(107,140,90,0.45), inset 0 1px 0 rgba(255,255,255,0.15)",
-              overflow: "hidden",
-            }}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <rect x="4" y="2" width="12" height="16" rx="2" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8"/>
-                <rect x="4" y="7.5" width="12" height="0.8" fill="rgba(255,255,255,0.4)"/>
-                <rect x="6" y="4.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
-                <rect x="6" y="10.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
-                <circle cx="13.5" cy="13.5" r="1" fill="#86efac"/>
-              </svg>
-            </Box>
+              background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)",
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", fontWeight: 900, color: "#fff",
+              boxShadow: "0 4px 12px rgba(107,140,90,0.35)",
+            }}>M</Box>
           )}
           {sidebarOpen && (
             <IconButton onClick={() => setSidebarOpen(false)} size="small"
@@ -3796,9 +4059,51 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
             </Box>
           )}
         </Box>
-      </Box>
 
-      {/* ── MAIN ── */}
+        {/* ── User profile + logout ── */}
+        {currentUser && (
+          <Box sx={{
+            mx: sidebarOpen ? 1.5 : 1, mb: 2, flexShrink: 0,
+            p: sidebarOpen ? 1.5 : 1,
+            background: "rgba(255,255,255,0.04)",
+            borderRadius: 2,
+            border: "1px solid rgba(255,255,255,0.08)",
+            display: "flex", alignItems: "center",
+            justifyContent: sidebarOpen ? "space-between" : "center",
+            gap: 1,
+          }}>
+            <Box display="flex" alignItems="center" gap={1} overflow="hidden">
+              {/* Avatar circle */}
+              <Box sx={{
+                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                background: "linear-gradient(135deg, #5a7c4a, #b8714e)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "0.72rem", fontWeight: 800, color: "#fff",
+              }}>
+                {currentUser.name?.charAt(0).toUpperCase() || "U"}
+              </Box>
+              {sidebarOpen && (
+                <Box overflow="hidden">
+                  <Typography sx={{ color: "#fff", fontSize: "0.75rem", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 110 }}>
+                    {currentUser.name}
+                  </Typography>
+                  <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.6rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 110 }}>
+                    {currentUser.email}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+            {sidebarOpen && (
+              <Tooltip title="Sign out">
+                <IconButton size="small" onClick={handleLogout}
+                  sx={{ color: "rgba(255,255,255,0.25)", p: 0.5, flexShrink: 0, "&:hover": { color: "#ef4444", background: "rgba(239,68,68,0.1)" } }}>
+                  <Box sx={{ fontSize: "0.9rem" }}>⎋</Box>
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        )}
+      </Box>
       <Box flex={1} sx={{
         ml: sidebarOpen ? `${SIDEBAR_W}px` : `${SIDEBAR_COLLAPSED_W}px`,
         transition: "margin-left 0.28s cubic-bezier(0.4,0,0.2,1)",
@@ -3819,21 +4124,21 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
               <Box sx={{ position: "relative", zIndex: 2, px: { xs: 4, md: 8 }, maxWidth: 780 }}>
                 <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, background: "rgba(107,140,90,0.18)", border: "1px solid rgba(107,140,90,0.4)", borderRadius: "100px", px: 2, py: 0.6, mb: 3, backdropFilter: "blur(8px)" }}>
                   <Box sx={{ width: 7, height: 7, borderRadius: "50%", background: "#6b8c5a", boxShadow: "0 0 8px #6b8c5a" }} />
-                  <Typography sx={{ color: "#a8c298", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Cook what you've got.</Typography>
+                  <Typography sx={{ color: "#a8c298", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Your kitchen, elevated.</Typography>
                 </Box>
                 <Typography sx={{ fontFamily: "'Georgia', serif", fontWeight: 900, fontSize: { xs: "3.2rem", md: "5rem" }, lineHeight: 1.02, letterSpacing: "-2px", color: "#fff", mb: 1, textShadow: "0 4px 32px rgba(0,0,0,0.5)" }}>
-                  Open your fridge.
+                  Cook with
                   <Box component="span" sx={{ background: "linear-gradient(90deg, #b8714e, #6b8c5a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                    {" "}We'll handle it.
+                    intention.
                   </Box>
                 </Typography>
                 <Typography sx={{ color: "rgba(255,255,255,0.72)", fontSize: "1.15rem", fontWeight: 400, lineHeight: 1.65, maxWidth: 520, mb: 4.5, textShadow: "0 2px 12px rgba(0,0,0,0.4)" }}>
-                  Tell Fridgely what's in your kitchen — anything at all — and it finds real, creative recipes you can make right now. No grocery run. No wasted food.
+                  Turn what you have into something worth eating. From pantry to plate — every meal crafted around your ingredients, your taste, your way.
                 </Typography>
                 <Box display="flex" gap={2} flexWrap="wrap">
                   <Button variant="contained" size="large" onClick={() => setPage("recipes")}
                     sx={{ background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", borderRadius: "12px", px: 4, py: 1.6, fontSize: "1rem", fontWeight: 700, boxShadow: "0 8px 32px rgba(107,140,90,0.45)", "&:hover": { boxShadow: "0 12px 40px rgba(107,140,90,0.55)", transform: "translateY(-2px)" }, transition: "all 0.2s ease" }}>
-                    What can I cook? →
+                    Generate Recipes →
                   </Button>
                   <Button variant="outlined" size="large" onClick={() => setPage("planner")}
                     sx={{ borderColor: "rgba(255,255,255,0.35)", color: "#fff", borderRadius: "12px", px: 4, py: 1.6, fontSize: "1rem", fontWeight: 600, backdropFilter: "blur(8px)", background: "rgba(255,255,255,0.07)", "&:hover": { borderColor: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.13)" } }}>
@@ -3841,7 +4146,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   </Button>
                 </Box>
                 <Box display="flex" gap={4} mt={5} flexWrap="wrap">
-                  {[{ num: "Any", label: "Ingredients work" }, { num: "5", label: "Day meal plans" }, { num: "12", label: "Cuisine styles" }].map((s, i) => (
+                  {[{ num: "6+", label: "Recipes per run" }, { num: "5", label: "Day meal plans" }, { num: "12", label: "Cuisine styles" }].map((s, i) => (
                     <Box key={i}>
                       <Typography sx={{ color: "#b8714e", fontWeight: 900, fontSize: "1.8rem", lineHeight: 1, fontFamily: "'Georgia', serif" }}>{s.num}</Typography>
                       <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: 500, mt: 0.3 }}>{s.label}</Typography>
@@ -3850,134 +4155,30 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                 </Box>
               </Box>
 
-              {/* ── Three recipe cards — zig-zag staircase ── */}
-              <Box sx={{
-                display: { xs: "none", lg: "block" },
-                position: "absolute", right: 50, top: "50%",
-                transform: "translateY(-50%)",
-                width: 290, height: 500,
-                zIndex: 2,
-              }}>
-
-                {/* Card 1 — top-left, Breakfast */}
-                <Box sx={{
-                  position: "absolute", top: 0, left: 0,
-                  width: 212, borderRadius: "18px",
-                  background: "rgba(255,255,255,0.08)",
-                  backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                  boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
-                  transform: "rotate(-5deg)",
-                  overflow: "hidden",
-                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                  "&:hover": { transform: "rotate(-2deg) translateY(-5px)", boxShadow: "0 24px 60px rgba(0,0,0,0.55)" },
-                }}>
-                  <Box component="img"
-                    src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&q=80"
-                    sx={{ width: "100%", height: 95, objectFit: "cover", display: "block" }}
-                  />
-                  <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, height: 95, background: "linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3) 100%)" }} />
-                  {/* Ready badge */}
-                  <Box sx={{ position: "absolute", top: 10, right: 10, display: "flex", alignItems: "center", gap: 0.5, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", borderRadius: "8px", px: 1, py: 0.35 }}>
-                    <Box sx={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e", animation: "lp 2s ease-in-out infinite", "@keyframes lp": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.3 } } }} />
-                    <Typography sx={{ color: "#86efac", fontSize: "0.58rem", fontWeight: 800 }}>Ready to cook</Typography>
-                  </Box>
-                  <Box sx={{ px: 1.8, py: 1.3 }}>
-                    <Typography sx={{ color: "rgba(255,255,255,0.42)", fontSize: "0.55rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.4 }}>☀️ Breakfast · 3 ingredients</Typography>
-                    <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.86rem", mb: 0.4 }}>Fluffy Pancakes</Typography>
-                    <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.7rem", mb: 0.9, lineHeight: 1.4 }}>Golden, soft, ready in 12 min.</Typography>
-                    <Box display="flex" gap={0.7}>
-                      {["🟢 Easy", "⏱ 12 min"].map((tag, i) => (
-                        <Box key={i} sx={{ background: "rgba(184,113,78,0.22)", border: "1px solid rgba(184,113,78,0.38)", borderRadius: "6px", px: 0.9, py: 0.25, fontSize: "0.6rem", fontWeight: 700, color: "#c4b08a" }}>{tag}</Box>
-                      ))}
-                    </Box>
-                  </Box>
+              {/* Floating recipe card */}
+              <Box sx={{ display: { xs: "none", lg: "flex" }, position: "absolute", right: 80, top: "50%", transform: "translateY(-50%) rotate(2deg)", flexDirection: "column", background: "rgba(255,255,255,0.09)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: "20px", p: 2.5, width: 220, zIndex: 2, boxShadow: "0 24px 64px rgba(0,0,0,0.4)" }}>
+                <Box component="img" src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80" alt="recipe" sx={{ width: "100%", height: 130, objectFit: "cover", borderRadius: "12px", mb: 1.5 }} />
+                <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "0.88rem", mb: 0.5 }}>Spiced Chickpea Bowl</Typography>
+                <Typography sx={{ color: "rgba(255,255,255,0.55)", fontSize: "0.75rem", mb: 1.5, lineHeight: 1.4 }}>Creamy tahini, roasted veggies, fresh herbs</Typography>
+                <Box display="flex" gap={0.8}>
+                  {["🟢 Easy", "🌱 Vegan"].map((tag, i) => (
+                    <Box key={i} sx={{ background: "rgba(184,113,78,0.2)", border: "1px solid rgba(184,113,78,0.35)", borderRadius: "6px", px: 0.9, py: 0.3, fontSize: "0.65rem", fontWeight: 700, color: "#c4b08a" }}>{tag}</Box>
+                  ))}
                 </Box>
-
-                {/* Card 2 — middle-right, Lunch */}
-                <Box sx={{
-                  position: "absolute", top: 162, left: 68,
-                  width: 215, borderRadius: "18px",
-                  background: "rgba(255,255,255,0.09)",
-                  backdropFilter: "blur(22px)",
-                  border: "1px solid rgba(255,255,255,0.16)",
-                  boxShadow: "0 18px 50px rgba(0,0,0,0.5)",
-                  transform: "rotate(5deg)",
-                  overflow: "hidden",
-                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                  "&:hover": { transform: "rotate(2deg) translateY(-5px)", boxShadow: "0 26px 62px rgba(0,0,0,0.55)" },
-                }}>
-                  <Box component="img"
-                    src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&q=80"
-                    sx={{ width: "100%", height: 95, objectFit: "cover", display: "block" }}
-                  />
-                  <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, height: 95, background: "linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3) 100%)" }} />
-                  {/* Ready badge */}
-                  <Box sx={{ position: "absolute", top: 10, right: 10, display: "flex", alignItems: "center", gap: 0.5, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", borderRadius: "8px", px: 1, py: 0.35 }}>
-                    <Box sx={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e", animation: "lp 2s ease-in-out 0.4s infinite" }} />
-                    <Typography sx={{ color: "#86efac", fontSize: "0.58rem", fontWeight: 800 }}>Ready to cook</Typography>
-                  </Box>
-                  <Box sx={{ px: 1.8, py: 1.3 }}>
-                    <Typography sx={{ color: "rgba(255,255,255,0.42)", fontSize: "0.55rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.4 }}>🌿 Lunch · 5 ingredients</Typography>
-                    <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.86rem", mb: 0.4 }}>Herb Garden Bowl</Typography>
-                    <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.7rem", mb: 0.9, lineHeight: 1.4 }}>Fresh, crisp, zero cooking needed.</Typography>
-                    <Box display="flex" gap={0.7}>
-                      {["🌱 Vegan", "⚡ No-cook"].map((tag, i) => (
-                        <Box key={i} sx={{ background: i === 0 ? "rgba(34,197,94,0.18)" : "rgba(184,113,78,0.22)", border: `1px solid ${i === 0 ? "rgba(34,197,94,0.3)" : "rgba(184,113,78,0.38)"}`, borderRadius: "6px", px: 0.9, py: 0.25, fontSize: "0.6rem", fontWeight: 700, color: i === 0 ? "#86efac" : "#c4b08a" }}>{tag}</Box>
-                      ))}
-                    </Box>
-                  </Box>
-                </Box>
-
-                {/* Card 3 — bottom-left, Dinner */}
-                <Box sx={{
-                  position: "absolute", top: 330, left: 8,
-                  width: 220, borderRadius: "20px",
-                  background: "rgba(255,255,255,0.13)",
-                  backdropFilter: "blur(28px)",
-                  border: "1px solid rgba(255,255,255,0.22)",
-                  boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
-                  transform: "rotate(-4deg)",
-                  overflow: "hidden",
-                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                  "&:hover": { transform: "rotate(-1deg) translateY(-5px)", boxShadow: "0 32px 72px rgba(0,0,0,0.6)" },
-                }}>
-                  <Box component="img"
-                    src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80"
-                    sx={{ width: "100%", height: 95, objectFit: "cover", display: "block" }}
-                  />
-                  <Box sx={{ position: "absolute", top: 0, left: 0, right: 0, height: 95, background: "linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.3) 100%)" }} />
-                  {/* Ready badge */}
-                  <Box sx={{ position: "absolute", top: 10, right: 10, display: "flex", alignItems: "center", gap: 0.5, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", borderRadius: "8px", px: 1, py: 0.35 }}>
-                    <Box sx={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e", animation: "lp 2s ease-in-out 0.8s infinite" }} />
-                    <Typography sx={{ color: "#86efac", fontSize: "0.58rem", fontWeight: 800 }}>Ready to cook</Typography>
-                  </Box>
-                  <Box sx={{ px: 2, py: 1.4 }}>
-                    <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.55rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.35 }}>🌙 Dinner · from your fridge</Typography>
-                    <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.9rem", mb: 0.4 }}>Golden Veggie Stir-Fry</Typography>
-                    <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", mb: 0.9, lineHeight: 1.4 }}>Crispy, colourful, 20 min flat.</Typography>
-                    <Box display="flex" gap={0.7}>
-                      {["🟢 Easy", "⚡ Quick"].map((tag, i) => (
-                        <Box key={i} sx={{ background: "rgba(184,113,78,0.25)", border: "1px solid rgba(184,113,78,0.4)", borderRadius: "6px", px: 0.9, py: 0.25, fontSize: "0.6rem", fontWeight: 700, color: "#c4b08a" }}>{tag}</Box>
-                      ))}
-                    </Box>
-                  </Box>
-                </Box>
-
               </Box>
             </Box>
 
             {/* Features strip */}
             <Box sx={{ background: "#141210", px: { xs: 4, md: 8 }, py: 8 }}>
               <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", mb: 4 }}>
-                How Fridgely works
+                Everything you need
               </Typography>
               <Grid container spacing={3}>
                 {[
-                  { icon: "🔒", title: "Zero assumptions", desc: "Fridgely only uses what you actually have. No phantom ingredients, no 'just pick up X at the store'.", accent: "#b8714e", page: "recipes" },
-                  { icon: "⚡", title: "Smart stretches", desc: "See how one or two extra items could open up a completely different dish — you decide if it's worth it.", accent: "#6b8c5a", page: "recipes" },
-                  { icon: "📅", title: "A whole week, sorted", desc: "Fridgely maps 5 days of breakfasts, lunches, dinners and snacks from your existing kitchen stock.", accent: "#c49a3c", page: "planner" },
-                  { icon: "🌍", title: "Any cuisine you crave", desc: "Italian, Japanese, Indian, Mexican and 9 more — your ingredients, their flavours.", accent: "#22c55e", page: "recipes" },
+                  { icon: "🔒", title: "Exact Ingredient Match", desc: "Works strictly with what you have. Every ingredient listed. Nothing assumed.", accent: "#b8714e", page: "recipes" },
+                  { icon: "⚡", title: "Flexible Suggestions", desc: "Your ingredients lead. We suggest what else you might need to unlock the dish.", accent: "#6b8c5a", page: "recipes" },
+                  { icon: "📅", title: "5-Day Meal Plans", desc: "A full week mapped out from your pantry. Or plan ahead from scratch.", accent: "#c49a3c", page: "planner" },
+                  { icon: "🌍", title: "12 Cuisine Styles", desc: "Italian, Japanese, Indian, Mexican — 12 styles, all adapting to your ingredients.", accent: "#22c55e", page: "recipes" },
                 ].map((feat, i) => (
                   <Grid item xs={12} sm={6} md={3} key={i}>
                     <Box onClick={() => setPage(feat.page)} sx={{
@@ -3998,10 +4199,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   sx={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 60%", filter: "brightness(0.6) saturate(1.1)" }} />
                 <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 2, background: "rgba(0,0,0,0.25)" }}>
                   <Typography sx={{ fontFamily: "'Georgia', serif", color: "#fff", fontWeight: 900, fontSize: { xs: "1.6rem", md: "2.4rem" }, textAlign: "center", textShadow: "0 4px 24px rgba(0,0,0,0.6)", letterSpacing: "-0.5px" }}>
-                    Your kitchen has more in it than you think.
+                    From what you have, to something worth making.
                   </Typography>
                   <Button variant="contained" onClick={() => setPage("recipes")} sx={{ background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", borderRadius: "10px", px: 4, py: 1.3, fontWeight: 700, fontSize: "0.95rem", boxShadow: "0 8px 24px rgba(107,140,90,0.4)", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 12px 32px rgba(107,140,90,0.5)" }, transition: "all 0.2s ease" }}>
-                    Show me what I've got →
+                    Try It Free →
                   </Button>
                 </Box>
               </Box>
@@ -4530,7 +4731,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                       <Box>
                         <Typography sx={{ fontWeight: 800, color: "#fff", fontSize: "1rem", lineHeight: 1.2 }}>Generate by Nutrition Targets</Typography>
                         <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.78rem", mt: 0.2 }}>
-                          Set your macro goals — Fridgely finds recipes that match. Enter any combination of targets.
+                          Set your macro goals — Mise finds recipes that match. Enter any combination of targets.
                         </Typography>
                       </Box>
                     </Box>
@@ -5436,31 +5637,39 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         {/* ══ TOP RATED ══ */}
         {page === "toprated" && (() => {
           const MEAT_KEYWORDS = ["chicken","beef","pork","lamb","turkey","fish","salmon","tuna","shrimp","bacon","sausage","steak","mutton","crab","lobster","meat","ham","pepperoni","prawn","anchovy","sardine","duck","venison"];
-          const isVeg = (title, overview = "") => {
-            const text = (title + " " + overview).toLowerCase();
-            return !MEAT_KEYWORDS.some(k => text.includes(k));
-          };
+          const isVeg = (title, overview = "") => !MEAT_KEYWORDS.some(k => (title + " " + overview).toLowerCase().includes(k));
 
-          const ratedTitles = Object.keys(recipeRatings).filter(t => recipeRatings[t] > 0);
+          // ── Community top rated state ──
+          const [communityRatings, setCommunityRatings] = React.useState([]);
+          const [communityLoading, setCommunityLoading] = React.useState(true);
+          const [trView, setTrView] = React.useState("community"); // "community" | "mine"
 
-          // Enrich with saved recipe data if available
-          const enriched = ratedTitles.map(title => {
-            const saved = savedRecipes.find(r => r._title === title);
-            return {
-              title,
-              rating: recipeRatings[title],
-              overview: saved?.overview || "",
-              servings: saved?.servings,
-              cook_time: saved?.cook_time,
-              veg: isVeg(title, saved?.overview || ""),
-            };
-          }).sort((a, b) => b.rating - a.rating);
+          React.useEffect(() => {
+            setCommunityLoading(true);
+            fetch(`${API}/top-rated`)
+              .then(r => r.json())
+              .then(data => setCommunityRatings(data.recipes || []))
+              .catch(() => {})
+              .finally(() => setCommunityLoading(false));
+          }, []);
 
-          const filtered = enriched.filter(r => {
-            if (trFilter === "veg") return r.veg;
-            if (trFilter === "nonveg") return !r.veg;
+          // My rated recipes
+          const myRated = Object.keys(recipeRatings)
+            .filter(t => recipeRatings[t] > 0)
+            .map(title => {
+              const saved = savedRecipes.find(r => r._title === title);
+              return { title, rating: recipeRatings[title], overview: saved?.overview || "", veg: isVeg(title, saved?.overview || "") };
+            })
+            .sort((a, b) => b.rating - a.rating);
+
+          const filtered = (trView === "community" ? communityRatings : myRated).filter(r => {
+            if (trFilter === "veg")    return isVeg(r.title, r.overview || "");
+            if (trFilter === "nonveg") return !isVeg(r.title, r.overview || "");
             return true;
           });
+
+          const displayList = filtered;
+          const totalRaters = communityRatings.reduce((sum, r) => sum + (r.totalRatings || 0), 0);
 
           return (
             <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #f0eedc 45%, #f5f2ea 100%)", position: "relative", overflow: "hidden" }}>
@@ -5473,95 +5682,157 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                 <Box sx={{ position: "relative", zIndex: 1 }}>
                   <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, background: "rgba(251,191,36,0.2)", border: "1px solid rgba(251,191,36,0.4)", borderRadius: "100px", px: 2, py: 0.5, mb: 2 }}>
                     <Box sx={{ width: 6, height: 6, borderRadius: "50%", background: "#d4aa4a", boxShadow: "0 0 6px #d4aa4a" }} />
-                    <Typography sx={{ color: "#e8d48a", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Your Reviews</Typography>
+                    <Typography sx={{ color: "#e8d48a", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Fridgely Community</Typography>
                   </Box>
                   <Typography sx={{ fontWeight: 900, fontSize: { xs: "1.8rem", md: "2.4rem" }, letterSpacing: "-1.5px", color: "#fff", lineHeight: 1.1, mb: 1 }}>⭐ Top Rated Recipes</Typography>
                   <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.95rem" }}>
-                    {ratedTitles.length} rated recipe{ratedTitles.length !== 1 ? "s" : ""} · sorted by your ratings
+                    {trView === "community"
+                      ? `Rated by ${totalRaters} cook${totalRaters !== 1 ? "s" : ""} across the Fridgely community`
+                      : `${myRated.length} recipe${myRated.length !== 1 ? "s" : ""} rated by you`}
                   </Typography>
                 </Box>
               </Box>
 
-              <Box p={4} maxWidth={960} mx="auto" sx={{ position: "relative", zIndex: 1 }}>
+              <Box p={4} maxWidth={980} mx="auto" sx={{ position: "relative", zIndex: 1 }}>
 
-                {/* Filter toggle */}
+                {/* View toggle — Community vs Mine */}
                 <Box display="flex" gap={1} mb={3} sx={{ background: "#fff", borderRadius: 3, p: 1, border: "1px solid #e8d48a", width: "fit-content" }}>
                   {[
-                    { key: "all", label: "🍽️ All", count: enriched.length },
-                    { key: "veg", label: "🌱 Vegetarian", count: enriched.filter(r => r.veg).length },
-                    { key: "nonveg", label: "🥩 Non-Veg", count: enriched.filter(r => !r.veg).length },
+                    { key: "community", label: "🌍 Community Picks", sublabel: `${communityRatings.length} recipes` },
+                    { key: "mine",      label: "⭐ My Ratings",       sublabel: `${myRated.length} rated` },
                   ].map(opt => (
-                    <Box key={opt.key} onClick={() => setTrFilter(opt.key)} sx={{
-                      px: 2, py: 0.8, borderRadius: 2, cursor: "pointer",
-                      background: trFilter === opt.key ? "linear-gradient(135deg, #c49a3c, #a8822e)" : "transparent",
-                      color: trFilter === opt.key ? "#fff" : "#6b7280",
-                      fontWeight: 700, fontSize: "0.82rem", transition: "all 0.18s",
-                      display: "flex", alignItems: "center", gap: 0.8,
+                    <Box key={opt.key} onClick={() => setTrView(opt.key)} sx={{
+                      px: 2.5, py: 1, borderRadius: 2, cursor: "pointer",
+                      background: trView === opt.key ? "linear-gradient(135deg, #c49a3c, #a8822e)" : "transparent",
+                      transition: "all 0.18s",
                     }}>
-                      {opt.label}
-                      <Box sx={{
-                        background: trFilter === opt.key ? "rgba(255,255,255,0.3)" : "#f3f4f6",
-                        color: trFilter === opt.key ? "#fff" : "#9ca3af",
-                        borderRadius: "10px", px: 0.8, fontSize: "0.65rem", fontWeight: 800,
-                      }}>{opt.count}</Box>
+                      <Typography sx={{ color: trView === opt.key ? "#fff" : "#374151", fontWeight: 800, fontSize: "0.82rem" }}>{opt.label}</Typography>
+                      <Typography sx={{ color: trView === opt.key ? "rgba(255,255,255,0.65)" : "#9ca3af", fontSize: "0.65rem", fontWeight: 600 }}>{opt.sublabel}</Typography>
                     </Box>
                   ))}
                 </Box>
 
-                {ratedTitles.length === 0 ? (
+                {/* Veg filter */}
+                <Box display="flex" gap={1} mb={3}>
+                  {[
+                    { key: "all",    label: "🍽️ All" },
+                    { key: "veg",    label: "🌱 Veg" },
+                    { key: "nonveg", label: "🥩 Non-Veg" },
+                  ].map(opt => (
+                    <Box key={opt.key} onClick={() => setTrFilter(opt.key)} sx={{
+                      px: 1.8, py: 0.7, borderRadius: 2, cursor: "pointer",
+                      background: trFilter === opt.key ? "#f0f4ec" : "#fff",
+                      border: `1.5px solid ${trFilter === opt.key ? "#6b8c5a" : "#e5e7eb"}`,
+                      color: trFilter === opt.key ? "#5a7a48" : "#6b7280",
+                      fontWeight: 700, fontSize: "0.78rem", transition: "all 0.15s",
+                    }}>
+                      {opt.label}
+                    </Box>
+                  ))}
+                </Box>
+
+                {/* Community stats bar */}
+                {trView === "community" && communityRatings.length > 0 && (
+                  <Grid container spacing={2} mb={3.5}>
+                    {[
+                      { label: "Recipes rated",    val: communityRatings.length,                                                          icon: "🍽️", color: "#b8714e", bg: "rgba(184,113,78,0.1)"  },
+                      { label: "Total ratings",    val: totalRaters,                                                                       icon: "⭐", color: "#c49a3c", bg: "rgba(196,154,60,0.1)"  },
+                      { label: "Avg community ★",  val: communityRatings.length ? (communityRatings.reduce((s,r) => s + r.avgRating, 0) / communityRatings.length).toFixed(1) : "—", icon: "📊", color: "#6b8c5a", bg: "rgba(107,140,90,0.1)" },
+                      { label: "Top rated",        val: communityRatings[0]?.avgRating ? `${communityRatings[0].avgRating}★` : "—",       icon: "🥇", color: "#eab308", bg: "rgba(234,179,8,0.1)"  },
+                    ].map((s, i) => (
+                      <Grid item xs={6} md={3} key={i}>
+                        <Box sx={{ background: s.bg, borderRadius: 3, p: 2, textAlign: "center", border: "1px solid rgba(0,0,0,0.06)" }}>
+                          <Typography sx={{ fontSize: "1.4rem", mb: 0.5 }}>{s.icon}</Typography>
+                          <Typography sx={{ color: s.color, fontWeight: 900, fontSize: "1.4rem", lineHeight: 1.2, mb: 0.3 }}>{s.val}</Typography>
+                          <Typography sx={{ color: "#6b7280", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>{s.label}</Typography>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                )}
+
+                {/* Loading */}
+                {trView === "community" && communityLoading && (
+                  <Box display="flex" alignItems="center" gap={2} py={6} justifyContent="center">
+                    <CircularProgress size={22} sx={{ color: "#c49a3c" }} />
+                    <Typography color="text.secondary">Loading community ratings…</Typography>
+                  </Box>
+                )}
+
+                {/* Empty states */}
+                {!communityLoading && displayList.length === 0 && (
                   <Box textAlign="center" py={10}>
-                    <Typography fontSize="3rem" mb={2}>⭐</Typography>
-                    <Typography fontWeight={700} fontSize="1rem" color="#374151" mb={1}>No rated recipes yet</Typography>
+                    <Typography fontSize="3rem" mb={2}>{trView === "community" ? "🌍" : "⭐"}</Typography>
+                    <Typography fontWeight={700} fontSize="1rem" color="#374151" mb={1}>
+                      {trView === "community" ? "No community ratings yet" : "You haven't rated any recipes yet"}
+                    </Typography>
                     <Typography variant="body2" color="text.secondary" mb={3} maxWidth={340} mx="auto">
-                      Rate recipes in the Recipe Generator or Meal Planner — they'll appear here sorted by your stars.
+                      {trView === "community"
+                        ? "Be the first! Rate any recipe you try — it shows up here for everyone."
+                        : "Open any recipe, cook it, and give it stars. They'll appear here sorted by rating."}
                     </Typography>
                     <Button variant="contained" onClick={() => setPage("recipes")}
                       sx={{ background: "linear-gradient(135deg, #c49a3c, #a8822e)", borderRadius: 2, fontWeight: 700 }}>
-                      Generate Recipes →
+                      Find Something to Cook →
                     </Button>
                   </Box>
-                ) : filtered.length === 0 ? (
-                  <Box textAlign="center" py={8}>
-                    <Typography fontSize="2rem" mb={1}>{trFilter === "veg" ? "🌱" : "🥩"}</Typography>
-                    <Typography fontWeight={700} color="#374151">No {trFilter === "veg" ? "vegetarian" : "non-veg"} rated recipes</Typography>
-                    <Button size="small" onClick={() => setTrFilter("all")} sx={{ mt: 1, color: "#c49a3c" }}>Show all</Button>
-                  </Box>
-                ) : (
+                )}
+
+                {/* Recipe grid */}
+                {!communityLoading && displayList.length > 0 && (
                   <Grid container spacing={2.5}>
-                    {filtered.map((r, i) => (
-                      <Grid item xs={12} sm={6} md={4} key={r.title}>
-                        <Card sx={{ ...cardSx, "&:hover": { transform: "translateY(-4px)", boxShadow: "0 8px 24px rgba(245,158,11,0.18)", borderColor: "#e8d48a" } }}>
-                          <Box onClick={() => fetchDetails(r.title)}>
-                            <Box sx={{ position: "relative", height: 155, overflow: "hidden" }}>
-                              <RecipeImage title={r.title} height={155} />
-                              {/* Rank badge */}
-                              {i < 3 && (
-                                <Box sx={{ position: "absolute", top: 10, left: 10, background: i === 0 ? "#c49a3c" : i === 1 ? "#9ca3af" : "#b45309", color: "#fff", borderRadius: "8px", px: 1.2, py: 0.4, fontSize: "0.7rem", fontWeight: 800 }}>
-                                  {i === 0 ? "🥇 #1" : i === 1 ? "🥈 #2" : "🥉 #3"}
+                    {displayList.map((r, i) => {
+                      const myRatingForThis = recipeRatings[r.title] || 0;
+                      const isSaved = savedRecipes.some(s => s._title === r.title);
+                      return (
+                        <Grid item xs={12} sm={6} md={4} key={r.title}>
+                          <Card sx={{ ...cardSx, "&:hover": { transform: "translateY(-4px)", boxShadow: "0 8px 24px rgba(245,158,11,0.18)", borderColor: "#e8d48a" } }}>
+                            <Box onClick={() => fetchDetails(r.title)}>
+                              <Box sx={{ position: "relative", height: 155, overflow: "hidden" }}>
+                                <RecipeImage title={r.title} height={155} />
+                                {/* Rank badge */}
+                                {i < 3 && (
+                                  <Box sx={{ position: "absolute", top: 10, left: 10, background: i === 0 ? "#c49a3c" : i === 1 ? "#9ca3af" : "#b45309", color: "#fff", borderRadius: "8px", px: 1.2, py: 0.4, fontSize: "0.7rem", fontWeight: 800 }}>
+                                    {i === 0 ? "🥇 #1" : i === 1 ? "🥈 #2" : "🥉 #3"}
+                                  </Box>
+                                )}
+                                {isSaved && (
+                                  <Box sx={{ position: "absolute", top: i < 3 ? 38 : 10, left: 10, background: "rgba(34,197,94,0.88)", borderRadius: "8px", px: 1, py: 0.25, fontSize: "0.62rem", fontWeight: 800, color: "#fff" }}>💾 Saved</Box>
+                                )}
+                                <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 60%)" }} />
+                              </Box>
+                              <CardContent sx={{ p: 2, pb: 1 }}>
+                                <Typography fontWeight={800} fontSize="0.95rem" color="#1a1a1a" mb={0.5} lineHeight={1.3}>{r.title}</Typography>
+                                {/* Community rating display */}
+                                {trView === "community" && (
+                                  <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                                    <Box display="flex" gap={0.2}>
+                                      {[1,2,3,4,5].map(s => (
+                                        <Box key={s} sx={{ fontSize: "0.75rem", color: s <= Math.round(r.avgRating) ? "#c49a3c" : "#e5e7eb" }}>★</Box>
+                                      ))}
+                                    </Box>
+                                    <Typography sx={{ color: "#c49a3c", fontSize: "0.72rem", fontWeight: 800 }}>{r.avgRating}</Typography>
+                                    <Typography sx={{ color: "#9ca3af", fontSize: "0.68rem" }}>({r.totalRatings} rating{r.totalRatings !== 1 ? "s" : ""})</Typography>
+                                  </Box>
+                                )}
+                              </CardContent>
+                            </Box>
+                            {/* My personal rating row */}
+                            <Box px={2} pb={1.5} display="flex" alignItems="center" justifyContent="space-between" onClick={e => e.stopPropagation()}>
+                              <Box>
+                                <Typography sx={{ fontSize: "0.62rem", color: "#9ca3af", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", mb: 0.3 }}>Your rating</Typography>
+                                <StarRating value={myRatingForThis} onChange={(v) => setRating(r.title, v)} size={16} />
+                              </Box>
+                              {myRatingForThis > 0 && (
+                                <Box sx={{ background: "#fef9e7", border: "1px solid #e8d48a", borderRadius: 1.5, px: 1, py: 0.4, textAlign: "center" }}>
+                                  <Typography sx={{ color: "#c49a3c", fontWeight: 900, fontSize: "0.78rem" }}>{myRatingForThis}/5 ⭐</Typography>
                                 </Box>
                               )}
-                              {/* Veg badge */}
-                              <Box sx={{ position: "absolute", top: 10, right: 10, background: r.veg ? "rgba(22,163,74,0.88)" : "rgba(220,38,38,0.88)", backdropFilter: "blur(4px)", borderRadius: "8px", px: 1.1, py: 0.3, fontSize: "0.66rem", fontWeight: 800, color: "#fff" }}>
-                                {r.veg ? "🌱 VEG" : "🥩 NON-VEG"}
-                              </Box>
-                              <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 60%)" }} />
                             </Box>
-                            <CardContent sx={{ p: 2, pb: 1 }}>
-                              <Typography fontWeight={800} fontSize="0.95rem" color="#1a1a1a" mb={0.5} lineHeight={1.3}>{r.title}</Typography>
-                              {r.overview && (
-                                <Typography variant="body2" color="text.secondary" fontSize="0.8rem" sx={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                                  {r.overview}
-                                </Typography>
-                              )}
-                            </CardContent>
-                          </Box>
-                          <Box px={2} pb={1.5} display="flex" alignItems="center" justifyContent="space-between" onClick={e => e.stopPropagation()}>
-                            <StarRating value={r.rating} onChange={(v) => setRating(r.title, v)} size={18} />
-                            <Typography variant="caption" color="#c49a3c" fontWeight={800} fontSize="0.72rem">{r.rating}/5 ⭐</Typography>
-                          </Box>
-                        </Card>
-                      </Grid>
-                    ))}
+                          </Card>
+                        </Grid>
+                      );
+                    })}
                   </Grid>
                 )}
               </Box>
