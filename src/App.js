@@ -2743,7 +2743,7 @@ const LandingPage = ({ onSignIn, onSignUp }) => {
   ];
   const stats = [
     { num: "Any", label: "Ingredients work" }, { num: "5", label: "Day meal plans" },
-    { num: "12", label: "Cuisine styles" },    { num: "∞",   label: "Recipe ideas" },
+    { num: "12", label: "Cuisine styles" },    { num: "100+", label: "Recipe ideas" },
   ];
   return (
     <Box sx={{ minHeight: "100vh", background: "#0d0f0a", color: "#fff" }}>
@@ -2753,12 +2753,12 @@ const LandingPage = ({ onSignIn, onSignUp }) => {
           <FridgeLogo size={36} />
           <Box>
             <Typography sx={{ fontWeight: 900, fontSize: "1.1rem", color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1 }}>Fridgely</Typography>
-            <Typography sx={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.35)" }}>Cook what you've got.</Typography>
+            <Typography sx={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.35)", display: { xs: "none", sm: "block" } }}>Cook what you've got.</Typography>
           </Box>
         </Box>
         <Box display="flex" alignItems="center" gap={1.5}>
-          <Box onClick={onSignIn} sx={{ px: 2.5, py: 1, borderRadius: "10px", cursor: "pointer", color: "rgba(255,255,255,0.7)", fontWeight: 600, fontSize: "0.9rem", transition: "all 0.18s", "&:hover": { color: "#fff", background: "rgba(255,255,255,0.07)" } }}>Sign In</Box>
-          <Box onClick={onSignUp} sx={{ px: 3, py: 1, borderRadius: "10px", cursor: "pointer", fontWeight: 700, fontSize: "0.9rem", background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", color: "#fff", boxShadow: "0 4px 16px rgba(107,140,90,0.4)", transition: "all 0.18s", "&:hover": { transform: "translateY(-1px)", boxShadow: "0 8px 24px rgba(107,140,90,0.5)" } }}>Sign Up Free →</Box>
+          <Box onClick={onSignIn} sx={{ px: { xs: 1.5, sm: 2.5 }, py: { xs: 0.7, sm: 1 }, borderRadius: "10px", cursor: "pointer", color: "rgba(255,255,255,0.7)", fontWeight: 600, fontSize: { xs: "0.8rem", sm: "0.9rem" }, transition: "all 0.18s", "&:hover": { color: "#fff", background: "rgba(255,255,255,0.07)" } }}>Sign In</Box>
+          <Box onClick={onSignUp} sx={{ px: { xs: 1.8, sm: 3 }, py: { xs: 0.7, sm: 1 }, borderRadius: "10px", cursor: "pointer", fontWeight: 700, fontSize: { xs: "0.8rem", sm: "0.9rem" }, background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", color: "#fff", boxShadow: "0 4px 16px rgba(107,140,90,0.4)", transition: "all 0.18s", "&:hover": { transform: "translateY(-1px)", boxShadow: "0 8px 24px rgba(107,140,90,0.5)" } }}>Sign Up →</Box>
         </Box>
       </Box>
 
@@ -4970,7 +4970,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
       </Box>
       <Box flex={1} sx={{
-        ml: sidebarOpen ? `${SIDEBAR_W}px` : `${SIDEBAR_COLLAPSED_W}px`,
+        ml: { xs: 0, md: sidebarOpen ? `${SIDEBAR_W}px` : `${SIDEBAR_COLLAPSED_W}px` },
         transition: "margin-left 0.28s cubic-bezier(0.4,0,0.2,1)",
       }}>
 
