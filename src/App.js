@@ -189,10 +189,18 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
   const [barcodeScanning, setBarcodeScanning] = useState(false);
   const [barcodeResult, setBarcodeResult] = useState(null);
   const [barcodeError, setBarcodeError] = useState("");
-  const [selected, setSelected]       = useState([]);
-  const recRef  = useRef(null);
-  const fileRef = useRef(null);
+  const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError]   = useState("");
+  const [scanFeedback, setScanFeedback] = useState(""); // "scanning" | "found" | ""
+  const [selected, setSelected]         = useState([]);
+  const recRef        = useRef(null);
+  const fileRef       = useRef(null);
   const barcodeInputRef = useRef(null);
+  const videoRef      = useRef(null);
+  const canvasRef     = useRef(null);
+  const streamRef     = useRef(null);
+  const detectorRef   = useRef(null);
+  const scanLoopRef   = useRef(null);
 
   const LANG_CODES = {
     English:"en-US", Hindi:"hi-IN", Spanish:"es-ES", French:"fr-FR",
@@ -201,11 +209,74 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
   };
   const langCode = LANG_CODES[language] || "en-US";
 
+  const stopCamera = () => {
+    cancelAnimationFrame(scanLoopRef.current);
+    streamRef.current?.getTracks().forEach(t => t.stop());
+    streamRef.current = null;
+    setCameraActive(false);
+  };
+
   const reset = () => {
+    stopCamera();
     setMode(null); setListening(false); setTranscript(""); setVoiceResult([]);
     setPhotoResult(null); setPhotoImg(null); setBarcodeInput(""); setBarcodeResult(null);
-    setBarcodeError(""); setSelected([]);
+    setBarcodeError(""); setCameraError(""); setScanFeedback(""); setSelected([]);
     recRef.current?.stop();
+  };
+
+  // ── Camera barcode scanner ──
+  const startCamera = async () => {
+    setCameraError(""); setBarcodeResult(null); setBarcodeError(""); setScanFeedback("scanning");
+
+    // Check BarcodeDetector support
+    if (!("BarcodeDetector" in window)) {
+      setCameraError("Camera scanning not supported in this browser. Try Chrome on Android, or type the barcode number below.");
+      setScanFeedback("");
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setCameraActive(true);
+
+      // Init BarcodeDetector
+      const detector = new window.BarcodeDetector({
+        formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","qr_code","data_matrix","itf","pdf417"]
+      });
+      detectorRef.current = detector;
+
+      // Scan loop
+      const scan = async () => {
+        if (!videoRef.current || !streamRef.current) return;
+        try {
+          const barcodes = await detector.detect(videoRef.current);
+          if (barcodes.length > 0) {
+            const code = barcodes[0].rawValue;
+            setScanFeedback("found");
+            stopCamera();
+            await lookupBarcode(code);
+            return;
+          }
+        } catch {}
+        scanLoopRef.current = requestAnimationFrame(scan);
+      };
+      scanLoopRef.current = requestAnimationFrame(scan);
+
+    } catch (err) {
+      if (err.name === "NotAllowedError") {
+        setCameraError("Camera permission denied. Please allow camera access in your browser settings, or type the barcode below.");
+      } else {
+        setCameraError("Could not access camera. Try typing the barcode number below.");
+      }
+      setScanFeedback("");
+    }
   };
 
   // ── Voice ──
@@ -277,20 +348,22 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
     setPhotoScanning(false);
   };
 
-  // ── Barcode ──
+  // ── Barcode lookup ──
   const lookupBarcode = async (code) => {
-    if (!code.trim()) return;
+    if (!code?.trim()) return;
     setBarcodeScanning(true); setBarcodeError(""); setBarcodeResult(null);
+    setBarcodeInput(code.trim());
     try {
-      const res = await fetch(`${API}/barcode/${code.trim()}`);
+      const res = await fetch(`${API}/barcode/${encodeURIComponent(code.trim())}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setBarcodeResult(data);
       setSelected([0]);
     } catch (err) {
-      setBarcodeError(err.message || "Product not found");
+      setBarcodeError(err.message || "Product not found — try another barcode");
     }
     setBarcodeScanning(false);
+    setScanFeedback("");
   };
 
   const toggleItem = (i) =>
@@ -331,13 +404,13 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
       </Box>
 
       {/* Barcode */}
-      <Box onClick={() => { setMode("barcode"); setTimeout(() => barcodeInputRef.current?.focus(), 150); }}
+      <Box onClick={() => { setMode("barcode"); setTimeout(() => startCamera(), 200); }}
         sx={{ ...btnBase, background: "linear-gradient(135deg, #eff6ff, #dbeafe)", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 6px 20px rgba(59,130,246,0.2)", borderColor: "#3b82f6" } }}>
         <Box sx={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #3b82f6, #2563eb)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(59,130,246,0.35)" }}>
-          <Typography sx={{ fontSize: "1.1rem" }}>⬛</Typography>
+          <Typography sx={{ fontSize: "1.2rem" }}>📷</Typography>
         </Box>
         <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#374151" }}>Barcode</Typography>
-        <Typography sx={{ fontSize: "0.65rem", color: "#6b7280", textAlign: "center", lineHeight: 1.3 }}>Scan product label</Typography>
+        <Typography sx={{ fontSize: "0.65rem", color: "#6b7280", textAlign: "center", lineHeight: 1.3 }}>Camera scan</Typography>
       </Box>
     </Box>
   );
@@ -490,53 +563,151 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
       {/* ── BARCODE MODE ── */}
       {mode === "barcode" && (
         <Box>
-          <Typography sx={{ fontSize: "0.8rem", color: "#6b7280", mb: 1.5, lineHeight: 1.5 }}>
-            Type or scan a product barcode. Works with most grocery products worldwide.
-          </Typography>
-          <Box display="flex" gap={1} mb={1.5}>
-            <input
-              ref={barcodeInputRef}
-              value={barcodeInput}
-              onChange={e => { setBarcodeInput(e.target.value); setBarcodeError(""); setBarcodeResult(null); }}
-              onKeyDown={e => e.key === "Enter" && lookupBarcode(barcodeInput)}
-              placeholder="e.g. 8901234567890"
-              style={{
-                flex: 1, padding: "10px 14px", borderRadius: 10, fontSize: "1rem",
-                border: `1.5px solid ${barcodeError ? "#ef4444" : pc.border}`,
-                background: "#fff", outline: "none", fontFamily: "inherit",
-                letterSpacing: "0.05em",
-              }}
-            />
-            <Button variant="contained" onClick={() => lookupBarcode(barcodeInput)} disabled={barcodeScanning || !barcodeInput.trim()}
-              sx={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", borderRadius: "10px", fontWeight: 700, px: 2.5, boxShadow: "none", minWidth: 90 }}>
-              {barcodeScanning ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Lookup"}
-            </Button>
-          </Box>
-          {barcodeError && (
-            <Box sx={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: "8px", px: 1.5, py: 1, mb: 1.5 }}>
-              <Typography sx={{ color: "#ef4444", fontSize: "0.8rem", fontWeight: 600 }}>⚠ {barcodeError} — try another barcode</Typography>
-            </Box>
-          )}
-          {barcodeResult && (
-            <Box sx={{ background: "rgba(255,255,255,0.8)", border: `1.5px solid ${pc.border}`, borderRadius: "12px", p: 2, mb: 1.5 }}>
-              <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={1}>
-                <Box>
-                  <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#1a1a1a", mb: 0.3 }}>{barcodeResult.name}</Typography>
-                  {barcodeResult.brand && <Typography sx={{ fontSize: "0.75rem", color: "#6b7280" }}>by {barcodeResult.brand}</Typography>}
-                  {barcodeResult.quantity && <Typography sx={{ fontSize: "0.75rem", color: "#9ca3af" }}>{barcodeResult.quantity}</Typography>}
-                </Box>
-                <Box sx={{ background: "#dcfce7", border: "1px solid #86efac", borderRadius: "8px", px: 1, py: 0.5, flexShrink: 0 }}>
-                  <Typography sx={{ color: "#16a34a", fontSize: "0.7rem", fontWeight: 800 }}>✓ Found</Typography>
+
+          {/* ── CAMERA VIEWFINDER ── */}
+          {cameraActive && (
+            <Box sx={{ position: "relative", borderRadius: "14px", overflow: "hidden", mb: 2, background: "#000", aspectRatio: "4/3" }}>
+              <video ref={videoRef} autoPlay playsInline muted style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              {/* Scanning overlay */}
+              <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {/* Dark vignette */}
+                <Box sx={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 55% 35% at 50% 50%, transparent 0%, rgba(0,0,0,0.55) 100%)" }} />
+                {/* Scan frame */}
+                <Box sx={{ position: "relative", width: "72%", height: "38%", border: "2.5px solid rgba(59,130,246,0.9)", borderRadius: "12px", boxShadow: "0 0 0 4000px rgba(0,0,0,0.35)" }}>
+                  {/* Corner accents */}
+                  {[{top:0,left:0},{top:0,right:0},{bottom:0,left:0},{bottom:0,right:0}].map((pos,i) => (
+                    <Box key={i} sx={{ position:"absolute", ...pos, width:18, height:18,
+                      borderTop: (pos.top===0) ? "3.5px solid #3b82f6" : "none",
+                      borderBottom: (pos.bottom===0) ? "3.5px solid #3b82f6" : "none",
+                      borderLeft: (pos.left===0) ? "3.5px solid #3b82f6" : "none",
+                      borderRight: (pos.right===0) ? "3.5px solid #3b82f6" : "none",
+                      borderTopLeftRadius: (pos.top===0&&pos.left===0) ? 4 : 0,
+                      borderTopRightRadius: (pos.top===0&&pos.right===0) ? 4 : 0,
+                      borderBottomLeftRadius: (pos.bottom===0&&pos.left===0) ? 4 : 0,
+                      borderBottomRightRadius: (pos.bottom===0&&pos.right===0) ? 4 : 0,
+                      margin: -1.5,
+                    }} />
+                  ))}
+                  {/* Animated scan line */}
+                  <Box sx={{
+                    position: "absolute", left: 4, right: 4, height: "2.5px",
+                    background: "linear-gradient(90deg, transparent, #3b82f6, #60a5fa, #3b82f6, transparent)",
+                    animation: "scanline 1.8s ease-in-out infinite",
+                    "@keyframes scanline": { "0%": { top: "8%" }, "50%": { top: "85%" }, "100%": { top: "8%" } },
+                    boxShadow: "0 0 8px 2px rgba(59,130,246,0.6)",
+                  }} />
                 </Box>
               </Box>
-              <Button fullWidth variant="contained" onClick={confirm} sx={{ mt: 1.5, background: "linear-gradient(135deg, #3b82f6, #2563eb)", borderRadius: "10px", fontWeight: 700, boxShadow: "none" }}>
-                Add to ingredients →
+              {/* Instruction badge */}
+              <Box sx={{ position: "absolute", bottom: 14, left: "50%", transform: "translateX(-50%)", background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", borderRadius: "20px", px: 2.5, py: 0.8, display: "flex", alignItems: "center", gap: 1 }}>
+                {scanFeedback === "found"
+                  ? <><Box sx={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e" }} /><Typography sx={{ color: "#86efac", fontSize: "0.78rem", fontWeight: 700 }}>Barcode detected!</Typography></>
+                  : <><Box sx={{ width: 8, height: 8, borderRadius: "50%", background: "#3b82f6", boxShadow: "0 0 6px #3b82f6", animation: "pulse 1s ease-in-out infinite", "@keyframes pulse": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.4 } } }} /><Typography sx={{ color: "rgba(255,255,255,0.85)", fontSize: "0.78rem", fontWeight: 600 }}>Point at a barcode</Typography></>
+                }
+              </Box>
+              {/* Close camera */}
+              <IconButton onClick={stopCamera} size="small" sx={{ position: "absolute", top: 10, right: 10, background: "rgba(0,0,0,0.55)", color: "#fff", "&:hover": { background: "rgba(0,0,0,0.8)" } }}>
+                <CloseIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Box>
+          )}
+
+          {/* Camera error */}
+          {cameraError && (
+            <Box sx={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "10px", px: 2, py: 1.5, mb: 2 }}>
+              <Typography sx={{ color: "#dc2626", fontSize: "0.8rem", fontWeight: 600, mb: 0.5 }}>⚠ {cameraError}</Typography>
+            </Box>
+          )}
+
+          {/* Open camera button — shown when not active */}
+          {!cameraActive && !barcodeResult && (
+            <Box onClick={startCamera} sx={{
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5,
+              py: 2, mb: 2, borderRadius: "12px", cursor: "pointer",
+              background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+              color: "#fff", fontWeight: 700, fontSize: "0.95rem",
+              boxShadow: "0 4px 16px rgba(59,130,246,0.4)",
+              transition: "all 0.2s",
+              "&:hover": { transform: "translateY(-1px)", boxShadow: "0 8px 24px rgba(59,130,246,0.5)" },
+            }}>
+              <Typography sx={{ fontSize: "1.2rem" }}>📷</Typography>
+              Scan Barcode with Camera
+            </Box>
+          )}
+
+          {/* Divider */}
+          {!barcodeResult && (
+            <Box display="flex" alignItems="center" gap={1.5} mb={2}>
+              <Box sx={{ flex: 1, height: "1px", background: "#e5e7eb" }} />
+              <Typography sx={{ color: "#9ca3af", fontSize: "0.72rem", fontWeight: 600 }}>or type manually</Typography>
+              <Box sx={{ flex: 1, height: "1px", background: "#e5e7eb" }} />
+            </Box>
+          )}
+
+          {/* Manual input */}
+          {!barcodeResult && (
+            <Box display="flex" gap={1} mb={1.5}>
+              <input
+                ref={barcodeInputRef}
+                value={barcodeInput}
+                onChange={e => { setBarcodeInput(e.target.value); setBarcodeError(""); }}
+                onKeyDown={e => e.key === "Enter" && lookupBarcode(barcodeInput)}
+                placeholder="Type barcode number…"
+                style={{
+                  flex: 1, padding: "10px 14px", borderRadius: 10, fontSize: "0.95rem",
+                  border: `1.5px solid ${barcodeError ? "#ef4444" : "#e5e7eb"}`,
+                  background: "#fff", outline: "none", fontFamily: "inherit",
+                  letterSpacing: "0.05em",
+                }}
+              />
+              <Button variant="contained" onClick={() => lookupBarcode(barcodeInput)}
+                disabled={barcodeScanning || !barcodeInput.trim()}
+                sx={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", borderRadius: "10px", fontWeight: 700, px: 2, boxShadow: "none", minWidth: 80 }}>
+                {barcodeScanning ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Go"}
               </Button>
             </Box>
           )}
-          <Typography sx={{ fontSize: "0.68rem", color: "#9ca3af", textAlign: "center" }}>
-            💡 Use your phone's camera app to scan a barcode and paste the number here
-          </Typography>
+
+          {/* Lookup error */}
+          {barcodeError && (
+            <Box sx={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", px: 1.5, py: 1, mb: 1.5 }}>
+              <Typography sx={{ color: "#dc2626", fontSize: "0.8rem", fontWeight: 600 }}>⚠ {barcodeError}</Typography>
+            </Box>
+          )}
+
+          {/* Result card */}
+          {barcodeResult && (
+            <Box sx={{ background: "linear-gradient(135deg, #eff6ff, #dbeafe)", border: "1.5px solid #93c5fd", borderRadius: "14px", p: 2.5, mb: 1.5 }}>
+              <Box display="flex" alignItems="flex-start" justifyContent="space-between" gap={1} mb={1.5}>
+                <Box>
+                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.6, background: "#dcfce7", border: "1px solid #86efac", borderRadius: "6px", px: 1, py: 0.3, mb: 0.8 }}>
+                    <Typography sx={{ color: "#16a34a", fontSize: "0.68rem", fontWeight: 800 }}>✓ Product found</Typography>
+                  </Box>
+                  <Typography sx={{ fontWeight: 900, fontSize: "1.05rem", color: "#1e3a5f", mb: 0.3, lineHeight: 1.3 }}>{barcodeResult.name}</Typography>
+                  {barcodeResult.brand && <Typography sx={{ fontSize: "0.78rem", color: "#3b82f6", fontWeight: 600 }}>by {barcodeResult.brand}</Typography>}
+                  {barcodeResult.quantity && <Typography sx={{ fontSize: "0.72rem", color: "#6b7280", mt: 0.2 }}>{barcodeResult.quantity}</Typography>}
+                </Box>
+                <Typography sx={{ fontSize: "2rem" }}>🛒</Typography>
+              </Box>
+              <Box display="flex" gap={1}>
+                <Button variant="outlined" onClick={() => { setBarcodeResult(null); setBarcodeInput(""); setTimeout(() => startCamera(), 200); }}
+                  sx={{ flex: 1, borderColor: "#93c5fd", color: "#3b82f6", borderRadius: "10px", fontWeight: 700 }}>
+                  Scan Another
+                </Button>
+                <Button variant="contained" onClick={confirm}
+                  sx={{ flex: 2, background: "linear-gradient(135deg, #3b82f6, #2563eb)", borderRadius: "10px", fontWeight: 700, boxShadow: "none" }}>
+                  Add to ingredients →
+                </Button>
+              </Box>
+            </Box>
+          )}
+
+          {/* Coverage note */}
+          {!barcodeResult && (
+            <Typography sx={{ fontSize: "0.68rem", color: "#9ca3af", textAlign: "center", mt: 0.5 }}>
+              Works with 3M+ products worldwide via Open Food Facts
+            </Typography>
+          )}
         </Box>
       )}
     </Box>
@@ -2721,168 +2892,6 @@ const TopRatedPage = ({ API, recipeRatings, savedRecipes, trFilter, setTrFilter,
   );
 };
 
-// ─── Landing Page ────────────────────────────────────────────────────────────
-const FridgeLogo = ({ size = 44 }) => (
-  <Box sx={{ width: size, height: size, borderRadius: Math.round(size * 0.23), background: "linear-gradient(145deg, #4a7a3a, #5a7c4a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 20px rgba(107,140,90,0.5)", flexShrink: 0 }}>
-    <svg width={size * 0.55} height={size * 0.55} viewBox="0 0 20 20" fill="none">
-      <rect x="4" y="2" width="12" height="16" rx="2" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8"/>
-      <rect x="4" y="7.5" width="12" height="0.8" fill="rgba(255,255,255,0.4)"/>
-      <rect x="6" y="4.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
-      <rect x="6" y="10.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
-      <circle cx="13.5" cy="13.5" r="1" fill="#86efac"/>
-    </svg>
-  </Box>
-);
-
-const LandingPage = ({ onSignIn, onSignUp }) => {
-  const features = [
-    { icon: "🧊", title: "Open your fridge", desc: "Tell us what's inside — even a half-empty fridge — and get real recipes instantly. No phantom ingredients, no store runs." },
-    { icon: "📅", title: "Plan your whole week", desc: "Auto-generate 5-day meal plans from what's already in your kitchen. Breakfast, lunch, dinner, snacks — all covered." },
-    { icon: "🗄️", title: "Track your pantry", desc: "Know exactly what you have and when you're running low. Get alerts before you run out of the essentials." },
-    { icon: "⭐", title: "Community top picks", desc: "See what recipes other cooks love. Rate what you make, discover what everyone's cooking across Fridgely." },
-  ];
-  const stats = [
-    { num: "Any", label: "Ingredients work" }, { num: "5", label: "Day meal plans" },
-    { num: "12", label: "Cuisine styles" },    { num: "100+", label: "Recipe ideas" },
-  ];
-  return (
-    <Box sx={{ minHeight: "100vh", background: "#0d0f0a", color: "#fff" }}>
-      {/* ── Navbar ── */}
-      <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "space-between", px: { xs: 3, md: 6 }, py: 2, background: "rgba(13,15,10,0.85)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <FridgeLogo size={36} />
-          <Box>
-            <Typography sx={{ fontWeight: 900, fontSize: "1.1rem", color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1 }}>Fridgely</Typography>
-            <Typography sx={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.35)", display: { xs: "none", sm: "block" } }}>Cook what you've got.</Typography>
-          </Box>
-        </Box>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <Box onClick={onSignIn} sx={{ px: { xs: 1.5, sm: 2.5 }, py: { xs: 0.7, sm: 1 }, borderRadius: "10px", cursor: "pointer", color: "rgba(255,255,255,0.7)", fontWeight: 600, fontSize: { xs: "0.8rem", sm: "0.9rem" }, transition: "all 0.18s", "&:hover": { color: "#fff", background: "rgba(255,255,255,0.07)" } }}>Sign In</Box>
-          <Box onClick={onSignUp} sx={{ px: { xs: 1.8, sm: 3 }, py: { xs: 0.7, sm: 1 }, borderRadius: "10px", cursor: "pointer", fontWeight: 700, fontSize: { xs: "0.8rem", sm: "0.9rem" }, background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", color: "#fff", boxShadow: "0 4px 16px rgba(107,140,90,0.4)", transition: "all 0.18s", "&:hover": { transform: "translateY(-1px)", boxShadow: "0 8px 24px rgba(107,140,90,0.5)" } }}>Sign Up →</Box>
-        </Box>
-      </Box>
-
-      {/* ── Hero ── */}
-      <Box sx={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", overflow: "hidden", pt: 10 }}>
-        <Box component="img" src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1800&q=80" alt="food" sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.3) saturate(1.2)" }} />
-        <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(13,15,10,0.92) 0%, rgba(13,15,10,0.6) 60%, transparent 100%)" }} />
-        <Box sx={{ position: "absolute", inset: 0, opacity: 0.04, backgroundImage: "radial-gradient(circle, #6b8c5a 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
-        <Box sx={{ position: "relative", zIndex: 1, px: { xs: 4, md: 8, lg: 12 }, maxWidth: 1200, width: "100%" }}>
-          <Grid container alignItems="center" spacing={6}>
-            <Grid item xs={12} lg={6}>
-              <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, background: "rgba(107,140,90,0.15)", border: "1px solid rgba(107,140,90,0.35)", borderRadius: "100px", px: 2, py: 0.6, mb: 3 }}>
-                <Box sx={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e", animation: "heroPulse 2s ease-in-out infinite", "@keyframes heroPulse": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.4 } } }} />
-                <Typography sx={{ color: "#a8c298", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>AI-Powered Kitchen Assistant</Typography>
-              </Box>
-              <Typography sx={{ fontFamily: "'Georgia', serif", fontWeight: 900, fontSize: { xs: "2.8rem", md: "4rem", lg: "5rem" }, lineHeight: 1.0, letterSpacing: "-2px", color: "#fff", mb: 1.5, textShadow: "0 4px 32px rgba(0,0,0,0.5)" }}>
-                Open your fridge.
-                <Box component="span" sx={{ display: "block", background: "linear-gradient(90deg, #b8714e, #6b8c5a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>We'll handle it.</Box>
-              </Typography>
-              <Typography sx={{ color: "rgba(255,255,255,0.65)", fontSize: { xs: "1rem", md: "1.15rem" }, lineHeight: 1.7, maxWidth: 500, mb: 4 }}>
-                Tell Fridgely what's in your kitchen — anything at all — and it finds real, creative recipes you can make right now. No grocery run. No wasted food.
-              </Typography>
-              <Box display="flex" gap={2} flexWrap="wrap" mb={5}>
-                <Box onClick={onSignUp} sx={{ px: 4, py: 1.8, borderRadius: "12px", cursor: "pointer", background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", color: "#fff", fontWeight: 800, fontSize: "1rem", boxShadow: "0 8px 32px rgba(107,140,90,0.45)", transition: "all 0.2s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 14px 40px rgba(107,140,90,0.55)" } }}>What can I cook? →</Box>
-                <Box onClick={onSignIn} sx={{ px: 4, py: 1.8, borderRadius: "12px", cursor: "pointer", border: "1px solid rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.8)", fontWeight: 600, fontSize: "1rem", backdropFilter: "blur(8px)", background: "rgba(255,255,255,0.06)", transition: "all 0.2s", "&:hover": { borderColor: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.12)" } }}>Sign in</Box>
-              </Box>
-              <Box display="flex" gap={4} flexWrap="wrap">
-                {stats.map((s, i) => (
-                  <Box key={i}>
-                    <Typography sx={{ color: "#b8714e", fontWeight: 900, fontSize: "1.8rem", lineHeight: 1, fontFamily: "'Georgia', serif" }}>{s.num}</Typography>
-                    <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.75rem", mt: 0.3 }}>{s.label}</Typography>
-                  </Box>
-                ))}
-              </Box>
-            </Grid>
-            <Grid item xs={12} lg={6}>
-              <Box sx={{ position: "relative", height: 500, display: { xs: "none", lg: "block" } }}>
-                {/* Card 1 */}
-                <Box sx={{ position: "absolute", top: 0, left: 30, width: 212, borderRadius: "18px", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 16px 48px rgba(0,0,0,0.5)", transform: "rotate(-5deg)", overflow: "hidden", transition: "transform 0.3s", "&:hover": { transform: "rotate(-2deg) translateY(-5px)" } }}>
-                  <Box component="img" src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&q=80" sx={{ width: "100%", height: 95, objectFit: "cover" }} />
-                  <Box sx={{ position: "absolute", top: 10, right: 10, display: "flex", alignItems: "center", gap: 0.5, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", borderRadius: "8px", px: 1, py: 0.35 }}>
-                    <Box sx={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e", animation: "lp 2s ease-in-out infinite", "@keyframes lp": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.3 } } }} />
-                    <Typography sx={{ color: "#86efac", fontSize: "0.58rem", fontWeight: 800 }}>Ready to cook</Typography>
-                  </Box>
-                  <Box sx={{ px: 1.8, py: 1.3 }}>
-                    <Typography sx={{ color: "rgba(255,255,255,0.42)", fontSize: "0.55rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.4 }}>☀️ Breakfast · 3 ingredients</Typography>
-                    <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.86rem", mb: 0.4 }}>Fluffy Pancakes</Typography>
-                    <Box display="flex" gap={0.7}>{["🟢 Easy","⏱ 12 min"].map((t,i)=><Box key={i} sx={{ background:"rgba(184,113,78,0.22)",border:"1px solid rgba(184,113,78,0.38)",borderRadius:"6px",px:0.9,py:0.25,fontSize:"0.6rem",fontWeight:700,color:"#c4b08a"}}>{t}</Box>)}</Box>
-                  </Box>
-                </Box>
-                {/* Card 2 */}
-                <Box sx={{ position: "absolute", top: 162, left: 98, width: 215, borderRadius: "18px", background: "rgba(255,255,255,0.09)", backdropFilter: "blur(22px)", border: "1px solid rgba(255,255,255,0.16)", boxShadow: "0 18px 50px rgba(0,0,0,0.5)", transform: "rotate(5deg)", overflow: "hidden", transition: "transform 0.3s", "&:hover": { transform: "rotate(2deg) translateY(-5px)" } }}>
-                  <Box component="img" src="https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&q=80" sx={{ width: "100%", height: 95, objectFit: "cover" }} />
-                  <Box sx={{ position: "absolute", top: 10, right: 10, display: "flex", alignItems: "center", gap: 0.5, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", borderRadius: "8px", px: 1, py: 0.35 }}>
-                    <Box sx={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e", animation: "lp 2s ease-in-out 0.4s infinite" }} />
-                    <Typography sx={{ color: "#86efac", fontSize: "0.58rem", fontWeight: 800 }}>Ready to cook</Typography>
-                  </Box>
-                  <Box sx={{ px: 1.8, py: 1.3 }}>
-                    <Typography sx={{ color: "rgba(255,255,255,0.42)", fontSize: "0.55rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.4 }}>🌿 Lunch · 5 ingredients</Typography>
-                    <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.86rem", mb: 0.4 }}>Herb Garden Bowl</Typography>
-                    <Box display="flex" gap={0.7}>{["🌱 Vegan","⚡ No-cook"].map((t,i)=><Box key={i} sx={{ background:i===0?"rgba(34,197,94,0.18)":"rgba(184,113,78,0.22)",border:`1px solid ${i===0?"rgba(34,197,94,0.3)":"rgba(184,113,78,0.38)"}`,borderRadius:"6px",px:0.9,py:0.25,fontSize:"0.6rem",fontWeight:700,color:i===0?"#86efac":"#c4b08a"}}>{t}</Box>)}</Box>
-                  </Box>
-                </Box>
-                {/* Card 3 */}
-                <Box sx={{ position: "absolute", top: 330, left: 40, width: 220, borderRadius: "20px", background: "rgba(255,255,255,0.13)", backdropFilter: "blur(28px)", border: "1px solid rgba(255,255,255,0.22)", boxShadow: "0 24px 60px rgba(0,0,0,0.55)", transform: "rotate(-4deg)", overflow: "hidden", transition: "transform 0.3s", "&:hover": { transform: "rotate(-1deg) translateY(-5px)" } }}>
-                  <Box component="img" src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80" sx={{ width: "100%", height: 95, objectFit: "cover" }} />
-                  <Box sx={{ position: "absolute", top: 10, right: 10, display: "flex", alignItems: "center", gap: 0.5, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", borderRadius: "8px", px: 1, py: 0.35 }}>
-                    <Box sx={{ width: 5, height: 5, borderRadius: "50%", background: "#22c55e", boxShadow: "0 0 6px #22c55e", animation: "lp 2s ease-in-out 0.8s infinite" }} />
-                    <Typography sx={{ color: "#86efac", fontSize: "0.58rem", fontWeight: 800 }}>Ready to cook</Typography>
-                  </Box>
-                  <Box sx={{ px: 2, py: 1.4 }}>
-                    <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.55rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.35 }}>🌙 Dinner · from your fridge</Typography>
-                    <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.9rem", mb: 0.4 }}>Golden Veggie Stir-Fry</Typography>
-                    <Box display="flex" gap={0.7}>{["🟢 Easy","⚡ Quick"].map((t,i)=><Box key={i} sx={{ background:"rgba(184,113,78,0.25)",border:"1px solid rgba(184,113,78,0.4)",borderRadius:"6px",px:0.9,py:0.25,fontSize:"0.6rem",fontWeight:700,color:"#c4b08a"}}>{t}</Box>)}</Box>
-                  </Box>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
-      </Box>
-
-      {/* ── Features ── */}
-      <Box sx={{ background: "#111410", px: { xs: 4, md: 8 }, py: 10 }}>
-        <Box textAlign="center" mb={7}>
-          <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", mb: 1.5 }}>How it works</Typography>
-          <Typography sx={{ color: "#fff", fontWeight: 900, fontSize: { xs: "1.8rem", md: "2.4rem" }, letterSpacing: "-1px" }}>Your kitchen has more in it than you think.</Typography>
-        </Box>
-        <Grid container spacing={3} maxWidth={1100} mx="auto">
-          {features.map((f, i) => (
-            <Grid item xs={12} sm={6} md={3} key={i}>
-              <Box sx={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "18px", p: 3.5, height: "100%", transition: "all 0.22s", "&:hover": { background: "rgba(255,255,255,0.07)", borderColor: "rgba(107,140,90,0.3)", transform: "translateY(-4px)" } }}>
-                <Typography sx={{ fontSize: "2rem", mb: 2 }}>{f.icon}</Typography>
-                <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "1rem", mb: 1 }}>{f.title}</Typography>
-                <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.85rem", lineHeight: 1.7 }}>{f.desc}</Typography>
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
-      </Box>
-
-      {/* ── CTA ── */}
-      <Box sx={{ background: "linear-gradient(135deg, #1a2414 0%, #0d1a0a 100%)", px: { xs: 4, md: 8 }, py: 10, textAlign: "center" }}>
-        <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", mb: 2 }}>Get started — free forever</Typography>
-        <Typography sx={{ fontFamily: "'Georgia', serif", color: "#fff", fontWeight: 900, fontSize: { xs: "1.8rem", md: "2.8rem" }, letterSpacing: "-1px", mb: 1.5 }}>Ready to cook what you've got?</Typography>
-        <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "1rem", mb: 4, maxWidth: 480, mx: "auto", lineHeight: 1.7 }}>Join thousands of home cooks who waste less and eat better — using whatever's already in their fridge.</Typography>
-        <Box display="flex" justifyContent="center" gap={2} flexWrap="wrap">
-          <Box onClick={onSignUp} sx={{ px: 5, py: 1.8, borderRadius: "12px", cursor: "pointer", background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", color: "#fff", fontWeight: 800, fontSize: "1rem", boxShadow: "0 8px 32px rgba(107,140,90,0.45)", transition: "all 0.2s", "&:hover": { transform: "translateY(-2px)" } }}>Create free account →</Box>
-          <Box onClick={onSignIn} sx={{ px: 5, py: 1.8, borderRadius: "12px", cursor: "pointer", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)", fontWeight: 600, fontSize: "1rem", transition: "all 0.2s", "&:hover": { borderColor: "rgba(255,255,255,0.5)", color: "#fff" } }}>Sign in</Box>
-        </Box>
-      </Box>
-
-      {/* ── Footer ── */}
-      <Box sx={{ background: "#0a0c08", px: { xs: 4, md: 8 }, py: 4, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <Box display="flex" alignItems="center" gap={1.2}>
-          <FridgeLogo size={28} />
-          <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" }}>© 2026 Fridgely. Cook what you've got.</Typography>
-        </Box>
-        <Typography sx={{ color: "rgba(255,255,255,0.2)", fontSize: "0.75rem" }}>Made with ❤️ for home cooks everywhere.</Typography>
-      </Box>
-    </Box>
-  );
-};
-
 // ─── Auth Screen ─────────────────────────────────────────────────────────────
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
@@ -2895,9 +2904,9 @@ const PW_RULES = [
   { id: "special", label: "One special character (!@#…)", test: p => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(p) },
 ];
 
-const AuthScreen = ({ onAuth, initialMode = "login", onBack }) => {
+const AuthScreen = ({ onAuth }) => {
   // mode: "login" | "signup" | "forgot" | "forgot-sent"
-  const [mode, setMode]           = useState(initialMode);
+  const [mode, setMode]           = useState("login");
   const [name, setName]           = useState("");
   const [username, setUsername]   = useState("");
   const [email, setEmail]         = useState("");
@@ -2976,7 +2985,7 @@ const AuthScreen = ({ onAuth, initialMode = "login", onBack }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       localStorage.setItem("fridgely_token", data.token);
-      onAuth(data.token, data.user, mode === "signup");
+      onAuth(data.token, data.user);
     } catch (err) { setError(err.message); }
     setLoading(false);
   };
@@ -3015,10 +3024,6 @@ const AuthScreen = ({ onAuth, initialMode = "login", onBack }) => {
         animation: "authIn 0.4s cubic-bezier(0.34,1.56,0.64,1)",
         "@keyframes authIn": { from: { opacity: 0, transform: "translateY(20px) scale(0.96)" }, to: { opacity: 1, transform: "translateY(0) scale(1)" } },
       }}>
-        {/* Back to landing */}
-        {onBack && (
-          <Box onClick={onBack} sx={{ display:"inline-flex",alignItems:"center",gap:0.5,color:"rgba(255,255,255,0.35)",fontSize:"0.8rem",cursor:"pointer",mb:2.5,"&:hover":{color:"rgba(255,255,255,0.7)"},transition:"color 0.2s" }}>← Back to home</Box>
-        )}
         {/* Logo */}
         <Box display="flex" alignItems="center" gap={1.5} mb={4}>
           <Box sx={{ width: 44, height: 44, borderRadius: 2.5, background: "linear-gradient(145deg, #4a7a3a, #5a7c4a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 20px rgba(107,140,90,0.5)" }}>
@@ -3238,7 +3243,6 @@ export default function App() {
   const [authToken, setAuthToken] = useState(() => localStorage.getItem("fridgely_token") || null);
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [authMode, setAuthMode] = useState("landing"); // "landing" | "login" | "signup"
 
   const authHeaders = useCallback(() => ({
     "Content-Type": "application/json",
@@ -3259,15 +3263,11 @@ export default function App() {
     if (u.language)              setLanguage(u.language);
   }, []); // eslint-disable-line
 
-  const handleAuth = useCallback((token, user, isNew = false) => {
+  const handleAuth = useCallback((token, user) => {
     setAuthToken(token);
     setCurrentUser(user);
     hydrateFromUser(user);
     setAuthLoading(false);
-    if (isNew) {
-      localStorage.removeItem("onboardingDone");
-      setShowOnboarding(true);
-    }
   }, [hydrateFromUser]);
 
   const handleLogout = useCallback(() => {
@@ -3413,7 +3413,6 @@ export default function App() {
   // Names of items the user has dismissed — resets on page refresh (intentional)
   const [dismissedLowStock, setDismissedLowStock] = useState(new Set());
   const [notifPanelOpen, setNotifPanelOpen] = useState(false);
-  const [showAuthPrompt, setShowAuthPrompt] = useState({ show: false, tab: "" });
   // Track which items we've already shown an auto-toast for (avoid repeat toasts)
   const notifToastedRef = React.useRef(new Set());
   const syncTimeout = React.useRef({});
@@ -3459,7 +3458,9 @@ export default function App() {
   }, [chatMessages, chatOpen]);
 
   // ── Onboarding ──
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(
+    !localStorage.getItem("onboardingDone")
+  );
 
   // ── Top Rated filter ──
   const [trFilter, setTrFilter] = useState("all");
@@ -4273,12 +4274,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
     </Box>
   );
 
-  if (!authToken) {
-    if (authMode === "login" || authMode === "signup") {
-      return <AuthScreen onAuth={handleAuth} initialMode={authMode} onBack={() => setAuthMode("landing")} />;
-    }
-    return <LandingPage onSignIn={() => setAuthMode("login")} onSignUp={() => setAuthMode("signup")} />;
-  }
+  if (!authToken) return <AuthScreen onAuth={handleAuth} />;
 
   return (
     <Box display="flex" sx={{ background: "#f5f1eb", minHeight: "100vh" }}>
@@ -4504,62 +4500,52 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         </Box>
       </Drawer>
 
-      {/* ══ FIXED TOP-RIGHT: Topbar pill ══ */}
-      <Box sx={{ position: "fixed", top: 12, right: 16, zIndex: 1300, display: "flex", alignItems: "center", gap: 1.5, background: "rgba(20,20,18,0.75)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "14px", px: 1.5, py: 0.8, boxShadow: "0 4px 24px rgba(0,0,0,0.3)" }}>
-
-        {/* User chip */}
-        {currentUser && (
-          <Box display="flex" alignItems="center" gap={1} sx={{ pr: 1, borderRight: "1px solid rgba(255,255,255,0.1)" }}>
-            <Box sx={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg, #5a7c4a, #b8714e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, color: "#fff" }}>
-              {currentUser.name?.charAt(0).toUpperCase() || "U"}
-            </Box>
-            <Box sx={{ display: { xs: "none", md: "block" } }}>
-              <Typography sx={{ color: "#fff", fontSize: "0.72rem", fontWeight: 700, lineHeight: 1.2 }}>{currentUser.name}</Typography>
-              {currentUser.username && <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.6rem" }}>@{currentUser.username}</Typography>}
-            </Box>
-          </Box>
-        )}
-
-        {/* Bell */}
-        <Tooltip title={lowStockItems.length > 0 ? `${lowStockItems.length} pantry alert${lowStockItems.length !== 1 ? "s" : ""}` : "Pantry alerts"} arrow placement="bottom">
-          <IconButton onClick={() => setNotifPanelOpen(true)} sx={{ width: 36, height: 36, background: lowStockItems.length > 0 ? "rgba(234,179,8,0.15)" : "transparent", border: `1.5px solid ${lowStockItems.length > 0 ? "rgba(234,179,8,0.5)" : "rgba(255,255,255,0.1)"}`, borderRadius: "10px", transition: "all 0.2s", animation: lowStockItems.length > 0 ? "bellPulse 2.5s ease-in-out infinite" : "none", "@keyframes bellPulse": { "0%,100%": { boxShadow: "0 0 0 0 rgba(234,179,8,0)" }, "50%": { boxShadow: "0 0 0 6px rgba(234,179,8,0.12)" } }, "&:hover": { background: lowStockItems.length > 0 ? "rgba(234,179,8,0.22)" : "rgba(255,255,255,0.1)", transform: "scale(1.05)" } }}>
-            <Badge badgeContent={lowStockItems.length} invisible={lowStockItems.length === 0} sx={{ "& .MuiBadge-badge": { fontSize: "0.55rem", fontWeight: 900, minWidth: 14, height: 14, padding: "0 3px", background: "#eab308", color: "#1a1200", top: -2, right: -2 } }}>
-              {lowStockItems.length > 0 ? <NotificationsActiveIcon sx={{ fontSize: 17, color: "#eab308" }} /> : <NotificationsNoneIcon sx={{ fontSize: 17, color: "rgba(255,255,255,0.4)" }} />}
+      {/* ══ FIXED TOP-RIGHT: Notification Bell ══ */}
+      <Box sx={{
+        position: "fixed", top: 16, right: 20, zIndex: 1300,
+        display: "flex", alignItems: "center", gap: 1,
+      }}>
+        <Tooltip title={lowStockItems.length > 0 ? `${lowStockItems.length} pantry alert${lowStockItems.length !== 1 ? "s" : ""}` : "No pantry alerts"} arrow placement="bottom">
+          <IconButton
+            onClick={() => setNotifPanelOpen(true)}
+            sx={{
+              width: 40, height: 40,
+              background: lowStockItems.length > 0 ? "rgba(234,179,8,0.15)" : "rgba(255,255,255,0.08)",
+              border: `1.5px solid ${lowStockItems.length > 0 ? "rgba(234,179,8,0.5)" : "rgba(255,255,255,0.15)"}`,
+              backdropFilter: "blur(12px)",
+              borderRadius: 2,
+              transition: "all 0.2s",
+              animation: lowStockItems.length > 0 ? "bellPulse 2.5s ease-in-out infinite" : "none",
+              "@keyframes bellPulse": {
+                "0%,100%": { boxShadow: "0 0 0 0 rgba(234,179,8,0)" },
+                "50%": { boxShadow: "0 0 0 5px rgba(234,179,8,0.15)" },
+              },
+              "&:hover": {
+                background: lowStockItems.length > 0 ? "rgba(234,179,8,0.25)" : "rgba(255,255,255,0.15)",
+                borderColor: lowStockItems.length > 0 ? "#eab308" : "rgba(255,255,255,0.3)",
+                transform: "scale(1.05)",
+              },
+            }}
+          >
+            <Badge
+              badgeContent={lowStockItems.length}
+              invisible={lowStockItems.length === 0}
+              sx={{
+                "& .MuiBadge-badge": {
+                  fontSize: "0.58rem", fontWeight: 900, minWidth: 15, height: 15, padding: "0 3px",
+                  background: "#eab308", color: "#1a1200",
+                  top: -2, right: -2,
+                },
+              }}
+            >
+              {lowStockItems.length > 0
+                ? <NotificationsActiveIcon sx={{ fontSize: 18, color: "#eab308" }} />
+                : <NotificationsNoneIcon  sx={{ fontSize: 18, color: "rgba(255,255,255,0.4)" }} />
+              }
             </Badge>
           </IconButton>
         </Tooltip>
-
-        {/* Logout */}
-        {currentUser && (
-          <Tooltip title="Sign out" arrow placement="bottom">
-            <IconButton onClick={handleLogout} size="small" sx={{ width: 36, height: 36, borderRadius: "10px", border: "1.5px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.3)", transition: "all 0.2s", "&:hover": { color: "#ef4444", background: "rgba(239,68,68,0.1)", borderColor: "rgba(239,68,68,0.3)" } }}>
-              <Typography sx={{ fontSize: "1rem" }}>⎋</Typography>
-            </IconButton>
-          </Tooltip>
-        )}
       </Box>
-
-      {/* ══ Auth Prompt Modal ══ */}
-      {showAuthPrompt.show && (
-        <Box sx={{ position: "fixed", inset: 0, zIndex: 1400, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", p: 3 }} onClick={() => setShowAuthPrompt({ show: false, tab: "" })}>
-          <Box sx={{ background: "rgba(20,22,18,0.98)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: "20px", p: 4, maxWidth: 400, width: "100%", boxShadow: "0 32px 80px rgba(0,0,0,0.7)", animation: "promptIn 0.3s cubic-bezier(0.34,1.56,0.64,1)", "@keyframes promptIn": { from: { opacity: 0, transform: "scale(0.92) translateY(10px)" }, to: { opacity: 1, transform: "scale(1) translateY(0)" } } }} onClick={e => e.stopPropagation()}>
-            <Typography sx={{ fontSize: "2.5rem", mb: 2, textAlign: "center" }}>🔒</Typography>
-            <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "1.2rem", textAlign: "center", mb: 0.8 }}>Sign in to access {showAuthPrompt.tab}</Typography>
-            <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.85rem", textAlign: "center", mb: 3, lineHeight: 1.6 }}>Create a free account to unlock your full kitchen — pantry tracking, saved recipes, meal plans and more.</Typography>
-            <Box display="flex" flexDirection="column" gap={1.5}>
-              <Box onClick={() => { setShowAuthPrompt({ show: false, tab: "" }); setAuthToken(null); setCurrentUser(null); setTimeout(() => window.location.reload(), 10); }}
-                sx={{ py: 1.4, borderRadius: "12px", cursor: "pointer", background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", color: "#fff", fontWeight: 800, fontSize: "0.95rem", textAlign: "center", boxShadow: "0 6px 20px rgba(107,140,90,0.4)", "&:hover": { transform: "translateY(-1px)" }, transition: "all 0.2s" }}>
-                Create free account →
-              </Box>
-              <Box onClick={() => { setShowAuthPrompt({ show: false, tab: "" }); setAuthToken(null); setCurrentUser(null); setTimeout(() => window.location.reload(), 10); }}
-                sx={{ py: 1.4, borderRadius: "12px", cursor: "pointer", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.7)", fontWeight: 600, fontSize: "0.95rem", textAlign: "center", "&:hover": { borderColor: "rgba(255,255,255,0.4)", color: "#fff" }, transition: "all 0.2s" }}>
-                Sign in
-              </Box>
-              <Box onClick={() => setShowAuthPrompt({ show: false, tab: "" })} sx={{ py: 0.6, cursor: "pointer", color: "rgba(255,255,255,0.25)", fontSize: "0.8rem", textAlign: "center", "&:hover": { color: "rgba(255,255,255,0.5)" } }}>Maybe later</Box>
-            </Box>
-          </Box>
-        </Box>
-      )}
 
       {/* ══ FLOATING CHEF CHAT WIDGET (bottom-right) ══ */}
       <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 1400, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1.5 }}>
@@ -4889,8 +4875,6 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         <Box sx={{ px: sidebarOpen ? 1.5 : 1, flex: 1, overflowY: "auto", overflowX: "hidden" }}>
           {navItems.map(({ muiIcon, label, key }) => {
             const isActive = page === key;
-            const protectedTabs = ["recipes","planner","pantry","saved","history","toprated"];
-            const requiresAuth = protectedTabs.includes(key);
             const item = (
               <Box key={key} onClick={() => setPage(key)} sx={{
                 display: "flex", alignItems: "center",
@@ -4967,10 +4951,52 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           )}
         </Box>
 
-
+        {/* ── User profile + logout ── */}
+        {currentUser && (
+          <Box sx={{
+            mx: sidebarOpen ? 1.5 : 1, mb: 2, flexShrink: 0,
+            p: sidebarOpen ? 1.5 : 1,
+            background: "rgba(255,255,255,0.04)",
+            borderRadius: 2,
+            border: "1px solid rgba(255,255,255,0.08)",
+            display: "flex", alignItems: "center",
+            justifyContent: sidebarOpen ? "space-between" : "center",
+            gap: 1,
+          }}>
+            <Box display="flex" alignItems="center" gap={1} overflow="hidden">
+              {/* Avatar circle */}
+              <Box sx={{
+                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                background: "linear-gradient(135deg, #5a7c4a, #b8714e)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "0.72rem", fontWeight: 800, color: "#fff",
+              }}>
+                {currentUser.name?.charAt(0).toUpperCase() || "U"}
+              </Box>
+              {sidebarOpen && (
+                <Box overflow="hidden">
+                  <Typography sx={{ color: "#fff", fontSize: "0.75rem", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 110 }}>
+                    {currentUser.name}
+                  </Typography>
+                  <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.6rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 110 }}>
+                    {currentUser.email}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+            {sidebarOpen && (
+              <Tooltip title="Sign out">
+                <IconButton size="small" onClick={handleLogout}
+                  sx={{ color: "rgba(255,255,255,0.25)", p: 0.5, flexShrink: 0, "&:hover": { color: "#ef4444", background: "rgba(239,68,68,0.1)" } }}>
+                  <Box sx={{ fontSize: "0.9rem" }}>⎋</Box>
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+        )}
       </Box>
       <Box flex={1} sx={{
-        ml: { xs: 0, md: sidebarOpen ? `${SIDEBAR_W}px` : `${SIDEBAR_COLLAPSED_W}px` },
+        ml: sidebarOpen ? `${SIDEBAR_W}px` : `${SIDEBAR_COLLAPSED_W}px`,
         transition: "margin-left 0.28s cubic-bezier(0.4,0,0.2,1)",
       }}>
 
