@@ -2355,24 +2355,92 @@ const TopRatedPage = ({ API, recipeRatings, savedRecipes, trFilter, setTrFilter,
 // ─── Auth Screen ─────────────────────────────────────────────────────────────
 const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
+// Password rule checker
+const PW_RULES = [
+  { id: "len",     label: "At least 8 characters",       test: p => p.length >= 8 },
+  { id: "upper",   label: "One uppercase letter (A–Z)",   test: p => /[A-Z]/.test(p) },
+  { id: "lower",   label: "One lowercase letter (a–z)",   test: p => /[a-z]/.test(p) },
+  { id: "number",  label: "One number (0–9)",             test: p => /\d/.test(p) },
+  { id: "special", label: "One special character (!@#…)", test: p => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(p) },
+];
+
 const AuthScreen = ({ onAuth }) => {
-  const [mode, setMode] = useState("login");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPass, setShowPass] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // mode: "login" | "signup" | "forgot" | "forgot-sent"
+  const [mode, setMode]           = useState("login");
+  const [name, setName]           = useState("");
+  const [username, setUsername]   = useState("");
+  const [email, setEmail]         = useState("");
+  const [identifier, setIdentifier] = useState(""); // email OR username for login
+  const [password, setPassword]   = useState("");
+  const [showPass, setShowPass]   = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [error, setError]         = useState("");
+  const [success, setSuccess]     = useState("");
+  const [unameStatus, setUnameStatus] = useState(null); // null | "checking" | "available" | "taken"
+  const unameTimer = useRef(null);
+
+  // Live username availability check
+  const checkUsername = (val) => {
+    clearTimeout(unameTimer.current);
+    setUnameStatus(null);
+    if (!val || val.length < 3) return;
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(val)) { setUnameStatus("invalid"); return; }
+    setUnameStatus("checking");
+    unameTimer.current = setTimeout(async () => {
+      try {
+        const r = await fetch(`${API_BASE}/auth/check-username?username=${encodeURIComponent(val)}`);
+        const d = await r.json();
+        setUnameStatus(d.available ? "available" : "taken");
+      } catch { setUnameStatus(null); }
+    }, 500);
+  };
+
+  const pwRulePassed = PW_RULES.map(r => r.test(password));
+  const allRulesPassed = pwRulePassed.every(Boolean);
+  const showRules = mode === "signup" && password.length > 0;
+
+  const switchMode = (m) => { setMode(m); setError(""); setSuccess(""); setPassword(""); };
 
   const submit = async () => {
-    if (!email.trim() || !password.trim()) return setError("Please fill in all fields");
-    if (mode === "signup" && !name.trim()) return setError("Please enter your name");
-    setLoading(true); setError("");
+    setError(""); setSuccess("");
+
+    if (mode === "forgot") {
+      if (!email.trim()) return setError("Please enter your email address");
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim() }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Something went wrong");
+        setMode("forgot-sent");
+      } catch (err) { setError(err.message); }
+      setLoading(false);
+      return;
+    }
+
+    if (mode === "signup") {
+      if (!name.trim() || !username.trim() || !email.trim() || !password)
+        return setError("Please fill in all fields");
+      if (!allRulesPassed) return setError("Password does not meet all requirements");
+      if (unameStatus === "taken")     return setError("Username is already taken");
+      if (unameStatus === "invalid")   return setError("Username must be 3–20 chars: letters, numbers, underscores only");
+    } else {
+      if (!identifier.trim() || !password.trim()) return setError("Please fill in all fields");
+    }
+
+    setLoading(true);
     try {
+      const body = mode === "signup"
+        ? { name: name.trim(), username: username.trim(), email: email.trim(), password }
+        : { identifier: identifier.trim(), password };
+
       const res = await fetch(`${API_BASE}/auth/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mode === "signup" ? { name: name.trim(), email, password } : { email, password }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
@@ -2382,6 +2450,18 @@ const AuthScreen = ({ onAuth }) => {
     setLoading(false);
   };
 
+  // Shared input style
+  const inputStyle = {
+    width: "100%", padding: "12px 14px", borderRadius: 10,
+    background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+    color: "#fff", fontSize: "0.9rem", outline: "none", boxSizing: "border-box",
+    fontFamily: "inherit", transition: "border-color 0.15s",
+  };
+  const labelStyle = {
+    color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: 700,
+    textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6,
+  };
+
   return (
     <Box sx={{
       minHeight: "100vh",
@@ -2389,12 +2469,12 @@ const AuthScreen = ({ onAuth }) => {
       display: "flex", alignItems: "center", justifyContent: "center",
       px: 2,
     }}>
-      {/* Background pattern */}
+      {/* Background accents */}
       <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", opacity: 0.04, backgroundImage: "radial-gradient(circle, #6b8c5a 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
       <Box sx={{ position: "fixed", top: "20%", right: "15%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(107,140,90,0.12) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none" }} />
 
       <Box sx={{
-        width: "100%", maxWidth: 420,
+        width: "100%", maxWidth: 440,
         background: "rgba(255,255,255,0.04)",
         backdropFilter: "blur(24px)",
         border: "1px solid rgba(255,255,255,0.1)",
@@ -2406,12 +2486,7 @@ const AuthScreen = ({ onAuth }) => {
       }}>
         {/* Logo */}
         <Box display="flex" alignItems="center" gap={1.5} mb={4}>
-          <Box sx={{
-            width: 44, height: 44, borderRadius: 2.5,
-            background: "linear-gradient(145deg, #4a7a3a, #5a7c4a)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 6px 20px rgba(107,140,90,0.5)",
-          }}>
+          <Box sx={{ width: 44, height: 44, borderRadius: 2.5, background: "linear-gradient(145deg, #4a7a3a, #5a7c4a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 20px rgba(107,140,90,0.5)" }}>
             <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
               <rect x="4" y="2" width="12" height="16" rx="2" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8"/>
               <rect x="4" y="7.5" width="12" height="0.8" fill="rgba(255,255,255,0.4)"/>
@@ -2426,116 +2501,185 @@ const AuthScreen = ({ onAuth }) => {
           </Box>
         </Box>
 
-        {/* Title */}
-        <Typography sx={{ fontWeight: 800, fontSize: "1.4rem", color: "#fff", mb: 0.5 }}>
-          {mode === "login" ? "Welcome back 👋" : "Create your account"}
-        </Typography>
-        <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", mb: 3.5 }}>
-          {mode === "login" ? "Sign in to access your pantry and saved recipes." : "Your kitchen, your history — all in one place."}
-        </Typography>
-
-        {/* Fields */}
-        {mode === "signup" && (
-          <Box mb={2}>
-            <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", mb: 0.8 }}>Your name</Typography>
-            <input
-              value={name} onChange={e => setName(e.target.value)}
-              placeholder="e.g. Hemanth"
-              onKeyDown={e => e.key === "Enter" && submit()}
-              style={{
-                width: "100%", padding: "12px 14px", borderRadius: 10,
-                background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
-                color: "#fff", fontSize: "0.9rem", outline: "none", boxSizing: "border-box",
-                fontFamily: "inherit",
-              }}
-              onFocus={e => e.target.style.borderColor = "#6b8c5a"}
-              onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
-            />
-          </Box>
-        )}
-
-        <Box mb={2}>
-          <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", mb: 0.8 }}>Email</Typography>
-          <input
-            type="email" value={email} onChange={e => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            onKeyDown={e => e.key === "Enter" && submit()}
-            style={{
-              width: "100%", padding: "12px 14px", borderRadius: 10,
-              background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
-              color: "#fff", fontSize: "0.9rem", outline: "none", boxSizing: "border-box",
-              fontFamily: "inherit",
-            }}
-            onFocus={e => e.target.style.borderColor = "#6b8c5a"}
-            onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
-          />
-        </Box>
-
-        <Box mb={3}>
-          <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", mb: 0.8 }}>Password</Typography>
-          <Box sx={{ position: "relative" }}>
-            <input
-              type={showPass ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
-              placeholder={mode === "signup" ? "At least 6 characters" : "Your password"}
-              onKeyDown={e => e.key === "Enter" && submit()}
-              style={{
-                width: "100%", padding: "12px 44px 12px 14px", borderRadius: 10,
-                background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
-                color: "#fff", fontSize: "0.9rem", outline: "none", boxSizing: "border-box",
-                fontFamily: "inherit",
-              }}
-              onFocus={e => e.target.style.borderColor = "#6b8c5a"}
-              onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
-            />
-            <Box onClick={() => setShowPass(p => !p)} sx={{
-              position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-              cursor: "pointer", color: "rgba(255,255,255,0.3)", fontSize: "0.8rem",
-              "&:hover": { color: "rgba(255,255,255,0.7)" },
-            }}>
-              {showPass ? "Hide" : "Show"}
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Error */}
-        {error && (
-          <Box mb={2} px={2} py={1} sx={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 2 }}>
-            <Typography sx={{ color: "#fca5a5", fontSize: "0.82rem", fontWeight: 600 }}>⚠ {error}</Typography>
-          </Box>
-        )}
-
-        {/* Submit */}
-        <Box
-          onClick={!loading ? submit : undefined}
-          sx={{
-            width: "100%", py: 1.6, borderRadius: "12px", cursor: loading ? "not-allowed" : "pointer",
-            background: loading ? "rgba(107,140,90,0.4)" : "linear-gradient(135deg, #5a7c4a, #4a6a3a)",
-            boxShadow: loading ? "none" : "0 8px 28px rgba(107,140,90,0.4)",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5,
-            transition: "all 0.2s",
-            "&:hover": !loading ? { transform: "translateY(-1px)", boxShadow: "0 12px 36px rgba(107,140,90,0.5)" } : {},
-            mb: 3,
-          }}
-        >
-          {loading
-            ? <CircularProgress size={18} sx={{ color: "#fff" }} />
-            : <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem" }}>
-                {mode === "login" ? "Sign in to Fridgely →" : "Create account →"}
+        {/* ── FORGOT PASSWORD SENT ── */}
+        {mode === "forgot-sent" && (
+          <>
+            <Box sx={{ textAlign: "center", py: 2 }}>
+              <Typography sx={{ fontSize: "3rem", mb: 2 }}>📬</Typography>
+              <Typography sx={{ fontWeight: 800, fontSize: "1.3rem", color: "#fff", mb: 1 }}>Check your inbox</Typography>
+              <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.87rem", lineHeight: 1.7 }}>
+                If an account exists for <strong style={{ color: "#a8c298" }}>{email}</strong>, you'll receive a password reset link shortly. The link expires in 1 hour.
               </Typography>
-          }
-        </Box>
-
-        {/* Toggle */}
-        <Box textAlign="center">
-          <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem" }}>
-            {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-            <Box component="span"
-              onClick={() => { setMode(m => m === "login" ? "signup" : "login"); setError(""); }}
-              sx={{ color: "#a8c298", fontWeight: 700, cursor: "pointer", "&:hover": { color: "#6b8c5a" } }}>
-              {mode === "login" ? "Sign up free" : "Sign in"}
             </Box>
-          </Typography>
-        </Box>
+            <Box textAlign="center" mt={3}>
+              <Box component="span" onClick={() => switchMode("login")} sx={{ color: "#a8c298", fontWeight: 700, cursor: "pointer", fontSize: "0.88rem", "&:hover": { color: "#6b8c5a" } }}>
+                ← Back to sign in
+              </Box>
+            </Box>
+          </>
+        )}
+
+        {/* ── FORGOT PASSWORD FORM ── */}
+        {mode === "forgot" && (
+          <>
+            <Typography sx={{ fontWeight: 800, fontSize: "1.4rem", color: "#fff", mb: 0.5 }}>Reset password</Typography>
+            <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", mb: 3.5 }}>
+              Enter your account email and we'll send you a reset link.
+            </Typography>
+
+            <Box mb={3}>
+              <label style={labelStyle}>Email address</label>
+              <input
+                type="email" value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                onKeyDown={e => e.key === "Enter" && submit()}
+                style={inputStyle}
+                onFocus={e => e.target.style.borderColor = "#6b8c5a"}
+                onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
+              />
+            </Box>
+
+            {error && (
+              <Box mb={2} px={2} py={1} sx={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 2 }}>
+                <Typography sx={{ color: "#fca5a5", fontSize: "0.82rem", fontWeight: 600 }}>⚠ {error}</Typography>
+              </Box>
+            )}
+
+            <Box onClick={!loading ? submit : undefined} sx={{ width: "100%", py: 1.6, borderRadius: "12px", cursor: loading ? "not-allowed" : "pointer", background: loading ? "rgba(107,140,90,0.4)" : "linear-gradient(135deg, #5a7c4a, #4a6a3a)", boxShadow: loading ? "none" : "0 8px 28px rgba(107,140,90,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5, mb: 3 }}>
+              {loading ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem" }}>Send reset link →</Typography>}
+            </Box>
+
+            <Box textAlign="center">
+              <Box component="span" onClick={() => switchMode("login")} sx={{ color: "#a8c298", fontWeight: 700, cursor: "pointer", fontSize: "0.84rem", "&:hover": { color: "#6b8c5a" } }}>
+                ← Back to sign in
+              </Box>
+            </Box>
+          </>
+        )}
+
+        {/* ── LOGIN / SIGNUP ── */}
+        {(mode === "login" || mode === "signup") && (
+          <>
+            <Typography sx={{ fontWeight: 800, fontSize: "1.4rem", color: "#fff", mb: 0.5 }}>
+              {mode === "login" ? "Welcome back 👋" : "Create your account"}
+            </Typography>
+            <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", mb: 3.5 }}>
+              {mode === "login" ? "Sign in to access your pantry and saved recipes." : "Your kitchen, your history — all in one place."}
+            </Typography>
+
+            {/* Name (signup only) */}
+            {mode === "signup" && (
+              <Box mb={2}>
+                <label style={labelStyle}>Your name</label>
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Hemanth" onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"} />
+              </Box>
+            )}
+
+            {/* Username (signup only) */}
+            {mode === "signup" && (
+              <Box mb={2}>
+                <label style={labelStyle}>Username</label>
+                <Box sx={{ position: "relative" }}>
+                  <input
+                    value={username}
+                    onChange={e => { setUsername(e.target.value); checkUsername(e.target.value); }}
+                    placeholder="e.g. chef_hemanth"
+                    onKeyDown={e => e.key === "Enter" && submit()}
+                    style={{ ...inputStyle, paddingRight: 38 }}
+                    onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
+                  />
+                  {/* Status indicator */}
+                  <Box sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: "0.78rem", fontWeight: 700 }}>
+                    {unameStatus === "checking"  && <CircularProgress size={13} sx={{ color: "#6b7280" }} />}
+                    {unameStatus === "available" && <span style={{ color: "#22c55e" }}>✓</span>}
+                    {unameStatus === "taken"     && <span style={{ color: "#f87171" }}>✗</span>}
+                    {unameStatus === "invalid"   && <span style={{ color: "#f87171" }}>!</span>}
+                  </Box>
+                </Box>
+                {unameStatus === "taken"     && <Typography sx={{ color: "#f87171", fontSize: "0.73rem", mt: 0.5 }}>Username already taken</Typography>}
+                {unameStatus === "available" && <Typography sx={{ color: "#22c55e", fontSize: "0.73rem", mt: 0.5 }}>Username available!</Typography>}
+                {unameStatus === "invalid"   && <Typography sx={{ color: "#f87171", fontSize: "0.73rem", mt: 0.5 }}>3–20 chars, letters/numbers/underscores only</Typography>}
+              </Box>
+            )}
+
+            {/* Email / identifier */}
+            <Box mb={2}>
+              <label style={labelStyle}>{mode === "login" ? "Email or Username" : "Email"}</label>
+              <input
+                type={mode === "login" ? "text" : "email"}
+                value={mode === "login" ? identifier : email}
+                onChange={e => mode === "login" ? setIdentifier(e.target.value) : setEmail(e.target.value)}
+                placeholder={mode === "login" ? "you@example.com or your_username" : "you@example.com"}
+                onKeyDown={e => e.key === "Enter" && submit()}
+                style={inputStyle}
+                onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
+              />
+            </Box>
+
+            {/* Password */}
+            <Box mb={mode === "signup" ? 1 : 3}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.8}>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>Password</label>
+                {mode === "login" && (
+                  <Box component="span" onClick={() => switchMode("forgot")} sx={{ color: "#a8c298", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", "&:hover": { color: "#6b8c5a" } }}>
+                    Forgot password?
+                  </Box>
+                )}
+              </Box>
+              <Box sx={{ position: "relative" }}>
+                <input
+                  type={showPass ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder={mode === "signup" ? "Create a strong password" : "Your password"}
+                  onKeyDown={e => e.key === "Enter" && submit()}
+                  style={{ ...inputStyle, paddingRight: 54 }}
+                  onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
+                />
+                <Box onClick={() => setShowPass(p => !p)} sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "rgba(255,255,255,0.3)", fontSize: "0.78rem", "&:hover": { color: "rgba(255,255,255,0.7)" } }}>
+                  {showPass ? "Hide" : "Show"}
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Password rules (signup only, shown once user starts typing) */}
+            {showRules && (
+              <Box mb={3} p={1.5} sx={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 2 }}>
+                {PW_RULES.map((rule, i) => (
+                  <Box key={rule.id} display="flex" alignItems="center" gap={1} mb={i < PW_RULES.length - 1 ? 0.6 : 0}>
+                    <Box sx={{ width: 16, height: 16, borderRadius: "50%", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: 900, background: pwRulePassed[i] ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.06)", color: pwRulePassed[i] ? "#22c55e" : "#6b7280", border: `1px solid ${pwRulePassed[i] ? "#22c55e" : "rgba(255,255,255,0.1)"}` }}>
+                      {pwRulePassed[i] ? "✓" : "·"}
+                    </Box>
+                    <Typography sx={{ fontSize: "0.75rem", color: pwRulePassed[i] ? "#86efac" : "rgba(255,255,255,0.35)", fontWeight: pwRulePassed[i] ? 600 : 400, transition: "color 0.2s" }}>
+                      {rule.label}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            )}
+
+            {/* Error */}
+            {error && (
+              <Box mb={2} px={2} py={1} sx={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 2 }}>
+                <Typography sx={{ color: "#fca5a5", fontSize: "0.82rem", fontWeight: 600 }}>⚠ {error}</Typography>
+              </Box>
+            )}
+
+            {/* Submit */}
+            <Box onClick={!loading ? submit : undefined} sx={{ width: "100%", py: 1.6, borderRadius: "12px", cursor: loading ? "not-allowed" : "pointer", background: loading ? "rgba(107,140,90,0.4)" : "linear-gradient(135deg, #5a7c4a, #4a6a3a)", boxShadow: loading ? "none" : "0 8px 28px rgba(107,140,90,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5, transition: "all 0.2s", "&:hover": !loading ? { transform: "translateY(-1px)", boxShadow: "0 12px 36px rgba(107,140,90,0.5)" } : {}, mb: 3 }}>
+              {loading ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem" }}>{mode === "login" ? "Sign in to Fridgely →" : "Create account →"}</Typography>}
+            </Box>
+
+            {/* Toggle login ↔ signup */}
+            <Box textAlign="center">
+              <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem" }}>
+                {mode === "login" ? "Don't have an account? " : "Already have an account? "}
+                <Box component="span" onClick={() => switchMode(mode === "login" ? "signup" : "login")} sx={{ color: "#a8c298", fontWeight: 700, cursor: "pointer", "&:hover": { color: "#6b8c5a" } }}>
+                  {mode === "login" ? "Sign up free" : "Sign in"}
+                </Box>
+              </Typography>
+            </Box>
+          </>
+        )}
       </Box>
     </Box>
   );
