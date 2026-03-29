@@ -348,23 +348,34 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
     setPhotoScanning(false);
   };
 
-  // ── Barcode lookup ──
-  const lookupBarcode = async (code) => {
-    if (!code?.trim()) return;
-    setBarcodeScanning(true); setBarcodeError(""); setBarcodeResult(null);
-    setBarcodeInput(code.trim());
-    try {
-      const res = await fetch(`${API}/barcode/${encodeURIComponent(code.trim())}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setBarcodeResult(data);
-      setSelected([0]);
-    } catch (err) {
-      setBarcodeError(err.message || "Product not found — try another barcode");
-    }
-    setBarcodeScanning(false);
-    setScanFeedback("");
-  };
+// ── Barcode lookup (direct from browser — Open Food Facts supports CORS) ──
+const lookupBarcode = async (code) => {
+  if (!code?.trim()) return;
+  setBarcodeScanning(true); setBarcodeError(""); setBarcodeResult(null);
+  setBarcodeInput(code.trim());
+  try {
+    const res = await fetch(
+      `https://world.openfoodfacts.org/api/v0/product/${code.trim()}.json`,
+      { headers: { "User-Agent": "Fridgely/1.0 (https://fridgely.app)" } }
+    );
+    const data = await res.json();
+    if (data.status !== 1) throw new Error("Product not found in database");
+    const p = data.product;
+    const name = p.product_name || p.generic_name || p.product_name_en || "";
+    if (!name) throw new Error("Product name not found");
+    setBarcodeResult({
+      name: name.toLowerCase(),
+      quantity: p.quantity || "",
+      category: p.categories_tags?.[0]?.replace("en:", "") || "",
+      brand: p.brands || "",
+    });
+    setSelected([0]);
+  } catch (err) {
+    setBarcodeError(err.message || "Product not found — try another barcode");
+  }
+  setBarcodeScanning(false);
+  setScanFeedback("");
+};
 
   const toggleItem = (i) =>
     setSelected(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]);
