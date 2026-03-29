@@ -39,6 +39,7 @@ import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import MicIcon from "@mui/icons-material/Mic";
 import MicNoneIcon from "@mui/icons-material/MicNone";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import { BrowserMultiFormatReader } from "@zxing/browser";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import StopIcon from "@mui/icons-material/Stop";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
@@ -201,6 +202,7 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
   const streamRef     = useRef(null);
   const detectorRef   = useRef(null);
   const scanLoopRef   = useRef(null);
+  const zxingReaderRef = useRef(null);
 
   const LANG_CODES = {
     English:"en-US", Hindi:"hi-IN", Spanish:"es-ES", French:"fr-FR",
@@ -210,9 +212,20 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
   const langCode = LANG_CODES[language] || "en-US";
 
   const stopCamera = () => {
-    cancelAnimationFrame(scanLoopRef.current);
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    streamRef.current = null;
+    // Stop ZXing reader if active
+    if (zxingReaderRef.current) {
+      try { zxingReaderRef.current.reset(); } catch {}
+      zxingReaderRef.current = null;
+    }
+    if (scanLoopRef.current) {
+      cancelAnimationFrame(scanLoopRef.current);
+      scanLoopRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) videoRef.current.srcObject = null;
     setCameraActive(false);
   };
 
@@ -224,16 +237,9 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
     recRef.current?.stop();
   };
 
-  // ── Camera barcode scanner ──
+  // ── Camera barcode scanner (cross-browser: BarcodeDetector + ZXing fallback) ──
   const startCamera = async () => {
     setCameraError(""); setBarcodeResult(null); setBarcodeError(""); setScanFeedback("scanning");
-
-    // Check BarcodeDetector support
-    if (!("BarcodeDetector" in window)) {
-      setCameraError("Camera scanning not supported in this browser. Try Chrome on Android, or type the barcode number below.");
-      setScanFeedback("");
-      return;
-    }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -246,28 +252,47 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
       }
       setCameraActive(true);
 
-      // Init BarcodeDetector
-      const detector = new window.BarcodeDetector({
-        formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","qr_code","data_matrix","itf","pdf417"]
-      });
-      detectorRef.current = detector;
-
-      // Scan loop
-      const scan = async () => {
-        if (!videoRef.current || !streamRef.current) return;
-        try {
-          const barcodes = await detector.detect(videoRef.current);
-          if (barcodes.length > 0) {
-            const code = barcodes[0].rawValue;
-            setScanFeedback("found");
-            stopCamera();
-            await lookupBarcode(code);
-            return;
-          }
-        } catch {}
+      if ("BarcodeDetector" in window) {
+        // ── Chrome / Edge / Android — native BarcodeDetector ──
+        const detector = new window.BarcodeDetector({
+          formats: ["ean_13","ean_8","upc_a","upc_e","code_128","code_39","qr_code","data_matrix","itf","pdf417"]
+        });
+        detectorRef.current = detector;
+        const scan = async () => {
+          if (!videoRef.current || !streamRef.current) return;
+          try {
+            const barcodes = await detector.detect(videoRef.current);
+            if (barcodes.length > 0) {
+              setScanFeedback("found");
+              const code = barcodes[0].rawValue;
+              stopCamera();
+              await lookupBarcode(code);
+              return;
+            }
+          } catch {}
+          scanLoopRef.current = requestAnimationFrame(scan);
+        };
         scanLoopRef.current = requestAnimationFrame(scan);
-      };
-      scanLoopRef.current = requestAnimationFrame(scan);
+
+      } else {
+        // ── Safari / iOS / Firefox — ZXing fallback ──
+        const reader = new BrowserMultiFormatReader();
+        zxingReaderRef.current = reader;
+        // Wait for video to be ready
+        await new Promise(resolve => {
+          if (videoRef.current.readyState >= 2) return resolve();
+          videoRef.current.onloadeddata = resolve;
+        });
+        reader.decodeFromStream(stream, videoRef.current, (result, err) => {
+          if (result) {
+            setScanFeedback("found");
+            const code = result.getText();
+            stopCamera();
+            lookupBarcode(code);
+          }
+          // err fires every frame when no barcode visible — safe to ignore
+        });
+      }
 
     } catch (err) {
       if (err.name === "NotAllowedError") {
@@ -348,34 +373,34 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
     setPhotoScanning(false);
   };
 
-// ── Barcode lookup (direct from browser — Open Food Facts supports CORS) ──
-const lookupBarcode = async (code) => {
-  if (!code?.trim()) return;
-  setBarcodeScanning(true); setBarcodeError(""); setBarcodeResult(null);
-  setBarcodeInput(code.trim());
-  try {
-    const res = await fetch(
-      `https://world.openfoodfacts.org/api/v0/product/${code.trim()}.json`,
-      { headers: { "User-Agent": "Fridgely/1.0 (https://fridgely.app)" } }
-    );
-    const data = await res.json();
-    if (data.status !== 1) throw new Error("Product not found in database");
-    const p = data.product;
-    const name = p.product_name || p.generic_name || p.product_name_en || "";
-    if (!name) throw new Error("Product name not found");
-    setBarcodeResult({
-      name: name.toLowerCase(),
-      quantity: p.quantity || "",
-      category: p.categories_tags?.[0]?.replace("en:", "") || "",
-      brand: p.brands || "",
-    });
-    setSelected([0]);
-  } catch (err) {
-    setBarcodeError(err.message || "Product not found — try another barcode");
-  }
-  setBarcodeScanning(false);
-  setScanFeedback("");
-};
+  // ── Barcode lookup (direct — Open Food Facts supports CORS) ──
+  const lookupBarcode = async (code) => {
+    if (!code?.trim()) return;
+    setBarcodeScanning(true); setBarcodeError(""); setBarcodeResult(null);
+    setBarcodeInput(code.trim());
+    try {
+      const res = await fetch(
+        `https://world.openfoodfacts.org/api/v0/product/${code.trim()}.json`,
+        { headers: { "User-Agent": "Fridgely/1.0 (https://fridgely.app)" } }
+      );
+      const data = await res.json();
+      if (data.status !== 1) throw new Error("Product not found in database");
+      const p = data.product;
+      const name = p.product_name || p.generic_name || p.product_name_en || "";
+      if (!name) throw new Error("Product name not found");
+      setBarcodeResult({
+        name: name.toLowerCase(),
+        quantity: p.quantity || "",
+        category: p.categories_tags?.[0]?.replace("en:", "") || "",
+        brand: p.brands || "",
+      });
+      setSelected([0]);
+    } catch (err) {
+      setBarcodeError(err.message || "Product not found — try another barcode");
+    }
+    setBarcodeScanning(false);
+    setScanFeedback("");
+  };
 
   const toggleItem = (i) =>
     setSelected(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]);
@@ -406,7 +431,7 @@ const lookupBarcode = async (code) => {
       {/* Photo */}
       <Box onClick={() => { setMode("photo"); setTimeout(() => fileRef.current?.click(), 100); }}
         sx={{ ...btnBase, background: "linear-gradient(135deg, #fef3ec, #fde8d8)", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 6px 20px rgba(184,113,78,0.2)", borderColor: "#b8714e" } }}>
-        <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handlePhoto} />
+        <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhoto} />
         <Box sx={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #b8714e, #a0623f)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(184,113,78,0.35)" }}>
           <CameraAltIcon sx={{ fontSize: 20, color: "#fff" }} />
         </Box>
@@ -521,7 +546,7 @@ const lookupBarcode = async (code) => {
                 sx={{ background: `linear-gradient(135deg, ${pc.accent}, #a0623f)`, borderRadius: "10px", fontWeight: 700, boxShadow: "none" }}>
                 📷 Take / Choose Photo
               </Button>
-              <input ref={fileRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handlePhoto} />
+              <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhoto} />
             </Box>
           )}
           {!photoScanning && photoResult && (
@@ -909,7 +934,7 @@ const fileRef = useRef();
         ref={fileRef}
         type="file"
         accept="image/*"
-        capture="environment"
+       
         style={{ display: "none" }}
         onChange={handleFile}
       />
