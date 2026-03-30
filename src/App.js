@@ -3192,10 +3192,29 @@ const AccountDialog = ({ open, onClose, currentUser, API, authToken, onUserUpdat
 };
 
 
+// ─── Help FAQ Item (collapsible) ──────────────────────────────────────────────
+function HelpFaqItem({ q, a }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Box sx={{ borderBottom: "1px solid rgba(255,255,255,0.06)", py: 0 }}>
+      <Box onClick={() => setOpen(o => !o)} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 1.4, cursor: "pointer", gap: 1, "&:hover .faq-q": { color: "#a8c298" } }}>
+        <Typography className="faq-q" sx={{ color: "#e5e7eb", fontSize: "0.85rem", fontWeight: 600, lineHeight: 1.4, transition: "color 0.15s" }}>{q}</Typography>
+        <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", flexShrink: 0, transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</Typography>
+      </Box>
+      {open && (
+        <Box sx={{ pb: 1.5 }}>
+          <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem", lineHeight: 1.65 }}>{a}</Typography>
+        </Box>
+      )}
+    </Box>
+  );
+}
+
 const AuthScreen = ({ onAuth, initialMode }) => {
   // mode: "login" | "signup" | "forgot" | "forgot-sent"
   const [mode, setMode]           = useState(initialMode || "login");
-  const [name, setName]           = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName]   = useState("");
   const [username, setUsername]   = useState("");
   const [email, setEmail]         = useState("");
   const [identifier, setIdentifier] = useState(""); // email OR username for login
@@ -3250,7 +3269,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
     }
 
     if (mode === "signup") {
-      if (!name.trim() || !username.trim() || !email.trim() || !password)
+      if (!firstName.trim() || !lastName.trim() || !username.trim() || !email.trim() || !password)
         return setError("Please fill in all fields");
       if (!allRulesPassed) return setError("Password does not meet all requirements");
       if (unameStatus === "taken")     return setError("Username is already taken");
@@ -3262,7 +3281,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
     setLoading(true);
     try {
       const body = mode === "signup"
-        ? { name: name.trim(), username: username.trim(), email: email.trim(), password }
+        ? { name: `${firstName.trim()} ${lastName.trim()}`, username: username.trim(), email: email.trim(), password }
         : { identifier: identifier.trim(), password };
 
       const res = await fetch(`${API_BASE}/auth/${mode}`, {
@@ -3395,12 +3414,19 @@ const AuthScreen = ({ onAuth, initialMode }) => {
               {mode === "login" ? "Sign in to access your pantry and saved recipes." : "Your kitchen, your history — all in one place."}
             </Typography>
 
-            {/* Name (signup only) */}
+            {/* First Name + Last Name (signup only) */}
             {mode === "signup" && (
-              <Box mb={2}>
-                <label style={labelStyle}>Your name</label>
-                <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Hemanth" onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle}
-                  onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"} />
+              <Box mb={2} display="flex" gap={1.5}>
+                <Box flex={1}>
+                  <label style={labelStyle}>First name</label>
+                  <input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="e.g. Alex" onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle}
+                    onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"} />
+                </Box>
+                <Box flex={1}>
+                  <label style={labelStyle}>Last name</label>
+                  <input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="e.g. Johnson" onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle}
+                    onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"} />
+                </Box>
               </Box>
             )}
 
@@ -3412,7 +3438,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
                   <input
                     value={username}
                     onChange={e => { setUsername(e.target.value); checkUsername(e.target.value); }}
-                    placeholder="e.g. chef_hemanth"
+                    placeholder="e.g. alex_j42"
                     onKeyDown={e => e.key === "Enter" && submit()}
                     style={{ ...inputStyle, paddingRight: 38 }}
                     onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
@@ -3523,6 +3549,8 @@ export default function App() {
   const [authModalMode, setAuthModalMode] = useState("login");
   // ── Account settings dialog ──
   const [accountOpen, setAccountOpen] = useState(false);
+  // ── Help & support dialog ──
+  const [helpOpen, setHelpOpen] = useState(false);
   // ── User profile dropdown menu ──
   const [userMenuEl, setUserMenuEl] = useState(null);
 
@@ -4612,6 +4640,82 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         showToast={showToast}
       />
 
+      {/* ── Help & Support Dialog ── */}
+      <Dialog open={helpOpen} onClose={() => setHelpOpen(false)} maxWidth="sm" fullWidth
+        PaperProps={{ sx: { borderRadius: 3, background: "linear-gradient(145deg,#141210,#1a1e14)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" } }}>
+        <DialogTitle sx={{ pb: 0 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Box display="flex" alignItems="center" gap={1.5}>
+              <Box sx={{ width: 38, height: 38, borderRadius: "10px", background: "linear-gradient(135deg,#5a7c4a,#4a6a3a)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem" }}>❓</Box>
+              <Box>
+                <Typography sx={{ fontWeight: 800, color: "#fff", fontSize: "1rem" }}>Help & Support</Typography>
+                <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem" }}>Fridgely — FAQ & Guide</Typography>
+              </Box>
+            </Box>
+            <IconButton onClick={() => setHelpOpen(false)} size="small" sx={{ color: "rgba(255,255,255,0.3)", "&:hover": { color: "#fff" } }}><CloseIcon sx={{ fontSize: 18 }} /></IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2.5, pb: 3 }}>
+          {/* Quick links */}
+          <Box display="flex" gap={1} flexWrap="wrap" mb={3}>
+            {[
+              { icon: "📧", label: "Contact us",   sub: "hello@fridgely.app" },
+              { icon: "🐛", label: "Report a bug", sub: "via feedback form" },
+              { icon: "💡", label: "Request feature", sub: "suggest an idea" },
+            ].map((l, i) => (
+              <Box key={i} sx={{ flex: "1 1 120px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 2, p: 1.5, textAlign: "center", cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(107,140,90,0.1)", borderColor: "rgba(107,140,90,0.3)" } }}>
+                <Typography sx={{ fontSize: "1.2rem", mb: 0.4 }}>{l.icon}</Typography>
+                <Typography sx={{ color: "#fff", fontSize: "0.78rem", fontWeight: 700 }}>{l.label}</Typography>
+                <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.65rem" }}>{l.sub}</Typography>
+              </Box>
+            ))}
+          </Box>
+
+          {/* FAQs */}
+          <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", mb: 1.5 }}>Frequently Asked Questions</Typography>
+          {[
+            {
+              q: "How does Fridgely generate recipes?",
+              a: "Fridgely sends your pantry ingredients to an AI model which finds creative, realistic recipes you can make right now — no extra shopping needed. You can filter by cuisine, diet, difficulty, and language.",
+            },
+            {
+              q: "Is my pantry data saved to my account?",
+              a: "Yes! When you're signed in, your pantry, saved recipes, grocery list, and recipe history all sync automatically to your account so they're available on any device.",
+            },
+            {
+              q: "What does the SmartInput panel do?",
+              a: "SmartInput lets you add ingredients by speaking (voice), snapping a photo of your fridge/pantry, or scanning a product barcode. Each method uses AI to extract ingredient names automatically.",
+            },
+            {
+              q: "How does the Meal Planner work?",
+              a: "The Meal Planner lets you schedule Breakfast, Lunch, Dinner, and Snack for Monday–Friday. You can generate AI recipes for any slot, add your own, and export the full week as a PDF.",
+            },
+            {
+              q: "What is the Grocery List for?",
+              a: "When you view a recipe, you can add missing ingredients directly to your Grocery List. Items already in your pantry are highlighted so you only buy what you actually need.",
+            },
+            {
+              q: "Can I use Fridgely in other languages?",
+              a: "Yes! The Recipe Generator supports 20+ languages including Hindi, Tamil, Telugu, Spanish, French, Japanese, and more. Recipes are generated in the language you choose.",
+            },
+            {
+              q: "How do I change my password or email?",
+              a: "Click your avatar in the top-right → Account settings. The Profile tab lets you update your display name and email; the Password tab lets you set a new password.",
+            },
+          ].map((faq, i) => (
+            <HelpFaqItem key={i} q={faq.q} a={faq.a} />
+          ))}
+
+          {/* Footer note */}
+          <Box mt={3} p={2} sx={{ background: "rgba(107,140,90,0.08)", border: "1px solid rgba(107,140,90,0.2)", borderRadius: 2 }}>
+            <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", lineHeight: 1.6 }}>
+              <Box component="span" sx={{ color: "#a8c298", fontWeight: 700 }}>Fridgely v1.0 </Box>
+              — Built with ❤️ to reduce food waste and make cooking easier. All recipe content is AI-generated and customizable. Have feedback? We'd love to hear it.
+            </Typography>
+          </Box>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Shopping list modal ── */}
       <ShoppingListModal
         open={shoppingList.open}
@@ -4818,48 +4922,6 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           )}
         </Box>
       </Drawer>
-
-      {/* ══ FIXED TOP-RIGHT: Notification Bell ══ */}
-      <Box sx={{ position: "fixed", top: 16, right: 20, zIndex: 1300, display: "flex", alignItems: "center", gap: 1 }}>
-        <Tooltip title={lowStockItems.length > 0 ? `${lowStockItems.length} pantry alert${lowStockItems.length !== 1 ? "s" : ""}` : "Pantry alerts"} arrow placement="bottom">
-          <Box onClick={() => setNotifPanelOpen(true)} sx={{
-            width: 42, height: 42, borderRadius: 2.5, cursor: "pointer",
-            background: lowStockItems.length > 0
-              ? "linear-gradient(135deg, rgba(234,179,8,0.2), rgba(234,179,8,0.1))"
-              : "rgba(255,255,255,0.06)",
-            border: `1.5px solid ${lowStockItems.length > 0 ? "rgba(234,179,8,0.6)" : "rgba(255,255,255,0.12)"}`,
-            backdropFilter: "blur(12px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "all 0.2s",
-            animation: lowStockItems.length > 0 ? "bellShake 4s ease-in-out infinite" : "none",
-            "@keyframes bellShake": {
-              "0%,90%,100%": { transform: "rotate(0deg)" },
-              "92%": { transform: "rotate(-8deg)" },
-              "94%": { transform: "rotate(8deg)" },
-              "96%": { transform: "rotate(-5deg)" },
-              "98%": { transform: "rotate(5deg)" },
-            },
-            boxShadow: lowStockItems.length > 0 ? "0 0 0 0 rgba(234,179,8,0.4), 0 4px 16px rgba(0,0,0,0.3)" : "0 4px 16px rgba(0,0,0,0.2)",
-            "&:hover": {
-              background: lowStockItems.length > 0 ? "rgba(234,179,8,0.25)" : "rgba(255,255,255,0.12)",
-              borderColor: lowStockItems.length > 0 ? "#eab308" : "rgba(255,255,255,0.25)",
-              transform: "scale(1.08)",
-              boxShadow: lowStockItems.length > 0 ? "0 0 20px rgba(234,179,8,0.3)" : "0 4px 20px rgba(0,0,0,0.3)",
-            },
-          }}>
-            <Badge
-              badgeContent={lowStockItems.length}
-              invisible={lowStockItems.length === 0}
-              sx={{ "& .MuiBadge-badge": { fontSize: "0.55rem", fontWeight: 900, minWidth: 16, height: 16, padding: "0 3px", background: "linear-gradient(135deg,#f59e0b,#eab308)", color: "#1a1200", top: -3, right: -3, boxShadow: "0 2px 6px rgba(234,179,8,0.5)" } }}
-            >
-              {lowStockItems.length > 0
-                ? <NotificationsActiveIcon sx={{ fontSize: 19, color: "#eab308" }} />
-                : <NotificationsNoneIcon sx={{ fontSize: 19, color: "rgba(255,255,255,0.45)" }} />
-              }
-            </Badge>
-          </Box>
-        </Tooltip>
-      </Box>
 
       {/* ══ FLOATING CHEF CHAT WIDGET (bottom-right) ══ */}
       <Box sx={{ position: "fixed", bottom: 24, right: 24, zIndex: 1400, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1.5 }}>
@@ -5268,112 +5330,175 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           )}
         </Box>
 
-        {/* ── User profile dropdown ── */}
-        {currentUser && (
-          <>
-            <Box onClick={e => setUserMenuEl(e.currentTarget)} sx={{
-              mx: sidebarOpen ? 1.5 : 1, mb: 2, flexShrink: 0,
-              p: sidebarOpen ? 1.5 : 1,
-              background: "rgba(255,255,255,0.04)",
-              borderRadius: 2,
-              border: "1px solid rgba(255,255,255,0.08)",
-              display: "flex", alignItems: "center",
-              justifyContent: sidebarOpen ? "space-between" : "center",
-              gap: 1, cursor: "pointer",
-              transition: "all 0.2s",
-              "&:hover": { background: "rgba(107,140,90,0.1)", borderColor: "rgba(107,140,90,0.3)" },
-            }}>
-              <Box display="flex" alignItems="center" gap={1} overflow="hidden">
-                <Box sx={{
-                  width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
-                  background: "linear-gradient(135deg, #5a7c4a, #b8714e)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "0.78rem", fontWeight: 900, color: "#fff",
-                  boxShadow: "0 2px 8px rgba(107,140,90,0.4)",
-                }}>
-                  {currentUser.name?.charAt(0).toUpperCase() || "U"}
-                </Box>
-                {sidebarOpen && (
-                  <Box overflow="hidden">
-                    <Typography sx={{ color: "#fff", fontSize: "0.78rem", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 105 }}>
-                      {currentUser.name}
-                    </Typography>
-                    <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.62rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 105 }}>
-                      @{currentUser.username}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-              {sidebarOpen && (
-                <Typography sx={{ color: "rgba(255,255,255,0.2)", fontSize: "0.65rem" }}>▾</Typography>
-              )}
-            </Box>
-
-            {/* Dropdown Menu */}
-            <Menu
-              anchorEl={userMenuEl}
-              open={Boolean(userMenuEl)}
-              onClose={() => setUserMenuEl(null)}
-              anchorOrigin={{ vertical: "top", horizontal: "right" }}
-              transformOrigin={{ vertical: "bottom", horizontal: "left" }}
-              PaperProps={{
-                sx: {
-                  background: "linear-gradient(145deg, #1a1e14, #141210)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 2.5,
-                  boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
-                  minWidth: 220,
-                  overflow: "visible",
-                  mt: -1,
-                  "& .MuiList-root": { py: 0.5 },
-                }
-              }}
-            >
-              {/* User info header */}
-              <Box sx={{ px: 2, py: 1.8, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                <Box display="flex" alignItems="center" gap={1.5}>
-                  <Box sx={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#5a7c4a,#b8714e)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: "1rem", flexShrink: 0 }}>
-                    {currentUser.name?.charAt(0).toUpperCase() || "U"}
-                  </Box>
-                  <Box overflow="hidden">
-                    <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "0.88rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 145 }}>{currentUser.name}</Typography>
-                    <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.7rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 145 }}>{currentUser.email}</Typography>
-                  </Box>
-                </Box>
-              </Box>
-
-              {/* Account info option */}
-              <Box onClick={() => { setUserMenuEl(null); setAccountOpen(true); }} sx={{ px: 2, py: 1.3, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(107,140,90,0.12)" } }}>
-                <Box sx={{ width: 30, height: 30, borderRadius: "8px", background: "rgba(107,140,90,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>👤</Box>
-                <Box>
-                  <Typography sx={{ color: "#fff", fontSize: "0.85rem", fontWeight: 600 }}>Account settings</Typography>
-                  <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.68rem" }}>Edit profile · change password</Typography>
-                </Box>
-              </Box>
-
-              <Box sx={{ mx: 2, height: "1px", background: "rgba(255,255,255,0.06)", my: 0.5 }} />
-
-              {/* Sign out option */}
-              <Box onClick={() => { setUserMenuEl(null); handleLogout(); }} sx={{ px: 2, py: 1.3, mb: 0.5, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", borderRadius: "0 0 10px 10px", "&:hover": { background: "rgba(239,68,68,0.1)" } }}>
-                <Box sx={{ width: 30, height: 30, borderRadius: "8px", background: "rgba(239,68,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>🚪</Box>
-                <Box>
-                  <Typography sx={{ color: "#f87171", fontSize: "0.85rem", fontWeight: 600 }}>Sign out</Typography>
-                  <Typography sx={{ color: "rgba(239,68,68,0.4)", fontSize: "0.68rem" }}>See you next time!</Typography>
-                </Box>
-              </Box>
-            </Menu>
-          </>
-        )}
       </Box>
       <Box flex={1} sx={{
         ml: sidebarOpen ? `${SIDEBAR_W}px` : `${SIDEBAR_COLLAPSED_W}px`,
         transition: "margin-left 0.28s cubic-bezier(0.4,0,0.2,1)",
       }}>
 
+        {/* ══ TOP BAR ══ */}
+        <Box sx={{
+          position: "fixed",
+          top: 0,
+          left: sidebarOpen ? SIDEBAR_W : SIDEBAR_COLLAPSED_W,
+          right: 0,
+          height: 52,
+          zIndex: 900,
+          background: "rgba(20,18,16,0.85)",
+          backdropFilter: "blur(16px)",
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
+          display: "flex", alignItems: "center", justifyContent: "flex-end",
+          px: 3, gap: 1.5,
+          transition: "left 0.28s cubic-bezier(0.4,0,0.2,1)",
+        }}>
+          {currentUser ? (
+            <>
+              {/* ── Bell icon ── */}
+              <Tooltip title={lowStockItems.length > 0 ? `${lowStockItems.length} pantry alert${lowStockItems.length !== 1 ? "s" : ""}` : "Pantry alerts"} arrow placement="bottom">
+                <Box onClick={() => setNotifPanelOpen(true)} sx={{
+                  width: 36, height: 36, borderRadius: "10px", cursor: "pointer",
+                  background: lowStockItems.length > 0 ? "rgba(234,179,8,0.12)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${lowStockItems.length > 0 ? "rgba(234,179,8,0.45)" : "rgba(255,255,255,0.1)"}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.18s",
+                  animation: lowStockItems.length > 0 ? "bellShake 4s ease-in-out infinite" : "none",
+                  "@keyframes bellShake": {
+                    "0%,90%,100%": { transform: "rotate(0deg)" },
+                    "92%": { transform: "rotate(-8deg)" }, "94%": { transform: "rotate(8deg)" },
+                    "96%": { transform: "rotate(-5deg)" }, "98%": { transform: "rotate(5deg)" },
+                  },
+                  "&:hover": { background: lowStockItems.length > 0 ? "rgba(234,179,8,0.22)" : "rgba(255,255,255,0.1)", transform: "scale(1.06)" },
+                }}>
+                  <Badge badgeContent={lowStockItems.length} invisible={lowStockItems.length === 0}
+                    sx={{ "& .MuiBadge-badge": { fontSize: "0.52rem", fontWeight: 900, minWidth: 15, height: 15, padding: "0 3px", background: "linear-gradient(135deg,#f59e0b,#eab308)", color: "#1a1200", top: -2, right: -2 } }}>
+                    {lowStockItems.length > 0
+                      ? <NotificationsActiveIcon sx={{ fontSize: 17, color: "#eab308" }} />
+                      : <NotificationsNoneIcon sx={{ fontSize: 17, color: "rgba(255,255,255,0.4)" }} />}
+                  </Badge>
+                </Box>
+              </Tooltip>
+              <Box onClick={e => setUserMenuEl(e.currentTarget)} sx={{
+                display: "flex", alignItems: "center", gap: 1.2,
+                px: 1.2, py: 0.6,
+                borderRadius: "100px",
+                border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(255,255,255,0.04)",
+                cursor: "pointer", transition: "all 0.18s",
+                "&:hover": { background: "rgba(107,140,90,0.12)", borderColor: "rgba(107,140,90,0.35)" },
+              }}>
+                <Box sx={{
+                  width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                  background: "linear-gradient(135deg, #5a7c4a, #b8714e)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "0.72rem", fontWeight: 900, color: "#fff",
+                  boxShadow: "0 2px 8px rgba(107,140,90,0.4)",
+                }}>
+                  {currentUser.name?.charAt(0).toUpperCase() || "U"}
+                </Box>
+                <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                  <Typography sx={{ color: "#fff", fontSize: "0.78rem", fontWeight: 700, lineHeight: 1.2, maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {currentUser.name}
+                  </Typography>
+                  <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.62rem", lineHeight: 1 }}>
+                    @{currentUser.username}
+                  </Typography>
+                </Box>
+                <Typography sx={{ color: "rgba(255,255,255,0.25)", fontSize: "0.6rem", ml: 0.3 }}>▾</Typography>
+              </Box>
+
+              {/* Dropdown Menu */}
+              <Menu
+                anchorEl={userMenuEl}
+                open={Boolean(userMenuEl)}
+                onClose={() => setUserMenuEl(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+                PaperProps={{
+                  sx: {
+                    background: "linear-gradient(145deg, #1a1e14, #141210)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 2.5,
+                    boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
+                    minWidth: 240,
+                    mt: 0.8,
+                    "& .MuiList-root": { py: 0.5 },
+                  }
+                }}
+              >
+                {/* User info header */}
+                <Box sx={{ px: 2, py: 1.8, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                  <Box display="flex" alignItems="center" gap={1.5}>
+                    <Box sx={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg,#5a7c4a,#b8714e)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: "1rem", flexShrink: 0 }}>
+                      {currentUser.name?.charAt(0).toUpperCase() || "U"}
+                    </Box>
+                    <Box overflow="hidden">
+                      <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "0.88rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 155 }}>{currentUser.name}</Typography>
+                      <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.7rem" }}>{currentUser.email}</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Menu items */}
+                {[
+                  { icon: "👤", label: "Account settings",    sub: "Edit profile · change password",  action: () => { setUserMenuEl(null); setAccountOpen(true); } },
+                  { icon: "🔖", label: "Saved recipes",        sub: "Your bookmarked recipes",          action: () => { setUserMenuEl(null); setPage("saved"); } },
+                  { icon: "📦", label: "My pantry",            sub: "Manage your ingredients",          action: () => { setUserMenuEl(null); setPage("pantry"); } },
+                  { icon: "🛒", label: "Grocery list",         sub: `${groceryList.length} items`,      action: () => { setUserMenuEl(null); setGroceryListOpen(true); } },
+                ].map((item, i) => (
+                  <Box key={i} onClick={item.action} sx={{ px: 2, py: 1.2, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(107,140,90,0.12)" } }}>
+                    <Box sx={{ width: 30, height: 30, borderRadius: "8px", background: "rgba(107,140,90,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.88rem", flexShrink: 0 }}>{item.icon}</Box>
+                    <Box>
+                      <Typography sx={{ color: "#fff", fontSize: "0.84rem", fontWeight: 600 }}>{item.label}</Typography>
+                      <Typography sx={{ color: "rgba(255,255,255,0.28)", fontSize: "0.67rem" }}>{item.sub}</Typography>
+                    </Box>
+                  </Box>
+                ))}
+
+                <Box sx={{ mx: 2, height: "1px", background: "rgba(255,255,255,0.06)", my: 0.5 }} />
+
+                {/* Preferences */}
+                {[
+                  { icon: "🌐", label: "Language",    sub: language || "English",   action: () => { setUserMenuEl(null); setPage("recipes"); } },
+                  { icon: "❓", label: "Help & support", sub: "Tips, FAQ & feedback", action: () => { setUserMenuEl(null); setHelpOpen(true); } },
+                ].map((item, i) => (
+                  <Box key={i} onClick={item.action} sx={{ px: 2, py: 1.2, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(107,140,90,0.12)" } }}>
+                    <Box sx={{ width: 30, height: 30, borderRadius: "8px", background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.88rem", flexShrink: 0 }}>{item.icon}</Box>
+                    <Box>
+                      <Typography sx={{ color: "#fff", fontSize: "0.84rem", fontWeight: 600 }}>{item.label}</Typography>
+                      <Typography sx={{ color: "rgba(255,255,255,0.28)", fontSize: "0.67rem" }}>{item.sub}</Typography>
+                    </Box>
+                  </Box>
+                ))}
+
+                <Box sx={{ mx: 2, height: "1px", background: "rgba(255,255,255,0.06)", my: 0.5 }} />
+
+                {/* Sign out */}
+                <Box onClick={() => { setUserMenuEl(null); handleLogout(); }} sx={{ px: 2, py: 1.2, mb: 0.5, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", borderRadius: "0 0 10px 10px", "&:hover": { background: "rgba(239,68,68,0.1)" } }}>
+                  <Box sx={{ width: 30, height: 30, borderRadius: "8px", background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.88rem", flexShrink: 0 }}>🚪</Box>
+                  <Box>
+                    <Typography sx={{ color: "#f87171", fontSize: "0.84rem", fontWeight: 600 }}>Sign out</Typography>
+                    <Typography sx={{ color: "rgba(239,68,68,0.35)", fontSize: "0.67rem" }}>See you next time!</Typography>
+                  </Box>
+                </Box>
+              </Menu>
+            </>
+          ) : (
+            <Box display="flex" gap={1}>
+              <Box onClick={() => { setAuthModalMode("login"); setAuthModalOpen(true); }} sx={{ px: 2.5, py: 0.8, borderRadius: "100px", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.75)", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", "&:hover": { borderColor: "rgba(255,255,255,0.4)", color: "#fff" }, transition: "all 0.15s" }}>
+                Sign in
+              </Box>
+              <Box onClick={() => { setAuthModalMode("signup"); setAuthModalOpen(true); }} sx={{ px: 2.5, py: 0.8, borderRadius: "100px", background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", color: "#fff", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(107,140,90,0.4)", "&:hover": { boxShadow: "0 6px 20px rgba(107,140,90,0.55)", transform: "translateY(-1px)" }, transition: "all 0.15s" }}>
+                Sign up free
+              </Box>
+            </Box>
+          )}
+        </Box>
+
+
         {/* ══ HOME ══ */}
         {page === "home" && (
-          <Box sx={{ minHeight: "100vh", background: "#141210" }}>
-            <Box sx={{ position: "relative", height: "100vh", minHeight: 600, overflow: "hidden", display: "flex", alignItems: "center" }}>
+          <Box sx={{ minHeight: "100vh", background: "#141210", pt: "52px" }}>
+            <Box sx={{ position: "relative", height: "calc(100vh - 52px)", minHeight: 600, overflow: "hidden", display: "flex", alignItems: "center" }}>
               <Box component="img"
                 src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1800&q=80"
                 alt="hero food"
@@ -5560,7 +5685,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
         {/* ══ RECIPE GENERATOR ══ */}
         {page === "recipes" && (
-          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #eef2e8 45%, #f5f2ec 100%)", position: "relative", overflow: "hidden" }}>
+          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #eef2e8 45%, #f5f2ec 100%)", position: "relative", overflow: "hidden", pt: "52px" }}>
             <Box sx={{ position: "fixed", top: 60, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(184,113,78,0.12) 0%, transparent 70%)", filter: "blur(40px)", pointerEvents: "none", zIndex: 0 }} />
             <Box sx={{ position: "fixed", bottom: 100, left: 100, width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(107,140,90,0.09) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none", zIndex: 0 }} />
             <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.45, backgroundImage: "radial-gradient(circle, #8faa7c 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
@@ -6219,7 +6344,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         )}
         {/* ══ MEAL PLANNER ══ */}
         {page === "planner" && (
-          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f0f2f5 0%, #e8edf5 45%, #f0f2f5 100%)", position: "relative", overflow: "hidden" }}>
+          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f0f2f5 0%, #e8edf5 45%, #f0f2f5 100%)", position: "relative", overflow: "hidden", pt: "52px" }}>
             <Box sx={{ position: "fixed", top: 60, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.11) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none", zIndex: 0 }} />
             <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.3, backgroundImage: "radial-gradient(circle, #3b82f6 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
 
@@ -6553,7 +6678,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
         {/* ══ MY PANTRY ══ */}
         {page === "pantry" && (
-          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f0f4ec 0%, #fef3e2 45%, #fffbeb 100%)", position: "relative", overflow: "hidden" }}>
+          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f0f4ec 0%, #fef3e2 45%, #fffbeb 100%)", position: "relative", overflow: "hidden", pt: "52px" }}>
             <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.35, backgroundImage: "radial-gradient(circle, #8faa7c 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
             <Box sx={{ position: "relative", zIndex: 1, overflow: "hidden", background: "linear-gradient(125deg, #141210 0%, #1e1a10 40%, #2a2016 70%, #332c14 100%)", px: { xs: 4, md: 6 }, py: 4.5 }}>
               <Box sx={{ position: "relative", zIndex: 1, display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 3 }}>
@@ -6801,7 +6926,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           const nonVegCount = savedRecipes.length - vegCount;
 
           return (
-            <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #eef2e8 45%, #f5f2ec 100%)", position: "relative", overflow: "hidden" }}>
+            <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #eef2e8 45%, #f5f2ec 100%)", position: "relative", overflow: "hidden", pt: "52px" }}>
               <Box sx={{ position: "fixed", top: 60, right: -100, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(16,185,129,0.11) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none", zIndex: 0 }} />
               <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.3, backgroundImage: "radial-gradient(circle, #059669 1.5px, transparent 1.5px)", backgroundSize: "36px 36px" }} />
 
@@ -7028,7 +7153,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           };
 
           return (
-            <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #141210 0%, #1a1814 100%)" }}>
+            <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #141210 0%, #1a1814 100%)", pt: "52px" }}>
               {/* Header */}
               <Box sx={{ overflow: "hidden", background: "linear-gradient(125deg, #161410 0%, #1e2b1a 40%, #243a1e 70%, #3a5c30 100%)", px: { xs: 4, md: 6 }, py: 4.5 }}>
                 <Box display="flex" alignItems="flex-end" justifyContent="space-between" flexWrap="wrap" gap={2}>
