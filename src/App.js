@@ -3912,24 +3912,95 @@ export default function App() {
       });
       setRecipes(res.data);
       setTimeout(() => document.getElementById("results-anchor")?.scrollIntoView({ behavior: "smooth" }), 150);
+
+      // 🚀 Background prefetch: warm the cache for all recipe details now
+      // so clicking any card is instant instead of waiting 5+ seconds
+      const allTitles = [
+        ...(res.data.strict  || []),
+        ...(res.data.flexible || []),
+      ].map(r => r.title).filter(Boolean);
+      if (allTitles.length) {
+        fetch(`${API}/prefetch-details`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ titles: allTitles, language }),
+        }).catch(() => {}); // fire-and-forget, errors silently ignored
+      }
     } catch { showToast("Error generating recipes", "error"); }
     setRecipeLoading(false);
   };
 
-  // ── Generate by name ──
+  // ── Generate by name (SSE streaming) ──
   const generateByName = async () => {
     if (!recipeNameInput.trim()) return showToast("Enter a recipe name first", "error");
     setRecipeByNameLoading(true); setRecipeByName(null);
     try {
-      const res = await axios.post(`${API}/generate-by-name`, {
-        recipeName: recipeNameInput.trim(),
-        filters: { cuisine: activeCuisine, foodTypes: activeFoodTypes, diet: activeDiet, difficulty: activeDifficulty },
-        language,
+      const response = await fetch(`${API}/generate-by-name`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        },
+        body: JSON.stringify({
+          recipeName: recipeNameInput.trim(),
+          filters: { cuisine: activeCuisine, foodTypes: activeFoodTypes, diet: activeDiet, difficulty: activeDifficulty },
+          language,
+        }),
       });
-      setRecipeByName(res.data);
-      setTimeout(() => document.getElementById("byname-anchor")?.scrollIntoView({ behavior: "smooth" }), 150);
-    } catch { showToast("Error generating recipe", "error"); }
-    setRecipeByNameLoading(false);
+
+      if (!response.ok) { showToast("Error generating recipe", "error"); setRecipeByNameLoading(false); return; }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+
+            if (data.done && data.result) {
+              // Full recipe received — render it
+              setRecipeByName(data.result);
+              setRecipeByNameLoading(false);
+              setTimeout(() => document.getElementById("byname-anchor")?.scrollIntoView({ behavior: "smooth" }), 150);
+
+            } else if (data.delta) {
+              // Accumulate stream and try to extract early fields for partial display
+              accumulated += data.delta;
+              // Show partial UI as soon as overview arrives (~1–2 seconds in)
+              if (!recipeByName || recipeByName._partial) {
+                const partial = { _partial: true, _title: recipeNameInput.trim() };
+                const ov = accumulated.match(/"overview"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+                if (ov) partial.overview = ov[1];
+                const sv = accumulated.match(/"servings"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+                if (sv) partial.servings = sv[1];
+                const pr = accumulated.match(/"prep_time"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+                if (pr) partial.prep_time = pr[1];
+                const ck = accumulated.match(/"cook_time"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+                if (ck) partial.cook_time = ck[1];
+                const dl = accumulated.match(/"difficulty_label"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+                if (dl) partial.difficulty_label = dl[1];
+                if (partial.overview) setRecipeByName(partial);
+              }
+
+            } else if (data.error) {
+              showToast("Error generating recipe", "error");
+              setRecipeByNameLoading(false);
+            }
+          } catch { /* malformed chunk, skip */ }
+        }
+      }
+    } catch { showToast("Error generating recipe", "error"); setRecipeByNameLoading(false); }
   };
 
   const generateByNutrition = async () => {
@@ -3942,8 +4013,19 @@ export default function App() {
         filters: { cuisine: activeCuisine, foodTypes: activeFoodTypes, diet: activeDiet, difficulty: activeDifficulty },
         language,
       });
-      setNutritionRecipes(res.data.recipes || []);
+      const recipes = res.data.recipes || [];
+      setNutritionRecipes(recipes);
       setTimeout(() => document.getElementById("nutrition-anchor")?.scrollIntoView({ behavior: "smooth" }), 150);
+
+      // 🚀 Prefetch details for all 4 nutrition recipes in background
+      const titles = recipes.map(r => r.title).filter(Boolean);
+      if (titles.length) {
+        fetch(`${API}/prefetch-details`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ titles, language }),
+        }).catch(() => {});
+      }
     } catch { showToast("Error generating nutrition-based recipes", "error"); }
     setNutritionLoading(false);
   };
@@ -3981,6 +4063,18 @@ export default function App() {
       });
       setMpPantryPlan(res.data.plan);
       setTimeout(() => document.getElementById("pantry-plan-anchor")?.scrollIntoView({ behavior: "smooth" }), 150);
+
+      // 🚀 Prefetch all 20 meal recipe details in background (5 days × 4 meals)
+      const titles = (res.data.plan || [])
+        .flatMap(d => Object.values(d.meals || {}).map(m => m.name))
+        .filter(Boolean);
+      if (titles.length) {
+        fetch(`${API}/prefetch-details`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ titles, language }),
+        }).catch(() => {});
+      }
     } catch { showToast("Error generating pantry meal plan", "error"); }
     setMpPantryLoading(false);
   };
@@ -3998,6 +4092,18 @@ export default function App() {
       });
       setMpGroceryPlan(res.data.plan);
       setTimeout(() => document.getElementById("grocery-plan-anchor")?.scrollIntoView({ behavior: "smooth" }), 150);
+
+      // 🚀 Prefetch all 20 meal recipe details in background (5 days × 4 meals)
+      const titles = (res.data.plan || [])
+        .flatMap(d => Object.values(d.meals || {}).map(m => m.name))
+        .filter(Boolean);
+      if (titles.length) {
+        fetch(`${API}/prefetch-details`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ titles, language }),
+        }).catch(() => {});
+      }
     } catch { showToast("Error generating full pantry meal plan", "error"); }
     setMpGroceryLoading(false);
   };
@@ -5997,14 +6103,15 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
                   <div id="byname-anchor" />
 
-                  {recipeByNameLoading && (
+                  {/* Loading skeleton — shown when nothing yet (before partial data arrives) */}
+                  {recipeByNameLoading && !recipeByName && (
                     <Box sx={{ background: "#fff", borderRadius: 4, border: "1.5px solid #b8cead", overflow: "hidden", mb: 4 }}>
                       <Box sx={{ height: 220, ...shimmerSx }} />
                       <Box p={3}><Box sx={{ height: 20, width: "60%", borderRadius: 1, mb: 2, ...shimmerSx }} /><Box sx={{ height: 14, width: "90%", borderRadius: 1, mb: 1, ...shimmerSx }} /></Box>
                     </Box>
                   )}
 
-                  {recipeByName && !recipeByNameLoading && (
+                  {recipeByName && (
                     <Box sx={{ background: "#fff", borderRadius: 4, border: "1.5px solid #b8cead", boxShadow: "0 8px 32px rgba(184,113,78,0.12)", overflow: "hidden", mb: 4 }}>
                       <Box sx={{ position: "relative", height: 220, overflow: "hidden" }}>
                         <RecipeImage title={recipeByName._title} height={220} />
@@ -6036,67 +6143,84 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                               </Box>
                             ))}
                           </Box>
-                          <Box display="flex" gap={1.5} flexWrap="wrap" alignItems="center">
-                            <Button variant="outlined" startIcon={<BookmarkBorderIcon />}
-                              onClick={() => {
-                                if (savedRecipes.find(r => r._title === recipeByName._title)) { showToast("Already saved!", "error"); return; }
-                                const updated = [...savedRecipes, recipeByName];
-                                setSavedRecipes(updated);
-                                localStorage.setItem("savedRecipes", JSON.stringify(updated));
-                                showToast(`"${recipeByName._title}" saved! 📖`, "success");
-                              }}
-                              sx={{ borderColor: "#b8714e", color: "#b8714e", borderRadius: 2, fontWeight: 700, "&:hover": { background: "#f0f4ec" } }}>
-                              Save Recipe
-                            </Button>
-                            <Button variant="outlined" startIcon={<DownloadIcon />}
-                              onClick={() => exportRecipePDF(recipeByName)}
-                              sx={{ borderColor: "#22c55e", color: "#15803d", borderRadius: 2, fontWeight: 700, "&:hover": { background: "#f0fdf4" } }}>
-                              Download PDF
-                            </Button>
-                            <Box display="flex" alignItems="center" gap={1} onClick={e => e.stopPropagation()}>
-                              <StarRating value={recipeRatings[recipeByName._title] || 0} onChange={(v) => setRating(recipeByName._title, v)} size={20} />
-                              {(recipeRatings[recipeByName._title] || 0) > 0 && <Typography variant="caption" color="#c49a3c" fontWeight={700}>{recipeRatings[recipeByName._title]}/5</Typography>}
+                          {!recipeByName._partial && (
+                            <Box display="flex" gap={1.5} flexWrap="wrap" alignItems="center">
+                              <Button variant="outlined" startIcon={<BookmarkBorderIcon />}
+                                onClick={() => {
+                                  if (savedRecipes.find(r => r._title === recipeByName._title)) { showToast("Already saved!", "error"); return; }
+                                  const updated = [...savedRecipes, recipeByName];
+                                  setSavedRecipes(updated);
+                                  localStorage.setItem("savedRecipes", JSON.stringify(updated));
+                                  showToast(`"${recipeByName._title}" saved! 📖`, "success");
+                                }}
+                                sx={{ borderColor: "#b8714e", color: "#b8714e", borderRadius: 2, fontWeight: 700, "&:hover": { background: "#f0f4ec" } }}>
+                                Save Recipe
+                              </Button>
+                              <Button variant="outlined" startIcon={<DownloadIcon />}
+                                onClick={() => exportRecipePDF(recipeByName)}
+                                sx={{ borderColor: "#22c55e", color: "#15803d", borderRadius: 2, fontWeight: 700, "&:hover": { background: "#f0fdf4" } }}>
+                                Download PDF
+                              </Button>
+                              <Box display="flex" alignItems="center" gap={1} onClick={e => e.stopPropagation()}>
+                                <StarRating value={recipeRatings[recipeByName._title] || 0} onChange={(v) => setRating(recipeByName._title, v)} size={20} />
+                                {(recipeRatings[recipeByName._title] || 0) > 0 && <Typography variant="caption" color="#c49a3c" fontWeight={700}>{recipeRatings[recipeByName._title]}/5</Typography>}
+                              </Box>
                             </Box>
-                          </Box>
+                          )}
                         </Box>
-                        <RecipeAudioPlayer recipe={recipeByName} language={language} />
-                        <Box mb={3} p={2} sx={{ background: "#f0f4ec", borderRadius: 2, border: "1px solid #b8cead" }}>
-                          <Typography fontWeight={800} fontSize="0.8rem" color="#5a7a48" mb={0.5} sx={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Overview</Typography>
-                          <Typography color="#374151" fontSize="0.92rem" lineHeight={1.6}>{recipeByName.overview}</Typography>
-                        </Box>
-                        <Grid container spacing={3}>
-                          <Grid item xs={12} md={5}>
-                            <Typography variant="h6" fontWeight={800} mb={1} color="#1a1a1a">🧂 Ingredients</Typography>
 
-                            {/* Pantry summary bar */}
-                            {(() => {
-                              const ings = recipeByName.ingredients?.main || [];
-                              const inPantryCount = ings.filter(i => isInPantryFuzzy(i.name)).length;
-                              const missing = ings.filter(i => !isInPantryFuzzy(i.name));
-                              return (
-                                <Box display="flex" alignItems="center" gap={1} mb={1.5} flexWrap="wrap">
-                                  <Chip
-                                    label={`● ${inPantryCount}/${ings.length} in pantry`}
-                                    size="small"
-                                    sx={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #86efac", fontWeight: 700, fontSize: "0.72rem" }}
-                                  />
-                                  {missing.length > 0 && (
-                                    <Chip
-                                      icon={<AddShoppingCartIcon sx={{ fontSize: "14px !important" }} />}
-                                      label={`ADD ${missing.length} MISSING TO GROCERY LIST`}
-                                      size="small"
-                                      onClick={() => addAllMissingToGrocery(ings)}
-                                      sx={{
-                                        background: "#fff", color: "#1d4ed8",
-                                        border: "1.5px solid #93c5fd", fontWeight: 700, fontSize: "0.68rem",
-                                        cursor: "pointer",
-                                        "&:hover": { background: "#eff6ff" },
-                                      }}
-                                    />
-                                  )}
-                                </Box>
-                              );
-                            })()}
+                        {/* Overview — shown as soon as it streams in */}
+                        {recipeByName.overview && (
+                          <Box mb={3} p={2} sx={{ background: "#f0f4ec", borderRadius: 2, border: "1px solid #b8cead" }}>
+                            <Typography fontWeight={800} fontSize="0.8rem" color="#5a7a48" mb={0.5} sx={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Overview</Typography>
+                            <Typography color="#374151" fontSize="0.92rem" lineHeight={1.6}>{recipeByName.overview}</Typography>
+                          </Box>
+                        )}
+
+                        {/* Streaming indicator while partial */}
+                        {recipeByName._partial && (
+                          <Box display="flex" alignItems="center" gap={1.5} py={2} px={2.5} sx={{ background: "rgba(107,140,90,0.06)", borderRadius: 2, border: "1px dashed #b8cead", mb: 2 }}>
+                            <CircularProgress size={16} sx={{ color: "#6b8c5a" }} />
+                            <Typography fontSize="0.85rem" color="#5a7a48" fontWeight={600}>Loading ingredients & steps…</Typography>
+                          </Box>
+                        )}
+
+                        {!recipeByName._partial && (
+                          <>
+                            <RecipeAudioPlayer recipe={recipeByName} language={language} />
+                            <Grid container spacing={3}>
+                              <Grid item xs={12} md={5}>
+                                <Typography variant="h6" fontWeight={800} mb={1} color="#1a1a1a">🧂 Ingredients</Typography>
+
+                                {/* Pantry summary bar */}
+                                {(() => {
+                                  const ings = recipeByName.ingredients?.main || [];
+                                  const inPantryCount = ings.filter(i => isInPantryFuzzy(i.name)).length;
+                                  const missing = ings.filter(i => !isInPantryFuzzy(i.name));
+                                  return (
+                                    <Box display="flex" alignItems="center" gap={1} mb={1.5} flexWrap="wrap">
+                                      <Chip
+                                        label={`● ${inPantryCount}/${ings.length} in pantry`}
+                                        size="small"
+                                        sx={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #86efac", fontWeight: 700, fontSize: "0.72rem" }}
+                                      />
+                                      {missing.length > 0 && (
+                                        <Chip
+                                          icon={<AddShoppingCartIcon sx={{ fontSize: "14px !important" }} />}
+                                          label={`ADD ${missing.length} MISSING TO GROCERY LIST`}
+                                          size="small"
+                                          onClick={() => addAllMissingToGrocery(ings)}
+                                          sx={{
+                                            background: "#fff", color: "#1d4ed8",
+                                            border: "1.5px solid #93c5fd", fontWeight: 700, fontSize: "0.68rem",
+                                            cursor: "pointer",
+                                            "&:hover": { background: "#eff6ff" },
+                                          }}
+                                        />
+                                      )}
+                                    </Box>
+                                  );
+                                })()}
 
                             {/* Ingredient rows */}
                             <Box sx={{ borderRadius: 2, overflow: "hidden", border: "1px solid #f3f4f6" }}>
@@ -6191,6 +6315,8 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                             </Box>
                           </Box>
                         )}
+                        </>
+                      )}
                       </Box>
                     </Box>
                   )}
