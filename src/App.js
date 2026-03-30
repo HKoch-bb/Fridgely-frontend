@@ -241,17 +241,38 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
   const startCamera = async () => {
     setCameraError(""); setBarcodeResult(null); setBarcodeError(""); setScanFeedback("scanning");
 
+    // ── Step 1: Get camera stream (separated from scanner init) ──
+    let stream = null;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+      // First try rear/environment camera with ideal resolution
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+      } catch {
+        // Fall back to any camera (works better on some iOS PWA installs)
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
       }
-      setCameraActive(true);
+    } catch (err) {
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        setCameraError("Camera permission denied. Please allow camera access in your browser settings, or type the barcode below.");
+      } else {
+        setCameraError("Could not access camera. Try typing the barcode number below.");
+      }
+      setScanFeedback("");
+      return;
+    }
 
+    // ── Step 2: Attach stream to video element ──
+    streamRef.current = stream;
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+      try { await videoRef.current.play(); } catch {}
+    }
+    setCameraActive(true);
+
+    // ── Step 3: Start barcode scanner (errors here don't kill the camera) ──
+    try {
       if ("BarcodeDetector" in window) {
         // ── Chrome / Edge / Android — native BarcodeDetector ──
         const detector = new window.BarcodeDetector({
@@ -278,10 +299,11 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
         // ── Safari / iOS / Firefox — ZXing fallback ──
         const reader = new BrowserMultiFormatReader();
         zxingReaderRef.current = reader;
-        // Wait for video to be ready
+        // Wait for video to be ready before decoding
         await new Promise(resolve => {
-          if (videoRef.current.readyState >= 2) return resolve();
-          videoRef.current.onloadeddata = resolve;
+          if (videoRef.current && videoRef.current.readyState >= 2) return resolve();
+          if (videoRef.current) videoRef.current.onloadeddata = resolve;
+          else resolve();
         });
         reader.decodeFromStream(stream, videoRef.current, (result, err) => {
           if (result) {
@@ -290,17 +312,12 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
             stopCamera();
             lookupBarcode(code);
           }
-          // err fires every frame when no barcode visible — safe to ignore
+          // err fires every frame when no barcode is visible — safe to ignore
         });
       }
-
-    } catch (err) {
-      if (err.name === "NotAllowedError") {
-        setCameraError("Camera permission denied. Please allow camera access in your browser settings, or type the barcode below.");
-      } else {
-        setCameraError("Could not access camera. Try typing the barcode number below.");
-      }
-      setScanFeedback("");
+    } catch (scanErr) {
+      // Scanner failed to init but camera IS working — let the user type instead
+      setCameraError("Scanner couldn't initialize on this device. Camera is active — point at a barcode, or type the number below.");
     }
   };
 
@@ -5177,13 +5194,15 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         boxShadow: "4px 0 24px rgba(0,0,0,0.22)",
         borderRight: "1px solid rgba(107,140,90,0.15)",
         display: "flex", flexDirection: "column", overflow: "hidden",
+        // PWA / notch safe area
+        paddingTop: "env(safe-area-inset-top, 0px)",
       }}>
         {/* Logo row */}
         <Box sx={{
           display: "flex", alignItems: "center",
           justifyContent: sidebarOpen ? "space-between" : "center",
-          px: sidebarOpen ? 2.5 : 1, pt: 2.5, pb: 1.5,
-          minHeight: 64, flexShrink: 0,
+          px: sidebarOpen ? 2.5 : 1, pt: 2, pb: 1.5,
+          minHeight: 56, flexShrink: 0,
         }}>
           {sidebarOpen && (
             <Box display="flex" alignItems="center" gap={1}>
@@ -5324,9 +5343,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           top: 0,
           left: sidebarOpen ? SIDEBAR_W : SIDEBAR_COLLAPSED_W,
           right: 0,
-          height: 52,
+          height: "calc(52px + env(safe-area-inset-top, 0px))",
+          paddingTop: "env(safe-area-inset-top, 0px)",
           zIndex: 900,
-          background: "rgba(20,18,16,0.85)",
+          background: "rgba(20,18,16,0.92)",
           backdropFilter: "blur(16px)",
           borderBottom: "1px solid rgba(255,255,255,0.07)",
           display: "flex", alignItems: "center", justifyContent: "flex-end",
@@ -5481,8 +5501,8 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
         {/* ══ HOME ══ */}
         {page === "home" && (
-          <Box sx={{ minHeight: "100vh", background: "#141210", pt: "52px" }}>
-            <Box sx={{ position: "relative", height: "calc(100vh - 52px)", minHeight: 600, overflow: "hidden", display: "flex", alignItems: "center" }}>
+          <Box sx={{ minHeight: "100vh", background: "#141210", pt: "calc(52px + env(safe-area-inset-top, 0px))" }}>
+            <Box sx={{ position: "relative", height: "calc(100vh - 52px - env(safe-area-inset-top, 0px))", minHeight: 600, overflow: "hidden", display: "flex", alignItems: "center" }}>
               <Box component="img"
                 src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1800&q=80"
                 alt="hero food"
@@ -5669,7 +5689,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
         {/* ══ RECIPE GENERATOR ══ */}
         {page === "recipes" && (
-          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #eef2e8 45%, #f5f2ec 100%)", position: "relative", overflow: "hidden", pt: "52px" }}>
+          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #eef2e8 45%, #f5f2ec 100%)", position: "relative", overflow: "hidden", pt: "calc(52px + env(safe-area-inset-top, 0px))" }}>
             <Box sx={{ position: "fixed", top: 60, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(184,113,78,0.12) 0%, transparent 70%)", filter: "blur(40px)", pointerEvents: "none", zIndex: 0 }} />
             <Box sx={{ position: "fixed", bottom: 100, left: 100, width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(107,140,90,0.09) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none", zIndex: 0 }} />
             <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.45, backgroundImage: "radial-gradient(circle, #8faa7c 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
@@ -6321,7 +6341,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         )}
         {/* ══ MEAL PLANNER ══ */}
         {page === "planner" && (
-          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f0f2f5 0%, #e8edf5 45%, #f0f2f5 100%)", position: "relative", overflow: "hidden", pt: "52px" }}>
+          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f0f2f5 0%, #e8edf5 45%, #f0f2f5 100%)", position: "relative", overflow: "hidden", pt: "calc(52px + env(safe-area-inset-top, 0px))" }}>
             <Box sx={{ position: "fixed", top: 60, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(59,130,246,0.11) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none", zIndex: 0 }} />
             <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.3, backgroundImage: "radial-gradient(circle, #3b82f6 1px, transparent 1px)", backgroundSize: "36px 36px" }} />
 
@@ -6649,7 +6669,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
         {/* ══ MY PANTRY ══ */}
         {page === "pantry" && (
-          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f0f4ec 0%, #fef3e2 45%, #fffbeb 100%)", position: "relative", overflow: "hidden", pt: "52px" }}>
+          <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f0f4ec 0%, #fef3e2 45%, #fffbeb 100%)", position: "relative", overflow: "hidden", pt: "calc(52px + env(safe-area-inset-top, 0px))" }}>
             <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.35, backgroundImage: "radial-gradient(circle, #8faa7c 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
             <Box sx={{ position: "relative", zIndex: 1, overflow: "hidden", background: "linear-gradient(125deg, #141210 0%, #1e1a10 40%, #2a2016 70%, #332c14 100%)", px: { xs: 4, md: 6 }, py: 4.5 }}>
               <Box sx={{ position: "relative", zIndex: 1, display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 3 }}>
@@ -6890,7 +6910,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           const nonVegCount = savedRecipes.length - vegCount;
 
           return (
-            <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #eef2e8 45%, #f5f2ec 100%)", position: "relative", overflow: "hidden", pt: "52px" }}>
+            <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #eef2e8 45%, #f5f2ec 100%)", position: "relative", overflow: "hidden", pt: "calc(52px + env(safe-area-inset-top, 0px))" }}>
               <Box sx={{ position: "fixed", top: 60, right: -100, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(16,185,129,0.11) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none", zIndex: 0 }} />
               <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.3, backgroundImage: "radial-gradient(circle, #059669 1.5px, transparent 1.5px)", backgroundSize: "36px 36px" }} />
 
@@ -7117,7 +7137,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           };
 
           return (
-            <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #141210 0%, #1a1814 100%)", pt: "52px" }}>
+            <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #141210 0%, #1a1814 100%)", pt: "calc(52px + env(safe-area-inset-top, 0px))" }}>
               {/* Header */}
               <Box sx={{ overflow: "hidden", background: "linear-gradient(125deg, #161410 0%, #1e2b1a 40%, #243a1e 70%, #3a5c30 100%)", px: { xs: 4, md: 6 }, py: 4.5 }}>
                 <Box display="flex" alignItems="flex-end" justifyContent="space-between" flexWrap="wrap" gap={2}>
