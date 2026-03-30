@@ -7,7 +7,7 @@ import {
   Drawer, List, ListItem, ListItemText, IconButton,
   Select, MenuItem, FormControl, InputLabel,
   Divider, CircularProgress, Tabs, Tab, Tooltip,
-  LinearProgress, Slider,
+  LinearProgress, Slider, Popover, Menu,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import TuneIcon from "@mui/icons-material/Tune";
@@ -2940,9 +2940,261 @@ const PW_RULES = [
   { id: "special", label: "One special character (!@#…)", test: p => /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(p) },
 ];
 
-const AuthScreen = ({ onAuth }) => {
+// ─── Landing Page (shown to logged-out visitors) ──────────────────────────────
+const LandingPage = ({ onOpenAuth }) => {
+  const features = [
+    { icon: "🧠", title: "AI Recipe Generator", desc: "Tell us what's in your fridge — get instant, personalised recipes powered by GPT-4." },
+    { icon: "📷", title: "Photo & Barcode Scan", desc: "Scan your pantry with your camera or a barcode scan. Ingredients added in seconds." },
+    { icon: "📅", title: "Weekly Meal Planner", desc: "Auto-plan Mon–Fri with 4 meals a day. Swap meals with one click." },
+    { icon: "🛒", title: "Smart Grocery List", desc: "Recipes automatically populate your grocery list. Never forget an ingredient." },
+    { icon: "⭐", title: "Community Ratings", desc: "See what's trending. Rate recipes and discover top-rated meals from other users." },
+    { icon: "🧑‍🍳", title: "AI Chef Chat", desc: "Ask your personal chef anything — substitutions, techniques, pairings, and more." },
+  ];
+
+  return (
+    <Box sx={{ minHeight: "100vh", background: "#0d0f0a", overflowX: "hidden" }}>
+      {/* ── Navbar ── */}
+      <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "space-between", px: { xs: 3, md: 6 }, py: 2, background: "rgba(13,15,10,0.85)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <Box sx={{ width: 36, height: 36, borderRadius: 2, background: "linear-gradient(145deg,#4a7a3a,#5a7c4a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(107,140,90,0.5)" }}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="4" y="2" width="12" height="16" rx="2" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.5)" strokeWidth="0.8"/>
+              <rect x="4" y="7.5" width="12" height="0.8" fill="rgba(255,255,255,0.4)"/>
+              <rect x="6" y="4.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
+              <rect x="6" y="10.5" width="4" height="1.2" rx="0.6" fill="rgba(255,255,255,0.7)"/>
+              <circle cx="13.5" cy="13.5" r="1" fill="#86efac"/>
+            </svg>
+          </Box>
+          <Typography sx={{ fontWeight: 900, fontSize: "1.2rem", color: "#fff", letterSpacing: "-0.5px" }}>Fridgely</Typography>
+        </Box>
+        <Box display="flex" gap={1.5} alignItems="center">
+          <Box onClick={() => onOpenAuth("login")} sx={{ px: 2.5, py: 0.9, borderRadius: "10px", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.8)", fontSize: "0.88rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s", "&:hover": { background: "rgba(255,255,255,0.07)", borderColor: "rgba(255,255,255,0.3)" } }}>
+            Sign in
+          </Box>
+          <Box onClick={() => onOpenAuth("signup")} sx={{ px: 2.5, py: 0.9, borderRadius: "10px", background: "linear-gradient(135deg,#5a7c4a,#4a6a3a)", color: "#fff", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(107,140,90,0.4)", transition: "all 0.2s", "&:hover": { transform: "translateY(-1px)", boxShadow: "0 8px 24px rgba(107,140,90,0.5)" } }}>
+            Get started free →
+          </Box>
+        </Box>
+      </Box>
+
+      {/* ── Hero ── */}
+      <Box sx={{ position: "relative", minHeight: "100vh", display: "flex", alignItems: "center", overflow: "hidden" }}>
+        <Box component="img" src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1800&q=80" alt="hero" sx={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.32) saturate(1.1)", transform: "scale(1.04)" }} />
+        <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(10,12,8,0.92) 0%, rgba(10,12,8,0.5) 60%, transparent 100%)" }} />
+        <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "40%", background: "linear-gradient(to top, #0d0f0a, transparent)" }} />
+        {/* Glow accents */}
+        <Box sx={{ position: "absolute", top: "20%", right: "10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(107,140,90,0.12) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none" }} />
+        <Box sx={{ position: "absolute", bottom: "20%", left: "5%", width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(184,113,78,0.08) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none" }} />
+
+        <Box sx={{ position: "relative", zIndex: 2, px: { xs: 4, md: 10 }, pt: 14, pb: 8, maxWidth: 820 }}>
+          {/* Badge */}
+          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, background: "rgba(107,140,90,0.15)", border: "1px solid rgba(107,140,90,0.4)", borderRadius: "100px", px: 2, py: 0.7, mb: 4, backdropFilter: "blur(8px)" }}>
+            <Box sx={{ width: 7, height: 7, borderRadius: "50%", background: "#6b8c5a", boxShadow: "0 0 8px #6b8c5a", animation: "glow 2s ease-in-out infinite", "@keyframes glow": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.5 } } }} />
+            <Typography sx={{ color: "#a8c298", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>AI-Powered Kitchen Assistant</Typography>
+          </Box>
+
+          <Typography sx={{ fontFamily: "'Georgia', serif", fontWeight: 900, fontSize: { xs: "3rem", md: "5.2rem" }, lineHeight: 1.0, letterSpacing: "-2.5px", color: "#fff", mb: 1.5, textShadow: "0 4px 40px rgba(0,0,0,0.6)" }}>
+            Open your fridge.
+            <Box component="span" sx={{ display: "block", background: "linear-gradient(90deg, #b8714e 0%, #6b8c5a 60%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              We'll handle it.
+            </Box>
+          </Typography>
+
+          <Typography sx={{ color: "rgba(255,255,255,0.55)", fontSize: { xs: "1rem", md: "1.2rem" }, lineHeight: 1.8, mb: 5, maxWidth: 560 }}>
+            Fridgely turns whatever's in your pantry into delicious, personalized recipes — instantly. No more "what do I cook tonight?"
+          </Typography>
+
+          {/* CTAs */}
+          <Box display="flex" gap={2} flexWrap="wrap">
+            <Box onClick={() => onOpenAuth("signup")} sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, px: 4, py: 1.8, borderRadius: "14px", background: "linear-gradient(135deg,#5a7c4a,#4a6a3a)", color: "#fff", fontWeight: 800, fontSize: "1rem", cursor: "pointer", boxShadow: "0 8px 32px rgba(107,140,90,0.5)", transition: "all 0.25s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 16px 48px rgba(107,140,90,0.6)" } }}>
+              🚀 Start cooking free
+            </Box>
+            <Box onClick={() => onOpenAuth("login")} sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, px: 4, py: 1.8, borderRadius: "14px", border: "1.5px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.85)", fontWeight: 700, fontSize: "1rem", cursor: "pointer", backdropFilter: "blur(8px)", transition: "all 0.25s", "&:hover": { background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.4)" } }}>
+              Sign in →
+            </Box>
+          </Box>
+
+          {/* Social proof */}
+          <Box display="flex" alignItems="center" gap={2} mt={4}>
+            <Box display="flex">
+              {["🧑‍🍳","👩‍🍳","👨‍🍳","🧑‍🍳"].map((e, i) => (
+                <Box key={i} sx={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg, hsl(${i*30+100},40%,40%), hsl(${i*30+120},40%,35%))`, border: "2px solid #0d0f0a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem", ml: i > 0 ? -1 : 0 }}>{e}</Box>
+              ))}
+            </Box>
+            <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.8rem" }}>Join thousands of home chefs</Typography>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* ── Features Grid ── */}
+      <Box sx={{ px: { xs: 4, md: 10 }, py: 10, background: "#0d0f0a" }}>
+        <Box textAlign="center" mb={7}>
+          <Typography sx={{ color: "#a8c298", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", mb: 1.5 }}>Everything you need</Typography>
+          <Typography sx={{ fontFamily: "'Georgia', serif", fontWeight: 800, fontSize: { xs: "2rem", md: "3rem" }, color: "#fff", letterSpacing: "-1px" }}>Your kitchen, supercharged.</Typography>
+          <Typography sx={{ color: "rgba(255,255,255,0.4)", mt: 1.5, fontSize: "1rem", maxWidth: 500, mx: "auto" }}>From scanning ingredients to planning your whole week — Fridgely does the heavy lifting.</Typography>
+        </Box>
+
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }, gap: 3, maxWidth: 1100, mx: "auto" }}>
+          {features.map((f, i) => (
+            <Box key={i} onClick={() => onOpenAuth("signup")} sx={{ p: 3.5, borderRadius: 3, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer", transition: "all 0.25s", "&:hover": { background: "rgba(107,140,90,0.08)", borderColor: "rgba(107,140,90,0.3)", transform: "translateY(-3px)" } }}>
+              <Typography sx={{ fontSize: "2.2rem", mb: 2 }}>{f.icon}</Typography>
+              <Typography sx={{ fontWeight: 800, color: "#fff", fontSize: "1rem", mb: 1, letterSpacing: "-0.3px" }}>{f.title}</Typography>
+              <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", lineHeight: 1.7 }}>{f.desc}</Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+
+      {/* ── Bottom CTA ── */}
+      <Box sx={{ px: { xs: 4, md: 10 }, py: 10, textAlign: "center", background: "linear-gradient(180deg, #0d0f0a 0%, #0a0c08 100%)", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <Typography sx={{ fontFamily: "'Georgia', serif", fontWeight: 900, fontSize: { xs: "2rem", md: "3.5rem" }, color: "#fff", letterSpacing: "-1.5px", mb: 2 }}>
+          Ready to cook smarter?
+        </Typography>
+        <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "1rem", mb: 5 }}>Free forever. No credit card needed.</Typography>
+        <Box onClick={() => onOpenAuth("signup")} sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, px: 5, py: 2, borderRadius: "14px", background: "linear-gradient(135deg,#5a7c4a,#4a6a3a)", color: "#fff", fontWeight: 800, fontSize: "1.1rem", cursor: "pointer", boxShadow: "0 8px 40px rgba(107,140,90,0.45)", transition: "all 0.25s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 16px 60px rgba(107,140,90,0.6)" } }}>
+          🥬 Get started — it's free
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+// ─── Account Settings Dialog ───────────────────────────────────────────────────
+const AccountDialog = ({ open, onClose, currentUser, API, authToken, onUserUpdate, showToast }) => {
+  const [tab, setTab] = useState(0);
+  const [name, setName] = useState(currentUser?.name || "");
+  const [email, setEmail] = useState(currentUser?.email || "");
+  const [curPw, setCurPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showCur, setShowCur] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+
+  useEffect(() => {
+    if (open) { setName(currentUser?.name || ""); setEmail(currentUser?.email || ""); setCurPw(""); setNewPw(""); setConfirmPw(""); }
+  }, [open, currentUser]);
+
+  const saveProfile = async () => {
+    if (!name.trim() || !email.trim()) return showToast("Name and email required", "error");
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/user/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ name: name.trim(), email: email.trim().toLowerCase() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update");
+      onUserUpdate(data.user);
+      showToast("Profile updated! ✅", "success");
+    } catch (err) { showToast(err.message, "error"); }
+    setLoading(false);
+  };
+
+  const changePassword = async () => {
+    if (!curPw || !newPw || !confirmPw) return showToast("Please fill in all fields", "error");
+    if (newPw !== confirmPw) return showToast("New passwords don't match", "error");
+    if (newPw.length < 8) return showToast("Password must be at least 8 characters", "error");
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/user/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({ currentPassword: curPw, newPassword: newPw }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to change password");
+      showToast("Password changed successfully! 🔐", "success");
+      setCurPw(""); setNewPw(""); setConfirmPw("");
+      onClose();
+    } catch (err) { showToast(err.message, "error"); }
+    setLoading(false);
+  };
+
+  const iStyle = { width: "100%", padding: "11px 14px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", fontFamily: "inherit" };
+  const lStyle = { color: "rgba(255,255,255,0.45)", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3, background: "linear-gradient(145deg,#141210,#1a1e14)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 32px 80px rgba(0,0,0,0.7)" } }}>
+      <DialogTitle sx={{ pb: 0 }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box display="flex" alignItems="center" gap={1.5}>
+            <Box sx={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#5a7c4a,#b8714e)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: "1rem" }}>
+              {currentUser?.name?.charAt(0).toUpperCase() || "U"}
+            </Box>
+            <Box>
+              <Typography sx={{ fontWeight: 800, color: "#fff", fontSize: "1rem" }}>Account Settings</Typography>
+              <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem" }}>@{currentUser?.username}</Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={onClose} size="small" sx={{ color: "rgba(255,255,255,0.3)", "&:hover": { color: "#fff" } }}><CloseIcon sx={{ fontSize: 18 }} /></IconButton>
+        </Box>
+        {/* Tabs */}
+        <Box display="flex" gap={0.5} mt={2.5} mb={0} sx={{ borderBottom: "1px solid rgba(255,255,255,0.08)", pb: 0 }}>
+          {["Profile", "Password"].map((t, i) => (
+            <Box key={i} onClick={() => setTab(i)} sx={{ px: 2, py: 1, cursor: "pointer", fontSize: "0.82rem", fontWeight: tab === i ? 700 : 500, color: tab === i ? "#a8c298" : "rgba(255,255,255,0.35)", borderBottom: `2px solid ${tab === i ? "#6b8c5a" : "transparent"}`, mb: "-1px", transition: "all 0.15s" }}>{t}</Box>
+          ))}
+        </Box>
+      </DialogTitle>
+
+      <DialogContent sx={{ pt: 3 }}>
+        {tab === 0 && (
+          <Box display="flex" flexDirection="column" gap={2.5}>
+            <Box>
+              <label style={lStyle}>Display name</label>
+              <input value={name} onChange={e => setName(e.target.value)} style={iStyle} placeholder="Your name" onFocus={e => e.target.style.borderColor="#6b8c5a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
+            </Box>
+            <Box>
+              <label style={lStyle}>Email address</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={iStyle} placeholder="you@example.com" onFocus={e => e.target.style.borderColor="#6b8c5a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
+            </Box>
+            <Box>
+              <label style={lStyle}>Username</label>
+              <input value={`@${currentUser?.username || ""}`} disabled style={{ ...iStyle, opacity: 0.4, cursor: "not-allowed" }} />
+              <Typography sx={{ color: "rgba(255,255,255,0.25)", fontSize: "0.68rem", mt: 0.5 }}>Username cannot be changed</Typography>
+            </Box>
+            <Box onClick={!loading ? saveProfile : undefined} sx={{ py: 1.4, borderRadius: "10px", background: loading ? "rgba(107,140,90,0.3)" : "linear-gradient(135deg,#5a7c4a,#4a6a3a)", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading ? "not-allowed" : "pointer", boxShadow: "0 6px 20px rgba(107,140,90,0.35)", transition: "all 0.2s", "&:hover": !loading ? { transform: "translateY(-1px)" } : {} }}>
+              {loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "0.88rem" }}>Save changes</Typography>}
+            </Box>
+          </Box>
+        )}
+
+        {tab === 1 && (
+          <Box display="flex" flexDirection="column" gap={2.5}>
+            <Box>
+              <label style={lStyle}>Current password</label>
+              <Box sx={{ position: "relative" }}>
+                <input type={showCur ? "text" : "password"} value={curPw} onChange={e => setCurPw(e.target.value)} style={{ ...iStyle, paddingRight: 50 }} placeholder="Your current password" onFocus={e => e.target.style.borderColor="#6b8c5a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
+                <Box onClick={() => setShowCur(p=>!p)} sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", cursor: "pointer", "&:hover": { color: "rgba(255,255,255,0.7)" } }}>{showCur?"Hide":"Show"}</Box>
+              </Box>
+            </Box>
+            <Box>
+              <label style={lStyle}>New password</label>
+              <Box sx={{ position: "relative" }}>
+                <input type={showNew ? "text" : "password"} value={newPw} onChange={e => setNewPw(e.target.value)} style={{ ...iStyle, paddingRight: 50 }} placeholder="Minimum 8 characters" onFocus={e => e.target.style.borderColor="#6b8c5a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
+                <Box onClick={() => setShowNew(p=>!p)} sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", cursor: "pointer", "&:hover": { color: "rgba(255,255,255,0.7)" } }}>{showNew?"Hide":"Show"}</Box>
+              </Box>
+            </Box>
+            <Box>
+              <label style={lStyle}>Confirm new password</label>
+              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} style={{ ...iStyle, borderColor: confirmPw && confirmPw !== newPw ? "#ef4444" : "rgba(255,255,255,0.12)" }} placeholder="Type it again" onFocus={e => e.target.style.borderColor="#6b8c5a"} onBlur={e => e.target.style.borderColor= confirmPw && confirmPw!==newPw?"#ef4444":"rgba(255,255,255,0.12)"} />
+              {confirmPw && confirmPw !== newPw && <Typography sx={{ color: "#f87171", fontSize: "0.72rem", mt: 0.5 }}>Passwords don't match</Typography>}
+            </Box>
+            <Box onClick={!loading ? changePassword : undefined} sx={{ py: 1.4, borderRadius: "10px", background: loading ? "rgba(107,140,90,0.3)" : "linear-gradient(135deg,#5a7c4a,#4a6a3a)", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading ? "not-allowed" : "pointer", boxShadow: "0 6px 20px rgba(107,140,90,0.35)", transition: "all 0.2s", "&:hover": !loading ? { transform: "translateY(-1px)" } : {} }}>
+              {loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "0.88rem" }}>🔐 Update password</Typography>}
+            </Box>
+          </Box>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
+const AuthScreen = ({ onAuth, initialMode }) => {
   // mode: "login" | "signup" | "forgot" | "forgot-sent"
-  const [mode, setMode]           = useState("login");
+  const [mode, setMode]           = useState(initialMode || "login");
   const [name, setName]           = useState("");
   const [username, setUsername]   = useState("");
   const [email, setEmail]         = useState("");
@@ -3266,6 +3518,14 @@ export default function App() {
   const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
   const [page, setPage] = useState("home");
 
+  // ── Auth modal (for landing page) ──
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState("login");
+  // ── Account settings dialog ──
+  const [accountOpen, setAccountOpen] = useState(false);
+  // ── User profile dropdown menu ──
+  const [userMenuEl, setUserMenuEl] = useState(null);
+
   // ── Toast system ──
   const [toasts, setToasts] = useState([]);
   const showToast = useCallback((message, type = "success") => {
@@ -3313,6 +3573,10 @@ export default function App() {
     setRecipeHistory([]); setRecipeRatings({}); setRecipeNotes({});
     showToast("Signed out — see you soon! 👋", "success");
   }, [showToast]);
+
+  const handleUserUpdate = useCallback((updatedUser) => {
+    setCurrentUser(updatedUser);
+  }, []);
 
   // Verify token on mount
   useEffect(() => {
@@ -4310,7 +4574,15 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
     </Box>
   );
 
-  if (!authToken) return <AuthScreen onAuth={handleAuth} />;
+  if (!authToken) return (
+    <>
+      <LandingPage onOpenAuth={(mode) => { setAuthModalMode(mode); setAuthModalOpen(true); }} />
+      <Dialog open={authModalOpen} onClose={() => setAuthModalOpen(false)} maxWidth="sm" fullWidth
+        PaperProps={{ sx: { background: "transparent", boxShadow: "none" } }}>
+        <AuthScreen onAuth={(token, user) => { handleAuth(token, user); setAuthModalOpen(false); }} initialMode={authModalMode} />
+      </Dialog>
+    </>
+  );
 
   return (
     <Box display="flex" sx={{ background: "#f5f1eb", minHeight: "100vh" }}>
@@ -4328,6 +4600,17 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
       {/* ── Toast container ── */}
       <ToastContainer toasts={toasts} removeToast={removeToast} />
+
+      {/* ── Account Settings Dialog ── */}
+      <AccountDialog
+        open={accountOpen}
+        onClose={() => setAccountOpen(false)}
+        currentUser={currentUser}
+        API={API}
+        authToken={authToken}
+        onUserUpdate={handleUserUpdate}
+        showToast={showToast}
+      />
 
       {/* ── Shopping list modal ── */}
       <ShoppingListModal
@@ -4537,49 +4820,44 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
       </Drawer>
 
       {/* ══ FIXED TOP-RIGHT: Notification Bell ══ */}
-      <Box sx={{
-        position: "fixed", top: 16, right: 20, zIndex: 1300,
-        display: "flex", alignItems: "center", gap: 1,
-      }}>
-        <Tooltip title={lowStockItems.length > 0 ? `${lowStockItems.length} pantry alert${lowStockItems.length !== 1 ? "s" : ""}` : "No pantry alerts"} arrow placement="bottom">
-          <IconButton
-            onClick={() => setNotifPanelOpen(true)}
-            sx={{
-              width: 40, height: 40,
-              background: lowStockItems.length > 0 ? "rgba(234,179,8,0.15)" : "rgba(255,255,255,0.08)",
-              border: `1.5px solid ${lowStockItems.length > 0 ? "rgba(234,179,8,0.5)" : "rgba(255,255,255,0.15)"}`,
-              backdropFilter: "blur(12px)",
-              borderRadius: 2,
-              transition: "all 0.2s",
-              animation: lowStockItems.length > 0 ? "bellPulse 2.5s ease-in-out infinite" : "none",
-              "@keyframes bellPulse": {
-                "0%,100%": { boxShadow: "0 0 0 0 rgba(234,179,8,0)" },
-                "50%": { boxShadow: "0 0 0 5px rgba(234,179,8,0.15)" },
-              },
-              "&:hover": {
-                background: lowStockItems.length > 0 ? "rgba(234,179,8,0.25)" : "rgba(255,255,255,0.15)",
-                borderColor: lowStockItems.length > 0 ? "#eab308" : "rgba(255,255,255,0.3)",
-                transform: "scale(1.05)",
-              },
-            }}
-          >
+      <Box sx={{ position: "fixed", top: 16, right: 20, zIndex: 1300, display: "flex", alignItems: "center", gap: 1 }}>
+        <Tooltip title={lowStockItems.length > 0 ? `${lowStockItems.length} pantry alert${lowStockItems.length !== 1 ? "s" : ""}` : "Pantry alerts"} arrow placement="bottom">
+          <Box onClick={() => setNotifPanelOpen(true)} sx={{
+            width: 42, height: 42, borderRadius: 2.5, cursor: "pointer",
+            background: lowStockItems.length > 0
+              ? "linear-gradient(135deg, rgba(234,179,8,0.2), rgba(234,179,8,0.1))"
+              : "rgba(255,255,255,0.06)",
+            border: `1.5px solid ${lowStockItems.length > 0 ? "rgba(234,179,8,0.6)" : "rgba(255,255,255,0.12)"}`,
+            backdropFilter: "blur(12px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            transition: "all 0.2s",
+            animation: lowStockItems.length > 0 ? "bellShake 4s ease-in-out infinite" : "none",
+            "@keyframes bellShake": {
+              "0%,90%,100%": { transform: "rotate(0deg)" },
+              "92%": { transform: "rotate(-8deg)" },
+              "94%": { transform: "rotate(8deg)" },
+              "96%": { transform: "rotate(-5deg)" },
+              "98%": { transform: "rotate(5deg)" },
+            },
+            boxShadow: lowStockItems.length > 0 ? "0 0 0 0 rgba(234,179,8,0.4), 0 4px 16px rgba(0,0,0,0.3)" : "0 4px 16px rgba(0,0,0,0.2)",
+            "&:hover": {
+              background: lowStockItems.length > 0 ? "rgba(234,179,8,0.25)" : "rgba(255,255,255,0.12)",
+              borderColor: lowStockItems.length > 0 ? "#eab308" : "rgba(255,255,255,0.25)",
+              transform: "scale(1.08)",
+              boxShadow: lowStockItems.length > 0 ? "0 0 20px rgba(234,179,8,0.3)" : "0 4px 20px rgba(0,0,0,0.3)",
+            },
+          }}>
             <Badge
               badgeContent={lowStockItems.length}
               invisible={lowStockItems.length === 0}
-              sx={{
-                "& .MuiBadge-badge": {
-                  fontSize: "0.58rem", fontWeight: 900, minWidth: 15, height: 15, padding: "0 3px",
-                  background: "#eab308", color: "#1a1200",
-                  top: -2, right: -2,
-                },
-              }}
+              sx={{ "& .MuiBadge-badge": { fontSize: "0.55rem", fontWeight: 900, minWidth: 16, height: 16, padding: "0 3px", background: "linear-gradient(135deg,#f59e0b,#eab308)", color: "#1a1200", top: -3, right: -3, boxShadow: "0 2px 6px rgba(234,179,8,0.5)" } }}
             >
               {lowStockItems.length > 0
-                ? <NotificationsActiveIcon sx={{ fontSize: 18, color: "#eab308" }} />
-                : <NotificationsNoneIcon  sx={{ fontSize: 18, color: "rgba(255,255,255,0.4)" }} />
+                ? <NotificationsActiveIcon sx={{ fontSize: 19, color: "#eab308" }} />
+                : <NotificationsNoneIcon sx={{ fontSize: 19, color: "rgba(255,255,255,0.45)" }} />
               }
             </Badge>
-          </IconButton>
+          </Box>
         </Tooltip>
       </Box>
 
@@ -4912,7 +5190,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           {navItems.map(({ muiIcon, label, key }) => {
             const isActive = page === key;
             const item = (
-              <Box key={key} onClick={() => setPage(key)} sx={{
+              <Box key={key} onClick={() => {
+                if (!authToken) { setAuthModalMode("login"); setAuthModalOpen(true); return; }
+                setPage(key);
+              }} sx={{
                 display: "flex", alignItems: "center",
                 gap: sidebarOpen ? 1.5 : 0,
                 justifyContent: sidebarOpen ? "flex-start" : "center",
@@ -4987,48 +5268,101 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           )}
         </Box>
 
-        {/* ── User profile + logout ── */}
+        {/* ── User profile dropdown ── */}
         {currentUser && (
-          <Box sx={{
-            mx: sidebarOpen ? 1.5 : 1, mb: 2, flexShrink: 0,
-            p: sidebarOpen ? 1.5 : 1,
-            background: "rgba(255,255,255,0.04)",
-            borderRadius: 2,
-            border: "1px solid rgba(255,255,255,0.08)",
-            display: "flex", alignItems: "center",
-            justifyContent: sidebarOpen ? "space-between" : "center",
-            gap: 1,
-          }}>
-            <Box display="flex" alignItems="center" gap={1} overflow="hidden">
-              {/* Avatar circle */}
-              <Box sx={{
-                width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                background: "linear-gradient(135deg, #5a7c4a, #b8714e)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "0.72rem", fontWeight: 800, color: "#fff",
-              }}>
-                {currentUser.name?.charAt(0).toUpperCase() || "U"}
+          <>
+            <Box onClick={e => setUserMenuEl(e.currentTarget)} sx={{
+              mx: sidebarOpen ? 1.5 : 1, mb: 2, flexShrink: 0,
+              p: sidebarOpen ? 1.5 : 1,
+              background: "rgba(255,255,255,0.04)",
+              borderRadius: 2,
+              border: "1px solid rgba(255,255,255,0.08)",
+              display: "flex", alignItems: "center",
+              justifyContent: sidebarOpen ? "space-between" : "center",
+              gap: 1, cursor: "pointer",
+              transition: "all 0.2s",
+              "&:hover": { background: "rgba(107,140,90,0.1)", borderColor: "rgba(107,140,90,0.3)" },
+            }}>
+              <Box display="flex" alignItems="center" gap={1} overflow="hidden">
+                <Box sx={{
+                  width: 30, height: 30, borderRadius: "50%", flexShrink: 0,
+                  background: "linear-gradient(135deg, #5a7c4a, #b8714e)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "0.78rem", fontWeight: 900, color: "#fff",
+                  boxShadow: "0 2px 8px rgba(107,140,90,0.4)",
+                }}>
+                  {currentUser.name?.charAt(0).toUpperCase() || "U"}
+                </Box>
+                {sidebarOpen && (
+                  <Box overflow="hidden">
+                    <Typography sx={{ color: "#fff", fontSize: "0.78rem", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 105 }}>
+                      {currentUser.name}
+                    </Typography>
+                    <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.62rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 105 }}>
+                      @{currentUser.username}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
               {sidebarOpen && (
-                <Box overflow="hidden">
-                  <Typography sx={{ color: "#fff", fontSize: "0.75rem", fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 110 }}>
-                    {currentUser.name}
-                  </Typography>
-                  <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.6rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 110 }}>
-                    {currentUser.email}
-                  </Typography>
-                </Box>
+                <Typography sx={{ color: "rgba(255,255,255,0.2)", fontSize: "0.65rem" }}>▾</Typography>
               )}
             </Box>
-            {sidebarOpen && (
-              <Tooltip title="Sign out">
-                <IconButton size="small" onClick={handleLogout}
-                  sx={{ color: "rgba(255,255,255,0.25)", p: 0.5, flexShrink: 0, "&:hover": { color: "#ef4444", background: "rgba(239,68,68,0.1)" } }}>
-                  <Box sx={{ fontSize: "0.9rem" }}>⎋</Box>
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
+
+            {/* Dropdown Menu */}
+            <Menu
+              anchorEl={userMenuEl}
+              open={Boolean(userMenuEl)}
+              onClose={() => setUserMenuEl(null)}
+              anchorOrigin={{ vertical: "top", horizontal: "right" }}
+              transformOrigin={{ vertical: "bottom", horizontal: "left" }}
+              PaperProps={{
+                sx: {
+                  background: "linear-gradient(145deg, #1a1e14, #141210)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  borderRadius: 2.5,
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
+                  minWidth: 220,
+                  overflow: "visible",
+                  mt: -1,
+                  "& .MuiList-root": { py: 0.5 },
+                }
+              }}
+            >
+              {/* User info header */}
+              <Box sx={{ px: 2, py: 1.8, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                <Box display="flex" alignItems="center" gap={1.5}>
+                  <Box sx={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg,#5a7c4a,#b8714e)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: "1rem", flexShrink: 0 }}>
+                    {currentUser.name?.charAt(0).toUpperCase() || "U"}
+                  </Box>
+                  <Box overflow="hidden">
+                    <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "0.88rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 145 }}>{currentUser.name}</Typography>
+                    <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.7rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 145 }}>{currentUser.email}</Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Account info option */}
+              <Box onClick={() => { setUserMenuEl(null); setAccountOpen(true); }} sx={{ px: 2, py: 1.3, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(107,140,90,0.12)" } }}>
+                <Box sx={{ width: 30, height: 30, borderRadius: "8px", background: "rgba(107,140,90,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>👤</Box>
+                <Box>
+                  <Typography sx={{ color: "#fff", fontSize: "0.85rem", fontWeight: 600 }}>Account settings</Typography>
+                  <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.68rem" }}>Edit profile · change password</Typography>
+                </Box>
+              </Box>
+
+              <Box sx={{ mx: 2, height: "1px", background: "rgba(255,255,255,0.06)", my: 0.5 }} />
+
+              {/* Sign out option */}
+              <Box onClick={() => { setUserMenuEl(null); handleLogout(); }} sx={{ px: 2, py: 1.3, mb: 0.5, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", borderRadius: "0 0 10px 10px", "&:hover": { background: "rgba(239,68,68,0.1)" } }}>
+                <Box sx={{ width: 30, height: 30, borderRadius: "8px", background: "rgba(239,68,68,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem" }}>🚪</Box>
+                <Box>
+                  <Typography sx={{ color: "#f87171", fontSize: "0.85rem", fontWeight: 600 }}>Sign out</Typography>
+                  <Typography sx={{ color: "rgba(239,68,68,0.4)", fontSize: "0.68rem" }}>See you next time!</Typography>
+                </Box>
+              </Box>
+            </Menu>
+          </>
         )}
       </Box>
       <Box flex={1} sx={{
