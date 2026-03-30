@@ -789,7 +789,7 @@ const MicButton = ({ onResult, langCode = "en-US", size = 20 }) => {
 
 
 // ─── Language Pill ────────────────────────────────────────────────────────────
-const LanguagePill = ({ value, onChange, accentColor = "#6b8c5a", accentBg = "#f0f4ec" }) => {
+const LanguagePill = ({ value, onChange, accentColor = "#6b8c5a", accentBg = "#f0f4ec", dark = false }) => {
   const [open, setOpen] = useState(false);
   const current = LANGUAGES.find(l => l.value === value) || LANGUAGES[0];
   const groups = ["Indian", "International"];
@@ -802,18 +802,18 @@ const LanguagePill = ({ value, onChange, accentColor = "#6b8c5a", accentBg = "#f
         sx={{
           display: "inline-flex", alignItems: "center", gap: 0.8,
           px: 1.4, py: 0.6, borderRadius: "20px", cursor: "pointer",
-          border: `1.5px solid ${open ? accentColor : "#e5e7eb"}`,
-          background: open ? accentBg : "#fff",
+          border: `1.5px solid ${open ? accentColor : dark ? "rgba(255,255,255,0.15)" : "#e5e7eb"}`,
+          background: open ? (dark ? "rgba(107,140,90,0.2)" : accentBg) : dark ? "rgba(255,255,255,0.06)" : "#fff",
           transition: "all 0.18s",
-          "&:hover": { borderColor: accentColor, background: accentBg },
+          "&:hover": { borderColor: accentColor, background: dark ? "rgba(107,140,90,0.16)" : accentBg },
           userSelect: "none",
         }}
       >
         <Typography sx={{ fontSize: "1rem", lineHeight: 1 }}>{current.flag}</Typography>
-        <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#374151", maxWidth: 72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: dark ? "rgba(255,255,255,0.85)" : "#374151", maxWidth: 72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {current.label}
         </Typography>
-        <Typography sx={{ fontSize: "0.6rem", color: "#9ca3af", ml: 0.2 }}>▼</Typography>
+        <Typography sx={{ fontSize: "0.6rem", color: dark ? "rgba(255,255,255,0.35)" : "#9ca3af", ml: 0.2 }}>▼</Typography>
       </Box>
 
       {/* Dropdown */}
@@ -5284,24 +5284,6 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           })}
         </Box>
 
-        {savedRecipes.length > 0 && (
-          <Box sx={{
-            mx: sidebarOpen ? 1.5 : 1, mb: 1, flexShrink: 0,
-            p: sidebarOpen ? 1.5 : 1,
-            background: "rgba(107,140,90,0.12)", borderRadius: 2,
-            border: "1px solid rgba(107,140,90,0.2)",
-            display: "flex", alignItems: "center",
-            justifyContent: sidebarOpen ? "flex-start" : "center",
-            gap: 1, overflow: "hidden",
-          }}>
-            <Typography sx={{ fontSize: sidebarOpen ? "0.75rem" : "0.9rem", flexShrink: 0 }}>💾</Typography>
-            {sidebarOpen && (
-              <Typography variant="caption" sx={{ color: "#a8c298", fontWeight: 700, whiteSpace: "nowrap" }}>
-                {savedRecipes.length} saved recipe{savedRecipes.length !== 1 ? "s" : ""}
-              </Typography>
-            )}
-          </Box>
-        )}
         {/* Grocery list badge */}
         <Box onClick={() => setGroceryListOpen(true)} sx={{
           mx: sidebarOpen ? 1.5 : 1, mb: 2.5, flexShrink: 0,
@@ -5353,6 +5335,9 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         }}>
           {currentUser ? (
             <>
+              {/* ── Global Language Selector ── */}
+              <LanguagePill value={language} onChange={setLanguage} accentColor="#6b8c5a" accentBg="rgba(107,140,90,0.12)" dark />
+
               {/* ── Bell icon ── */}
               <Tooltip title={lowStockItems.length > 0 ? `${lowStockItems.length} pantry alert${lowStockItems.length !== 1 ? "s" : ""}` : "Pantry alerts"} arrow placement="bottom">
                 <Box onClick={() => setNotifPanelOpen(true)} sx={{
@@ -5443,7 +5428,6 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   { icon: "👤", label: "Account settings",    sub: "Edit profile · change password",  action: () => { setUserMenuEl(null); setAccountOpen(true); } },
                   { icon: "🔖", label: "Saved recipes",        sub: "Your bookmarked recipes",          action: () => { setUserMenuEl(null); setPage("saved"); } },
                   { icon: "📦", label: "My pantry",            sub: "Manage your ingredients",          action: () => { setUserMenuEl(null); setPage("pantry"); } },
-                  { icon: "🛒", label: "Grocery list",         sub: `${groceryList.length} items`,      action: () => { setUserMenuEl(null); setGroceryListOpen(true); } },
                 ].map((item, i) => (
                   <Box key={i} onClick={item.action} sx={{ px: 2, py: 1.2, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(107,140,90,0.12)" } }}>
                     <Box sx={{ width: 30, height: 30, borderRadius: "8px", background: "rgba(107,140,90,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.88rem", flexShrink: 0 }}>{item.icon}</Box>
@@ -5458,7 +5442,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
                 {/* Preferences */}
                 {[
-                  { icon: "🌐", label: "Language",    sub: language || "English",   action: () => { setUserMenuEl(null); setPage("recipes"); } },
+                  { icon: "🌐", label: "Language",    sub: language || "English",   action: () => { setUserMenuEl(null); } },
                   { icon: "❓", label: "Help & support", sub: "Tips, FAQ & feedback", action: () => { setUserMenuEl(null); setHelpOpen(true); } },
                 ].map((item, i) => (
                   <Box key={i} onClick={item.action} sx={{ px: 2, py: 1.2, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(107,140,90,0.12)" } }}>
@@ -5709,13 +5693,6 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                     <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.95rem", maxWidth: 520 }}>
                       Add your ingredients, set your filters (including cuisine!), and get perfectly crafted recipes
                     </Typography>
-                  </Box>
-                  {/* Language selector */}
-                  <Box sx={{ mt: 0.5 }}>
-                    <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.8 }}>
-                      Recipe Language
-                    </Typography>
-                    <LanguagePill value={language} onChange={setLanguage} accentColor="#b8714e" accentBg="#f0f4ec" />
                   </Box>
                 </Box>
               </Box>
@@ -6360,12 +6337,6 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                     <Typography sx={{ fontWeight: 900, fontSize: { xs: "1.8rem", md: "2.4rem" }, letterSpacing: "-1.5px", color: "#fff", lineHeight: 1.1, mb: 1 }}>📅 Meal Planner</Typography>
                     <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.95rem", maxWidth: 520 }}>Generate 5-day meal plans with shopping list and nutrition analysis</Typography>
                   </Box>
-                  <Box sx={{ mt: 0.5 }}>
-                    <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.8 }}>
-                      Plan Language
-                    </Typography>
-                    <LanguagePill value={language} onChange={setLanguage} accentColor="#3b82f6" accentBg="#eff6ff" />
-                  </Box>
                 </Box>
               </Box>
             </Box>
@@ -6693,13 +6664,6 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   </Typography>
                 </Box>
                 <Box display="flex" alignItems="flex-end" gap={2} flexWrap="wrap">
-                  {/* Language selector */}
-                  <Box>
-                    <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.65rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.8 }}>
-                      Recipe Language
-                    </Typography>
-                    <LanguagePill value={language} onChange={setLanguage} accentColor="#b8714e" accentBg="#f0f4ec" />
-                  </Box>
                   {pantryItems.some(i => i.inStock) && (
                     <Button variant="contained" onClick={importPantryToGenerator}
                       sx={{ background: "linear-gradient(135deg, #b8714e, #6b8c5a)", borderRadius: 2, fontWeight: 700, boxShadow: "0 4px 16px rgba(107,140,90,0.3)" }}>
