@@ -4013,19 +4013,8 @@ export default function App() {
         filters: { cuisine: activeCuisine, foodTypes: activeFoodTypes, diet: activeDiet, difficulty: activeDifficulty },
         language,
       });
-      const recipes = res.data.recipes || [];
-      setNutritionRecipes(recipes);
+      setNutritionRecipes(res.data.recipes || []);
       setTimeout(() => document.getElementById("nutrition-anchor")?.scrollIntoView({ behavior: "smooth" }), 150);
-
-      // 🚀 Prefetch details for all 4 nutrition recipes in background
-      const titles = recipes.map(r => r.title).filter(Boolean);
-      if (titles.length) {
-        fetch(`${API}/prefetch-details`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ titles, language }),
-        }).catch(() => {});
-      }
     } catch { showToast("Error generating nutrition-based recipes", "error"); }
     setNutritionLoading(false);
   };
@@ -4063,18 +4052,6 @@ export default function App() {
       });
       setMpPantryPlan(res.data.plan);
       setTimeout(() => document.getElementById("pantry-plan-anchor")?.scrollIntoView({ behavior: "smooth" }), 150);
-
-      // 🚀 Prefetch all 20 meal recipe details in background (5 days × 4 meals)
-      const titles = (res.data.plan || [])
-        .flatMap(d => Object.values(d.meals || {}).map(m => m.name))
-        .filter(Boolean);
-      if (titles.length) {
-        fetch(`${API}/prefetch-details`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ titles, language }),
-        }).catch(() => {});
-      }
     } catch { showToast("Error generating pantry meal plan", "error"); }
     setMpPantryLoading(false);
   };
@@ -4092,18 +4069,6 @@ export default function App() {
       });
       setMpGroceryPlan(res.data.plan);
       setTimeout(() => document.getElementById("grocery-plan-anchor")?.scrollIntoView({ behavior: "smooth" }), 150);
-
-      // 🚀 Prefetch all 20 meal recipe details in background (5 days × 4 meals)
-      const titles = (res.data.plan || [])
-        .flatMap(d => Object.values(d.meals || {}).map(m => m.name))
-        .filter(Boolean);
-      if (titles.length) {
-        fetch(`${API}/prefetch-details`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ titles, language }),
-        }).catch(() => {});
-      }
     } catch { showToast("Error generating full pantry meal plan", "error"); }
     setMpGroceryLoading(false);
   };
