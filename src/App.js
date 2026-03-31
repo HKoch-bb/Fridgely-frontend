@@ -3701,6 +3701,7 @@ export default function App() {
   const [activeDifficulty, setActiveDifficulty] = useState(null);
   const [activeCuisine, setActiveCuisine] = useState([]);
   const [recipes, setRecipes] = useState({ strict: [], flexible: [] });
+  const [flexibleOpen, setFlexibleOpen] = useState(false);
   const [recipeLoading, setRecipeLoading] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -3953,20 +3954,25 @@ export default function App() {
         language,
       });
       setRecipes(res.data);
+      setFlexibleOpen(false); // always start collapsed when new results arrive
       setTimeout(() => document.getElementById("results-anchor")?.scrollIntoView({ behavior: "smooth" }), 150);
 
       // 🚀 Background prefetch: warm the cache for all recipe details now
-      // so clicking any card is instant instead of waiting 5+ seconds
-      const allTitles = [
-        ...(res.data.strict  || []),
-        ...(res.data.flexible || []),
-      ].map(r => r.title).filter(Boolean);
-      if (allTitles.length) {
+      const strictTitles   = (res.data.strict   || []).map(r => r.title).filter(Boolean);
+      const flexibleTitles = (res.data.flexible || []).map(r => r.title).filter(Boolean);
+      if (strictTitles.length) {
         fetch(`${API}/prefetch-details`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ titles: allTitles, language }),
-        }).catch(() => {}); // fire-and-forget, errors silently ignored
+          body: JSON.stringify({ titles: strictTitles, language, strictIngredients: ingredients }),
+        }).catch(() => {});
+      }
+      if (flexibleTitles.length) {
+        fetch(`${API}/prefetch-details`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ titles: flexibleTitles, language }),
+        }).catch(() => {});
       }
     } catch { showToast("Error generating recipes", "error"); }
     setRecipeLoading(false);
@@ -4061,13 +4067,13 @@ export default function App() {
     setNutritionLoading(false);
   };
 
-  const swapMeal = async (plan, setPlan, day, mealType, filters, ingredients = []) => {
+  const swapMeal = async (plan, setPlan, day, mealType, filters, ingredients = [], strict = false) => {
     const key = `${day}-${mealType}`;
     setSwapping(prev => ({ ...prev, [key]: true }));
     const currentMeal = plan.find(d => d.day === day)?.meals?.[mealType]?.name || "";
     try {
       const res = await axios.post(`${API}/swap-meal`, {
-        day, mealType, currentMeal, ingredients, filters, language,
+        day, mealType, currentMeal, ingredients, filters, language, strict,
       });
       const { name, note } = res.data;
       setPlan(prev => prev.map(d =>
@@ -4116,9 +4122,8 @@ export default function App() {
   };
 
   // ── Recipe details ──
-  const fetchDetails = async (title) => {
+  const fetchDetails = async (title, strictIngredients = []) => {
     setOpen(true); setServingMultiplier(1);
-    // Track in history — increment viewCount if already seen, expire after 30 days, cap at 30
     setRecipeHistory(prev => {
       const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
       const existing = prev.find(h => h.title === title);
@@ -4132,12 +4137,18 @@ export default function App() {
         .filter(h => new Date(h.viewedAt).getTime() > thirtyDaysAgo)
         .slice(0, 30);
     });
-    if (recipeCache[title]) { setDetails(recipeCache[title]); return; }
+    // Use a strict-aware cache key so strict and free details are stored separately
+    const cacheKey = strictIngredients.length ? `${title}::strict` : title;
+    if (recipeCache[cacheKey]) { setDetails(recipeCache[cacheKey]); return; }
     setDetails(null); setDetailsLoading(true);
     try {
-      const res = await axios.post(`${API}/recipe-details`, { recipeName: title, language });
+      const res = await axios.post(`${API}/recipe-details`, {
+        recipeName: title,
+        language,
+        strictIngredients,
+      });
       const enriched = { ...res.data, _title: title };
-      setRecipeCache(prev => ({ ...prev, [title]: enriched }));
+      setRecipeCache(prev => ({ ...prev, [cacheKey]: enriched }));
       setDetails(enriched);
     } catch { showToast("Failed to load details", "error"); }
     setDetailsLoading(false);
@@ -5998,82 +6009,139 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
                   {recipeLoading && (
                     <>
-                      <SectionHeader accent="lock" icon={<LockIcon sx={{ color: "#2e8b7a", fontSize: 22 }} />} title="🔒 Cook With Exactly What You Have" subtitle="Generating strict recipes…" />
-                      <Grid container spacing={2.5}>{[1,2,3].map(i => <Grid item xs={12} sm={6} md={4} key={i}><SkeletonCard /></Grid>)}</Grid>
-                      <SectionHeader accent="bolt" icon={<BoltIcon sx={{ color: "#22c55e", fontSize: 22 }} />} title="⚡ Expand Your Options" subtitle="Generating flexible recipes…" />
+                      <SectionHeader accent="lock" icon={<LockIcon sx={{ color: "#2e8b7a", fontSize: 22 }} />} title="🔒 Cook With Exactly What You Have" subtitle="Finding recipes using only your ingredients…" />
                       <Grid container spacing={2.5}>{[1,2,3].map(i => <Grid item xs={12} sm={6} md={4} key={i}><SkeletonCard /></Grid>)}</Grid>
                     </>
                   )}
 
                   {!recipeLoading && (recipes.strict.length > 0 || recipes.flexible.length > 0) && (
                     <>
-                      <SectionHeader accent="lock" icon={<LockIcon sx={{ color: "#2e8b7a", fontSize: 22 }} />} title="🔒 Cook With Exactly What You Have" subtitle="Recipes use only the exact ingredients you listed — no extras" />
-                      <Grid container spacing={2.5}>
-                        {recipes.strict.map((r, i) => (
-                          <Grid item xs={12} sm={6} md={4} key={i}>
-                            <Card sx={cardSx}>
-                              <Box onClick={() => fetchDetails(r.title)}>
-                                <Box sx={{ position: "relative", height: 160, overflow: "hidden" }}>
-                                  <RecipeImage title={r.title} height={160} />
-                                  <Box sx={badgeSx("rgba(46,139,122,0.92)")}>🔒 EXACT MATCH</Box>
-                                </Box>
-                                <CardContent sx={{ p: 2, pb: 1 }}>
-                                  <Typography fontWeight={700} fontSize="0.93rem" color="#1a1a1a" mb={0.5}>{r.title}</Typography>
-                                  <Typography variant="body2" color="text.secondary" fontSize="0.82rem">{r.preview}</Typography>
-                                </CardContent>
-                              </Box>
-                              <Box px={2} pb={1.5} display="flex" alignItems="center" justifyContent="space-between" onClick={e => e.stopPropagation()}>
-                                <StarRating value={recipeRatings[r.title] || 0} onChange={(v) => setRating(r.title, v)} size={16} />
-                                {(recipeRatings[r.title] || 0) > 0 && <Typography variant="caption" color="#c49a3c" fontWeight={700} fontSize="0.65rem">{recipeRatings[r.title]}/5 ⭐</Typography>}
-                              </Box>
-                            </Card>
-                          </Grid>
-                        ))}
-                      </Grid>
+                      {/* ── STRICT: always visible, front and centre ── */}
+                      <SectionHeader
+                        accent="lock"
+                        icon={<LockIcon sx={{ color: "#2e8b7a", fontSize: 22 }} />}
+                        title="🔒 Cook With Exactly What You Have"
+                        subtitle="Recipes made only from the ingredients you listed — nothing extra"
+                      />
 
-                      <SectionHeader accent="bolt" icon={<BoltIcon sx={{ color: "#22c55e", fontSize: 22 }} />} title="⚡ Expand Your Options" subtitle="Your ingredients as the base — plus smart extras suggested" />
-                      <Grid container spacing={2.5}>
-                        {recipes.flexible.map((r, i) => (
-                          <Grid item xs={12} sm={6} md={4} key={i}>
-                            <Card sx={cardSx}>
-                              <Box onClick={() => fetchDetails(r.title)}>
-                                <Box sx={{ position: "relative", height: 160, overflow: "hidden" }}>
-                                  <RecipeImage title={r.title} height={160} />
-                                  <Box sx={badgeSx("rgba(34,197,94,0.92)")}>⚡ EXPANDED</Box>
+                      {recipes.strict.length === 0 ? (
+                        <Box sx={{ background: "#f9fafb", border: "1.5px dashed #99d6ce", borderRadius: 3, p: 4, textAlign: "center", mb: 2 }}>
+                          <Typography fontSize="2rem" mb={1}>🤔</Typography>
+                          <Typography fontWeight={700} color="#374151" mb={0.5}>Not enough for a full recipe</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            The ingredients you listed can't make a standalone dish on their own. Try the expanded options below.
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Grid container spacing={2.5}>
+                        {recipes.strict.map((r, i) => (
+                            <Grid item xs={12} sm={6} md={4} key={i}>
+                              <Card sx={cardSx}>
+                                <Box onClick={() => fetchDetails(r.title, ingredients)}>
+                                  <Box sx={{ position: "relative", height: 160, overflow: "hidden" }}>
+                                    <RecipeImage title={r.title} height={160} />
+                                    <Box sx={badgeSx("rgba(46,139,122,0.92)")}>🔒 EXACT MATCH</Box>
+                                  </Box>
+                                  <CardContent sx={{ p: 2, pb: 1 }}>
+                                    <Typography fontWeight={700} fontSize="0.93rem" color="#1a1a1a" mb={0.5}>{r.title}</Typography>
+                                    <Typography variant="body2" color="text.secondary" fontSize="0.82rem">{r.preview}</Typography>
+                                  </CardContent>
                                 </Box>
-                                <CardContent sx={{ p: 2, pb: 1 }}>
-                                  <Typography fontWeight={700} fontSize="0.93rem" color="#1a1a1a" mb={0.5}>{r.title}</Typography>
-                                  <Typography variant="body2" color="text.secondary" fontSize="0.82rem" mb={1}>{r.preview}</Typography>
-                                  {r.missing_ingredients?.length > 0 && (
-                                    <Box>
-                                      <Typography variant="caption" sx={{ fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", fontSize: "0.64rem" }}>You'll also need:</Typography>
-                                      <Box display="flex" flexWrap="wrap" gap={0.5} mt={0.5}>
-                                        {r.missing_ingredients.map((m, idx) => (
-                                          <Chip key={idx} label={[m.qty, m.unit, m.name].filter(Boolean).join(" ")} size="small"
-                                            sx={{ background: "#f0fdf4", color: "#0d9488", border: "1px solid #86efac", fontWeight: 600, fontSize: "0.71rem", height: 22 }} />
-                                        ))}
+                                <Box px={2} pb={1.5} display="flex" alignItems="center" justifyContent="space-between" onClick={e => e.stopPropagation()}>
+                                  <StarRating value={recipeRatings[r.title] || 0} onChange={(v) => setRating(r.title, v)} size={16} />
+                                  {(recipeRatings[r.title] || 0) > 0 && <Typography variant="caption" color="#c49a3c" fontWeight={700} fontSize="0.65rem">{recipeRatings[r.title]}/5 ⭐</Typography>}
+                                </Box>
+                              </Card>
+                            </Grid>
+                          ))}
+                        </Grid>
+                      )}
+
+                      {/* ── FLEXIBLE: collapsed by default, expand on click ── */}
+                      {recipes.flexible.length > 0 && (
+                        <Box mt={4}>
+                          <Box
+                            onClick={() => setFlexibleOpen(o => !o)}
+                            sx={{
+                              display: "flex", alignItems: "center", justifyContent: "space-between",
+                              background: flexibleOpen
+                                ? "linear-gradient(135deg, #1a2e28, #1e3830)"
+                                : "linear-gradient(135deg, #1a1e14, #1e2b1a)",
+                              borderRadius: flexibleOpen ? "12px 12px 0 0" : "12px",
+                              px: 3, py: 2,
+                              cursor: "pointer",
+                              border: "1.5px solid rgba(46,139,122,0.35)",
+                              borderBottom: flexibleOpen ? "none" : "1.5px solid rgba(46,139,122,0.35)",
+                              transition: "all 0.2s",
+                              "&:hover": { background: "linear-gradient(135deg, #1e3428, #243a2e)", borderColor: "rgba(46,139,122,0.6)" },
+                            }}
+                          >
+                            <Box display="flex" alignItems="center" gap={1.5}>
+                              <Box sx={{ width: 36, height: 36, borderRadius: "10px", background: "rgba(46,139,122,0.2)", border: "1px solid rgba(46,139,122,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem" }}>⚡</Box>
+                              <Box>
+                                <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem", lineHeight: 1.2 }}>
+                                  Expand Your Options
+                                </Typography>
+                                <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.75rem" }}>
+                                  {recipes.flexible.length} more recipes — grab a few extra ingredients
+                                </Typography>
+                              </Box>
+                            </Box>
+                            <Box sx={{
+                              color: "rgba(255,255,255,0.6)", fontSize: "0.75rem",
+                              transform: flexibleOpen ? "rotate(180deg)" : "rotate(0deg)",
+                              transition: "transform 0.25s",
+                            }}>▼</Box>
+                          </Box>
+
+                          {flexibleOpen && (
+                            <Box sx={{ background: "rgba(46,139,122,0.04)", border: "1.5px solid rgba(46,139,122,0.25)", borderTop: "none", borderRadius: "0 0 12px 12px", p: 2.5 }}>
+                              <Grid container spacing={2.5}>
+                                {recipes.flexible.map((r, i) => (
+                                  <Grid item xs={12} sm={6} md={4} key={i}>
+                                    <Card sx={cardSx}>
+                                      <Box onClick={() => fetchDetails(r.title)}>
+                                        <Box sx={{ position: "relative", height: 160, overflow: "hidden" }}>
+                                          <RecipeImage title={r.title} height={160} />
+                                          <Box sx={badgeSx("rgba(13,148,136,0.92)")}>⚡ +EXTRAS</Box>
+                                        </Box>
+                                        <CardContent sx={{ p: 2, pb: 1 }}>
+                                          <Typography fontWeight={700} fontSize="0.93rem" color="#1a1a1a" mb={0.5}>{r.title}</Typography>
+                                          <Typography variant="body2" color="text.secondary" fontSize="0.82rem" mb={1}>{r.preview}</Typography>
+                                          {r.missing_ingredients?.length > 0 && (
+                                            <Box>
+                                              <Typography variant="caption" sx={{ fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.06em", fontSize: "0.64rem" }}>You'll also need:</Typography>
+                                              <Box display="flex" flexWrap="wrap" gap={0.5} mt={0.5}>
+                                                {r.missing_ingredients.map((m, idx) => (
+                                                  <Chip key={idx} label={[m.qty, m.unit, m.name].filter(Boolean).join(" ")} size="small"
+                                                    sx={{ background: "#f0fdf9", color: "#0d9488", border: "1px solid #99d6ce", fontWeight: 600, fontSize: "0.71rem", height: 22 }} />
+                                                ))}
+                                              </Box>
+                                            </Box>
+                                          )}
+                                        </CardContent>
                                       </Box>
-                                    </Box>
-                                  )}
-                                </CardContent>
-                              </Box>
-                              {r.missing_ingredients?.length > 0 && (
-                                <Box px={2} pb={1}>
-                                  <Button size="small" startIcon={<ShoppingCartIcon sx={{ fontSize: 14 }} />}
-                                    onClick={() => openFlexibleShoppingList(r)}
-                                    sx={{ color: "#0d9488", fontSize: "0.75rem", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 1.5, py: 0.3 }}>
-                                    Shopping List
-                                  </Button>
-                                </Box>
-                              )}
-                              <Box px={2} pb={1.5} display="flex" alignItems="center" justifyContent="space-between" onClick={e => e.stopPropagation()}>
-                                <StarRating value={recipeRatings[r.title] || 0} onChange={(v) => setRating(r.title, v)} size={16} />
-                                {(recipeRatings[r.title] || 0) > 0 && <Typography variant="caption" color="#c49a3c" fontWeight={700} fontSize="0.65rem">{recipeRatings[r.title]}/5 ⭐</Typography>}
-                              </Box>
-                            </Card>
-                          </Grid>
-                        ))}
-                      </Grid>
+                                      {r.missing_ingredients?.length > 0 && (
+                                        <Box px={2} pb={1}>
+                                          <Button size="small" startIcon={<ShoppingCartIcon sx={{ fontSize: 14 }} />}
+                                            onClick={() => openFlexibleShoppingList(r)}
+                                            sx={{ color: "#0d9488", fontSize: "0.75rem", background: "#f0fdf9", border: "1px solid #99d6ce", borderRadius: 1.5, py: 0.3 }}>
+                                            Shopping List
+                                          </Button>
+                                        </Box>
+                                      )}
+                                      <Box px={2} pb={1.5} display="flex" alignItems="center" justifyContent="space-between" onClick={e => e.stopPropagation()}>
+                                        <StarRating value={recipeRatings[r.title] || 0} onChange={(v) => setRating(r.title, v)} size={16} />
+                                        {(recipeRatings[r.title] || 0) > 0 && <Typography variant="caption" color="#c49a3c" fontWeight={700} fontSize="0.65rem">{recipeRatings[r.title]}/5 ⭐</Typography>}
+                                      </Box>
+                                    </Card>
+                                  </Grid>
+                                ))}
+                              </Grid>
+                            </Box>
+                          )}
+                        </Box>
+                      )}
                     </>
                   )}
                 </Box>
@@ -6701,10 +6769,11 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                     )}
                   </Box>
                   <div id="pantry-plan-anchor" />
-                  <MealPlanGrid plan={mpPantryPlan} onViewRecipe={fetchDetails} recipeRatings={recipeRatings} onRate={setRating}
+                  <MealPlanGrid plan={mpPantryPlan} onViewRecipe={(title) => fetchDetails(title, mpSelectedPantryIdxs.map(idx => pantryItems[idx]).filter(Boolean))} recipeRatings={recipeRatings} onRate={setRating}
                     onSwap={(day, meal) => swapMeal(mpPantryPlan, setMpPantryPlan, day, meal,
                       { cuisine: mpPantryCuisine, foodTypes: mpPantryFoodTypes, diet: mpPantryDiet, difficulty: mpPantryDifficulty },
-                      mpSelectedPantryIdxs.map(idx => pantryItems[idx]).filter(Boolean)
+                      mpSelectedPantryIdxs.map(idx => pantryItems[idx]).filter(Boolean),
+                      true  // strict — only selected pantry items
                     )}
                     swapping={swapping}
                   />
