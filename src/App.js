@@ -132,10 +132,10 @@ const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"];
 
 const DAY_COLORS = {
-  Monday:    { bg: "#f0f4ec", border: "#b8cead", accent: "#6b8c5a", text: "#3d6b2a" },
+  Monday:    { bg: "#e8f7f5", border: "#99d6ce", accent: "#2e8b7a", text: "#1a6b5e" },
   Tuesday:   { bg: "#fdf4ff", border: "#e9d5ff", accent: "#a855f7", text: "#7e22ce" },
   Wednesday: { bg: "#eff6ff", border: "#bfdbfe", accent: "#3b82f6", text: "#1d4ed8" },
-  Thursday:  { bg: "#f0fdf4", border: "#bbf7d0", accent: "#22c55e", text: "#15803d" },
+  Thursday:  { bg: "#f0fdf4", border: "#bbf7d0", accent: "#22c55e", text: "#0d9488" },
   Friday:    { bg: "#f0f3f8", border: "#c8c0d8", accent: "#7c6ea8", text: "#4a3e80" },
 };
 
@@ -150,7 +150,7 @@ const ToastContainer = ({ toasts, removeToast }) => (
       <Box key={t.id} sx={{
         pointerEvents: "auto",
         background: t.type === "error" ? "#1c1c1c" : t.type === "success" ? "#052e16" : "#1c1c1c",
-        border: `1px solid ${t.type === "error" ? "#6b8c5a" : t.type === "success" ? "#22c55e" : "#374151"}`,
+        border: `1px solid ${t.type === "error" ? "#2e8b7a" : t.type === "success" ? "#22c55e" : "#374151"}`,
         borderRadius: 2, px: 2.5, py: 1.5,
         display: "flex", alignItems: "center", gap: 1.5,
         boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
@@ -177,7 +177,7 @@ const ToastContainer = ({ toasts, removeToast }) => (
 );
 
 // ─── Smart Input Panel (Voice + Photo + Barcode) ─────────────────────────────
-const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor = "#6b8c5a" }) => {
+const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor = "#2e8b7a" }) => {
   const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
   const [mode, setMode] = useState(null); // null | "voice" | "photo" | "barcode"
   const [listening, setListening]     = useState(false);
@@ -437,8 +437,8 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
     <Box sx={{ display: "flex", gap: 1.5, mt: 1.5, mb: 0.5 }}>
       {/* Voice */}
       <Box onClick={() => { setMode("voice"); setTimeout(startListening, 100); }}
-        sx={{ ...btnBase, background: "linear-gradient(135deg, #f0f4ec, #e8f0e4)", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 6px 20px rgba(107,140,90,0.2)", borderColor: accentColor } }}>
-        <Box sx={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(107,140,90,0.35)" }}>
+        sx={{ ...btnBase, background: "linear-gradient(135deg, #f0f4ec, #e8f0e4)", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 6px 20px rgba(46,139,122,0.2)", borderColor: accentColor } }}>
+        <Box sx={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(46,139,122,0.35)" }}>
           <MicNoneIcon sx={{ fontSize: 20, color: "#fff" }} />
         </Box>
         <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: "#374151" }}>Voice</Typography>
@@ -470,7 +470,7 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
 
   // ── Active panel ──
   const panelColors = {
-    voice:   { bg: "#f0f4ec", accent: "#5a7c4a", border: "#a8c298" },
+    voice:   { bg: "#f0f4ec", accent: "#2e8b7a", border: "#99d6ce" },
     photo:   { bg: "#fef3ec", accent: "#2e8b7a", border: "#f0c4a0" },
     barcode: { bg: "#eff6ff", accent: "#3b82f6", border: "#93c5fd" },
   };
@@ -499,9 +499,9 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
               onClick={listening ? stopAndParse : startListening}
               sx={{
                 width: 72, height: 72, borderRadius: "50%", cursor: "pointer",
-                background: listening ? "linear-gradient(135deg, #ef4444, #dc2626)" : `linear-gradient(135deg, ${pc.accent}, #4a6a3a)`,
+                background: listening ? "linear-gradient(135deg, #ef4444, #dc2626)" : `linear-gradient(135deg, ${pc.accent}, #1a6b5e)`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: listening ? "0 0 0 8px rgba(239,68,68,0.15), 0 8px 24px rgba(239,68,68,0.3)" : "0 8px 24px rgba(107,140,90,0.35)",
+                boxShadow: listening ? "0 0 0 8px rgba(239,68,68,0.15), 0 8px 24px rgba(239,68,68,0.3)" : "0 8px 24px rgba(46,139,122,0.35)",
                 transition: "all 0.3s",
                 animation: listening ? "ripple 1.5s ease-in-out infinite" : "none",
                 "@keyframes ripple": { "0%": { boxShadow: "0 0 0 0 rgba(239,68,68,0.3), 0 8px 24px rgba(239,68,68,0.3)" }, "100%": { boxShadow: "0 0 0 20px rgba(239,68,68,0), 0 8px 24px rgba(239,68,68,0.3)" } },
@@ -533,7 +533,7 @@ const SmartInputPanel = ({ onAddIngredients, language = "English", accentColor =
                 ))}
               </Box>
               <Button fullWidth variant="contained" onClick={confirm}
-                sx={{ background: `linear-gradient(135deg, ${pc.accent}, #4a6a3a)`, borderRadius: "10px", fontWeight: 700, boxShadow: "none" }}>
+                sx={{ background: `linear-gradient(135deg, ${pc.accent}, #1a6b5e)`, borderRadius: "10px", fontWeight: 700, boxShadow: "none" }}>
                 Add {selected.length} ingredient{selected.length !== 1 ? "s" : ""} →
               </Button>
             </>
@@ -793,10 +793,10 @@ const MicButton = ({ onResult, langCode = "en-US", size = 20 }) => {
   return (
     <Tooltip title={listening ? "Stop listening" : "Speak ingredient name"} arrow>
       <IconButton onClick={toggle} size="small" sx={{
-        color: listening ? "#6b8c5a" : "#9ca3af",
+        color: listening ? "#2e8b7a" : "#9ca3af",
         animation: listening ? "micPulse 1s infinite" : "none",
         "@keyframes micPulse": { "0%,100%": { opacity: 1, transform: "scale(1)" }, "50%": { opacity: 0.5, transform: "scale(1.15)" } },
-        "&:hover": { color: "#6b8c5a" },
+        "&:hover": { color: "#2e8b7a" },
       }}>
         {listening ? <MicIcon sx={{ fontSize: size }} /> : <MicNoneIcon sx={{ fontSize: size }} />}
       </IconButton>
@@ -806,84 +806,112 @@ const MicButton = ({ onResult, langCode = "en-US", size = 20 }) => {
 
 
 // ─── Language Pill ────────────────────────────────────────────────────────────
-const LanguagePill = ({ value, onChange, accentColor = "#6b8c5a", accentBg = "#f0f4ec", dark = false }) => {
+const LanguagePill = ({ value, onChange, accentColor = "#2e8b7a", accentBg = "#f0f4ec", dark = false }) => {
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
   const current = LANGUAGES.find(l => l.value === value) || LANGUAGES[0];
   const groups = ["Indian", "International"];
 
+  // ── Click-outside closes dropdown reliably ──
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, [open]);
+
   return (
-    <Box sx={{ position: "relative" }}>
+    <Box ref={ref} sx={{ position: "relative" }}>
       {/* Trigger */}
       <Box
         onClick={() => setOpen(o => !o)}
         sx={{
           display: "inline-flex", alignItems: "center", gap: 0.8,
-          px: 1.4, py: 0.6, borderRadius: "20px", cursor: "pointer",
-          border: `1.5px solid ${open ? accentColor : dark ? "rgba(255,255,255,0.15)" : "#e5e7eb"}`,
-          background: open ? (dark ? "rgba(107,140,90,0.2)" : accentBg) : dark ? "rgba(255,255,255,0.06)" : "#fff",
+          px: 1.5, py: 0.65, borderRadius: "20px", cursor: "pointer",
+          border: `1.5px solid ${open ? accentColor : dark ? "rgba(255,255,255,0.28)" : "#e5e7eb"}`,
+          background: open
+            ? (dark ? "rgba(46,139,122,0.25)" : accentBg)
+            : dark ? "rgba(255,255,255,0.1)" : "#fff",
           transition: "all 0.18s",
-          "&:hover": { borderColor: accentColor, background: dark ? "rgba(107,140,90,0.16)" : accentBg },
+          "&:hover": { borderColor: accentColor, background: dark ? "rgba(46,139,122,0.2)" : accentBg },
           userSelect: "none",
+          boxShadow: dark ? "0 2px 8px rgba(0,0,0,0.25)" : "none",
         }}
       >
-        <Typography sx={{ fontSize: "1rem", lineHeight: 1 }}>{current.flag}</Typography>
-        <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, color: dark ? "rgba(255,255,255,0.85)" : "#374151", maxWidth: 72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <Typography sx={{ fontSize: "0.88rem", lineHeight: 1 }}>{current.flag}</Typography>
+        <Typography sx={{
+          fontSize: "0.78rem", fontWeight: 700,
+          color: dark ? "#fff" : "#374151",
+          maxWidth: 72, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        }}>
           {current.label}
         </Typography>
-        <Typography sx={{ fontSize: "0.6rem", color: dark ? "rgba(255,255,255,0.35)" : "#9ca3af", ml: 0.2 }}>▼</Typography>
+        <Typography sx={{
+          fontSize: "0.55rem",
+          color: dark ? "rgba(255,255,255,0.6)" : "#9ca3af",
+          ml: 0.2,
+          transform: open ? "rotate(180deg)" : "none",
+          transition: "transform 0.2s",
+          display: "inline-block",
+        }}>▼</Typography>
       </Box>
 
-      {/* Dropdown */}
+      {/* Dropdown — renders via portal-like fixed positioning so it escapes stacking contexts */}
       {open && (
-        <>
-          {/* Backdrop */}
-          <Box onClick={() => setOpen(false)} sx={{ position: "fixed", inset: 0, zIndex: 1299 }} />
-          <Box sx={{
-            position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 1300,
-            background: "#fff", borderRadius: 2.5,
-            border: "1px solid #e5e7eb",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.13)",
-            minWidth: 200, maxHeight: 360, overflowY: "auto",
-            py: 1,
-          }}>
-            {groups.map(group => (
-              <Box key={group}>
-                <Typography sx={{
-                  px: 2, py: 0.6, fontSize: "0.65rem", fontWeight: 800,
-                  color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em",
-                  borderBottom: "1px solid #f3f4f6", mb: 0.5,
-                }}>
-                  {group === "Indian" ? "🇮🇳 Indian Languages" : "🌍 International"}
-                </Typography>
-                {LANGUAGES.filter(l => l.group === group).map(lang => (
-                  <Box
-                    key={lang.value}
-                    onClick={() => { onChange(lang.value); setOpen(false); }}
-                    sx={{
-                      display: "flex", alignItems: "center", gap: 1.2,
-                      px: 2, py: 0.9, cursor: "pointer",
-                      background: lang.value === value ? accentBg : "transparent",
-                      "&:hover": { background: accentBg },
-                      transition: "background 0.12s",
-                    }}
-                  >
-                    <Typography sx={{ fontSize: "1rem", flexShrink: 0 }}>{lang.flag}</Typography>
-                    <Typography sx={{
-                      fontSize: "0.84rem",
-                      fontWeight: lang.value === value ? 700 : 500,
-                      color: lang.value === value ? accentColor : "#374151",
-                    }}>
-                      {lang.label}
-                    </Typography>
-                    {lang.value === value && (
-                      <Typography sx={{ ml: "auto", fontSize: "0.7rem", color: accentColor }}>✓</Typography>
-                    )}
-                  </Box>
-                ))}
-              </Box>
-            ))}
-          </Box>
-        </>
+        <Box sx={{
+          position: "absolute", top: "calc(100% + 8px)", left: 0, zIndex: 99999,
+          background: "#fff", borderRadius: "12px",
+          border: "1px solid #e5e7eb",
+          boxShadow: "0 16px 48px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)",
+          minWidth: 210, maxHeight: 340, overflowY: "auto",
+          py: 1,
+          "&::-webkit-scrollbar": { width: 4 },
+          "&::-webkit-scrollbar-thumb": { background: "#e5e7eb", borderRadius: 2 },
+        }}>
+          {groups.map(group => (
+            <Box key={group}>
+              <Typography sx={{
+                px: 2, py: 0.7, fontSize: "0.63rem", fontWeight: 800,
+                color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.1em",
+                borderBottom: "1px solid #f3f4f6", mb: 0.5,
+              }}>
+                {group === "Indian" ? "IN Indian Languages" : "🌍 International"}
+              </Typography>
+              {LANGUAGES.filter(l => l.group === group).map(lang => (
+                <Box
+                  key={lang.value}
+                  onClick={() => { onChange(lang.value); setOpen(false); }}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 1.2,
+                    px: 2, py: 0.85, cursor: "pointer",
+                    background: lang.value === value ? (dark ? "rgba(46,139,122,0.1)" : accentBg) : "transparent",
+                    "&:hover": { background: dark ? "rgba(46,139,122,0.08)" : accentBg },
+                    transition: "background 0.12s",
+                  }}
+                >
+                  <Typography sx={{ fontSize: "0.95rem", flexShrink: 0 }}>{lang.flag}</Typography>
+                  <Typography sx={{
+                    fontSize: "0.84rem",
+                    fontWeight: lang.value === value ? 700 : 500,
+                    color: lang.value === value ? accentColor : "#374151",
+                    flex: 1,
+                  }}>
+                    {lang.label}
+                  </Typography>
+                  {lang.value === value && (
+                    <Typography sx={{ fontSize: "0.75rem", color: accentColor, fontWeight: 700 }}>✓</Typography>
+                  )}
+                </Box>
+              ))}
+            </Box>
+          ))}
+        </Box>
       )}
     </Box>
   );
@@ -1151,14 +1179,14 @@ const EmptyStateIllustration = ({ type, message, subMessage, action }) => {
   const illustrations = {
     pantry: (
       <svg width="140" height="120" viewBox="0 0 140 120">
-        <rect x="20" y="30" width="100" height="75" rx="8" fill="#f0f4ec" stroke="#b8cead" strokeWidth="2"/>
+        <rect x="20" y="30" width="100" height="75" rx="8" fill="#f0f4ec" stroke="#99d6ce" strokeWidth="2"/>
         <rect x="30" y="20" width="80" height="20" rx="4" fill="#2e8b7a"/>
         <rect x="35" y="50" width="30" height="8" rx="3" fill="#e8d48a"/>
         <rect x="75" y="50" width="30" height="8" rx="3" fill="#e8d48a"/>
-        <rect x="35" y="65" width="20" height="8" rx="3" fill="#b8cead"/>
-        <rect x="60" y="65" width="45" height="8" rx="3" fill="#b8cead"/>
+        <rect x="35" y="65" width="20" height="8" rx="3" fill="#99d6ce"/>
+        <rect x="60" y="65" width="45" height="8" rx="3" fill="#99d6ce"/>
         <rect x="35" y="80" width="35" height="8" rx="3" fill="#e8d48a"/>
-        <circle cx="110" cy="28" r="14" fill="#6b8c5a"/>
+        <circle cx="110" cy="28" r="14" fill="#2e8b7a"/>
         <text x="110" y="33" textAnchor="middle" fill="white" fontSize="14" fontWeight="bold">+</text>
       </svg>
     ),
@@ -1242,10 +1270,10 @@ const FilterPill = ({ item, active, onClick }) => (
     px: 1.5, py: 0.7, borderRadius: "20px",
     fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", userSelect: "none",
     transition: "all 0.18s ease", border: "1.5px solid",
-    borderColor: active ? "#6b8c5a" : "#e5e7eb",
-    background: active ? "#f0f4ec" : "#fff",
-    color: active ? "#6b8c5a" : "#6b7280",
-    "&:hover": { borderColor: "#6b8c5a", color: "#6b8c5a", background: "#f0f4ec" },
+    borderColor: active ? "#2e8b7a" : "#e5e7eb",
+    background: active ? "#e6f7f5" : "#fff",
+    color: active ? "#2e8b7a" : "#6b7280",
+    "&:hover": { borderColor: "#2e8b7a", color: "#2e8b7a", background: "#f0f4ec" },
   }}>
     <span style={{ fontSize: "1rem" }}>{item.emoji}</span>
     <span>{item.label}</span>
@@ -1263,7 +1291,7 @@ const SectionHeader = ({ icon, title, subtitle, accent }) => (
   }}>
     <Box display="flex" alignItems="center" gap={1}>
       {icon}
-      <Typography variant="h6" fontWeight={800} color={accent === "lock" ? "#5a7a48" : "#15803d"}>
+      <Typography variant="h6" fontWeight={800} color={accent === "lock" ? "#1a6b5e" : "#0d9488"}>
         {title}
       </Typography>
     </Box>
@@ -1335,7 +1363,7 @@ const IngredientChips = ({ items, onRemove }) => (
         onDelete={() => onRemove(idx)}
         deleteIcon={<CloseIcon sx={{ fontSize: "0.85rem !important" }} />}
         sx={{
-          background: "#f0f4ec", color: "#6b8c5a", border: "1px solid #a8c298",
+          background: "#f0f4ec", color: "#2e8b7a", border: "1px solid #99d6ce",
           fontWeight: 600, fontSize: "0.8rem",
           "& .MuiChip-deleteIcon": { color: "#8aaa7a" },
         }}
@@ -1460,11 +1488,11 @@ const FiltersPanel = ({
         px={3} py={2} sx={{ cursor: "pointer", "&:hover": { background: "#fafafa" } }}
         onClick={() => setOpen(!open)}>
         <Box display="flex" alignItems="center" gap={1.2}>
-          <TuneIcon sx={{ color: "#6b8c5a", fontSize: 20 }} />
+          <TuneIcon sx={{ color: "#2e8b7a", fontSize: 20 }} />
           <Typography fontWeight={700} color="#374151">Filters</Typography>
           {total > 0 && (
             <Box sx={{
-              background: "#6b8c5a", color: "#fff", borderRadius: "12px",
+              background: "#2e8b7a", color: "#fff", borderRadius: "12px",
               px: 1, py: 0.1, fontSize: "0.7rem", fontWeight: 800, minWidth: 22, textAlign: "center",
             }}>{total}</Box>
           )}
@@ -1546,7 +1574,7 @@ const FiltersPanel = ({
           <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>Active:</Typography>
           {[...(activeCuisine || []), ...activeFoodTypes, ...activeDiet, ...(activeDifficulty ? [activeDifficulty] : [])].map(f => (
             <Chip key={f} label={f} size="small" sx={{
-              background: "#f0f3ec", color: "#6b8c5a", border: "1px solid #a8c298",
+              background: "#f0f3ec", color: "#2e8b7a", border: "1px solid #99d6ce",
               fontWeight: 600, fontSize: "0.72rem", height: 22,
             }} />
           ))}
@@ -1685,7 +1713,7 @@ const CookMode = ({ open, recipe, onClose, language = "English" }) => {
           value={((step + 1) / steps.length) * 100}
           sx={{
             height: 3, background: "rgba(255,255,255,0.08)",
-            "& .MuiLinearProgress-bar": { background: "linear-gradient(90deg, #2e8b7a, #6b8c5a)" },
+            "& .MuiLinearProgress-bar": { background: "linear-gradient(90deg, #2e8b7a, #0d9488)" },
           }}
         />
 
@@ -1696,10 +1724,10 @@ const CookMode = ({ open, recipe, onClose, language = "English" }) => {
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", p: { xs: 4, md: 8 } }}>
             <Box sx={{
               width: 60, height: 60, borderRadius: "50%",
-              background: "linear-gradient(135deg, #6b8c5a, #4a7a3a)",
+              background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: "1.4rem", fontWeight: 900, color: "#fff", mb: 4,
-              boxShadow: "0 0 32px rgba(107,140,90,0.4)",
+              boxShadow: "0 0 32px rgba(46,139,122,0.4)",
             }}>
               {step + 1}
             </Box>
@@ -1728,8 +1756,8 @@ const CookMode = ({ open, recipe, onClose, language = "English" }) => {
                     onClick={() => setRunning(r => !r)}
                     startIcon={running ? <PauseIcon /> : <PlayArrowIcon />}
                     sx={{
-                      background: running ? "rgba(107,140,90,0.2)" : "linear-gradient(135deg, #2e8b7a, #6b8c5a)",
-                      border: running ? "1px solid rgba(107,140,90,0.5)" : "none",
+                      background: running ? "rgba(46,139,122,0.2)" : "linear-gradient(135deg, #2e8b7a, #0d9488)",
+                      border: running ? "1px solid rgba(46,139,122,0.5)" : "none",
                       borderRadius: 2, fontWeight: 700,
                     }}>
                     {running ? "Pause" : timeLeft === 0 ? "Restart" : "Start Timer"}
@@ -1790,7 +1818,7 @@ const CookMode = ({ open, recipe, onClose, language = "English" }) => {
               onClick={() => setStep(s => s + 1)}
               endIcon={<ChevronRightIcon />}
               sx={{
-                background: "linear-gradient(135deg, #2e8b7a, #6b8c5a)",
+                background: "linear-gradient(135deg, #2e8b7a, #0d9488)",
                 color: "#fff", fontWeight: 700, borderRadius: 2, px: 3,
               }}>
               Next Step
@@ -1963,8 +1991,8 @@ const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
         )}
         {error && <Typography color="error">{error}</Typography>}
         {results.map((sub, i) => (
-          <Box key={i} mb={2} p={2} sx={{ background: "#f0f4ec", borderRadius: 2, border: "1px solid #b8cead" }}>
-            <Typography fontWeight={800} color="#5a7a48" mb={0.3}>{sub.name}</Typography>
+          <Box key={i} mb={2} p={2} sx={{ background: "#f0f4ec", borderRadius: 2, border: "1px solid #99d6ce" }}>
+            <Typography fontWeight={800} color="#1a6b5e" mb={0.3}>{sub.name}</Typography>
             {sub.ratio && <Typography variant="caption" sx={{ color: "#2e8b7a", fontWeight: 700, display: "block", mb: 0.3 }}>Amount: {sub.ratio}</Typography>}
             <Typography fontSize="0.85rem" color="#374151">{sub.note}</Typography>
           </Box>
@@ -2021,7 +2049,7 @@ const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
             </Box>
           </Box>
           <Button variant="contained" size="small" onClick={analyze} disabled={loading}
-            sx={{ background: "linear-gradient(135deg, #2e8b7a, #6b8c5a)", borderRadius: 2, fontWeight: 700 }}>
+            sx={{ background: "linear-gradient(135deg, #2e8b7a, #0d9488)", borderRadius: 2, fontWeight: 700 }}>
             {loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "📊 Analyze"}
           </Button>
         </Box>
@@ -2106,7 +2134,7 @@ const OnboardingFlow = ({ onFinish, setPage }) => {
           {ONBOARDING_STEPS.map((_, i) => (
             <Box key={i} sx={{
               height: 4, flex: 1, borderRadius: "2px",
-              background: i <= step ? "linear-gradient(90deg,#2e8b7a,#6b8c5a)" : "#e5e7eb",
+              background: i <= step ? "linear-gradient(90deg, #2e8b7a, #0d9488)" : "#e5e7eb",
               transition: "background 0.3s",
             }} />
           ))}
@@ -2127,9 +2155,9 @@ const OnboardingFlow = ({ onFinish, setPage }) => {
               if (isLast) { onFinish(); } else setStep(s => s + 1);
             }}
             sx={{
-              background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)",
+              background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)",
               borderRadius: 2, fontWeight: 700, flex: 1,
-              boxShadow: "0 4px 16px rgba(107,140,90,0.3)",
+              boxShadow: "0 4px 16px rgba(46,139,122,0.3)",
             }}>
             {isLast ? "Let's see what I can cook 🧊" : "Next →"}
           </Button>
@@ -2297,14 +2325,14 @@ const RecipeAudioPlayer = ({ recipe, language = "English" }) => {
   const currentSeg = segments[Math.min(curIdx, segments.length - 1)];
   const isActive = status === "playing" || status === "paused";
 
-  const segTypeColor = { title: "#6b8c5a", meta: "#2e8b7a", overview: "#8b5cf6", section: "#3b82f6", ingredient: "#10b981", step: "#c49a3c", nutrition: "#06b6d4", end: "#6b7280" };
+  const segTypeColor = { title: "#2e8b7a", meta: "#2e8b7a", overview: "#8b5cf6", section: "#3b82f6", ingredient: "#10b981", step: "#c49a3c", nutrition: "#06b6d4", end: "#6b7280" };
   const segTypeIcon  = { title: "🍳", meta: "ℹ️", overview: "📖", section: "📢", ingredient: "🧂", step: "👨‍🍳", nutrition: "📊", end: "✅" };
 
   return (
     <Box sx={{ background: "linear-gradient(135deg, #141210 0%, #1c0f0a 100%)", borderRadius: 3, overflow: "hidden", mb: 3 }}>
       {/* Header */}
       <Box sx={{ px: 3, py: 2, display: "flex", alignItems: "center", gap: 1.5, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-        <Box sx={{ width: 32, height: 32, borderRadius: 2, background: "linear-gradient(135deg,#6b8c5a,#2e8b7a)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box sx={{ width: 32, height: 32, borderRadius: 2, background: "linear-gradient(135deg, #2e8b7a, #0d9488)", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <VolumeUpIcon sx={{ fontSize: 18, color: "#fff" }} />
         </Box>
         <Box flex={1}>
@@ -2319,7 +2347,7 @@ const RecipeAudioPlayer = ({ recipe, language = "English" }) => {
           <Box display="flex" alignItems="center" gap={0.5}>
             {[0,1,2].map(i => (
               <Box key={i} sx={{
-                width: 3, borderRadius: 2, background: "#6b8c5a",
+                width: 3, borderRadius: 2, background: "#2e8b7a",
                 height: status === "playing" ? `${8 + i * 4}px` : "4px",
                 transition: "height 0.3s ease",
                 animation: status === "playing" ? `bar${i} 0.8s ease-in-out infinite alternate` : "none",
@@ -2340,17 +2368,17 @@ const RecipeAudioPlayer = ({ recipe, language = "English" }) => {
         sx={{
           height: 3, borderRadius: 0,
           background: "rgba(255,255,255,0.08)",
-          "& .MuiLinearProgress-bar": { background: "linear-gradient(90deg,#6b8c5a,#2e8b7a)" },
+          "& .MuiLinearProgress-bar": { background: "linear-gradient(90deg, #2e8b7a, #0d9488)" },
         }}
       />
 
       {/* Current segment display */}
       {isActive && currentSeg && (
-        <Box sx={{ px: 3, py: 1.5, background: "rgba(107,140,90,0.08)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <Box sx={{ px: 3, py: 1.5, background: "rgba(46,139,122,0.08)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <Box display="flex" alignItems="flex-start" gap={1}>
             <Typography sx={{ fontSize: "0.9rem", flexShrink: 0, mt: 0.1 }}>{segTypeIcon[currentSeg.type] || "🔊"}</Typography>
             <Box>
-              <Typography sx={{ color: segTypeColor[currentSeg.type] || "#6b8c5a", fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.2 }}>
+              <Typography sx={{ color: segTypeColor[currentSeg.type] || "#2e8b7a", fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", mb: 0.2 }}>
                 {currentSeg.label}
               </Typography>
               <Typography sx={{ color: "rgba(255,255,255,0.85)", fontSize: "0.82rem", lineHeight: 1.5 }}>
@@ -2365,18 +2393,18 @@ const RecipeAudioPlayer = ({ recipe, language = "English" }) => {
       <Box sx={{ px: 3, py: 2, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
         {/* Play/Pause */}
         {status === "playing" ? (
-          <IconButton onClick={handlePause} sx={{ width: 44, height: 44, background: "#6b8c5a", color: "#fff", "&:hover": { background: "#527a42" } }}>
+          <IconButton onClick={handlePause} sx={{ width: 44, height: 44, background: "#2e8b7a", color: "#fff", "&:hover": { background: "#1e7a6e" } }}>
             <PauseIcon />
           </IconButton>
         ) : (
-          <IconButton onClick={handlePlay} sx={{ width: 44, height: 44, background: "linear-gradient(135deg,#6b8c5a,#2e8b7a)", color: "#fff", "&:hover": { opacity: 0.9 } }}>
+          <IconButton onClick={handlePlay} sx={{ width: 44, height: 44, background: "linear-gradient(135deg, #2e8b7a, #0d9488)", color: "#fff", "&:hover": { opacity: 0.9 } }}>
             <PlayArrowIcon />
           </IconButton>
         )}
 
         {/* Stop */}
         {isActive && (
-          <IconButton onClick={handleStop} size="small" sx={{ color: "rgba(255,255,255,0.4)", "&:hover": { color: "#6b8c5a" } }}>
+          <IconButton onClick={handleStop} size="small" sx={{ color: "rgba(255,255,255,0.4)", "&:hover": { color: "#2e8b7a" } }}>
             <StopIcon sx={{ fontSize: 20 }} />
           </IconButton>
         )}
@@ -2395,10 +2423,10 @@ const RecipeAudioPlayer = ({ recipe, language = "English" }) => {
           {[0.8, 1, 1.2, 1.5].map(s => (
             <Box key={s} onClick={() => handleSpeedChange(s)} sx={{
               px: 1, py: 0.4, borderRadius: 1.5, cursor: "pointer", fontSize: "0.72rem", fontWeight: 700,
-              background: speed === s ? "#6b8c5a" : "rgba(255,255,255,0.08)",
+              background: speed === s ? "#2e8b7a" : "rgba(255,255,255,0.08)",
               color: speed === s ? "#fff" : "rgba(255,255,255,0.4)",
               transition: "all 0.15s",
-              "&:hover": { background: speed === s ? "#6b8c5a" : "rgba(255,255,255,0.15)" },
+              "&:hover": { background: speed === s ? "#2e8b7a" : "rgba(255,255,255,0.15)" },
             }}>{s}×</Box>
           ))}
         </Box>
@@ -2414,13 +2442,13 @@ const RecipeAudioPlayer = ({ recipe, language = "English" }) => {
             <Box key={i} onClick={() => handleSegmentClick(i)} sx={{
               display: "inline-flex", alignItems: "center", gap: 0.5,
               px: 1.2, py: 0.4, borderRadius: "12px", cursor: "pointer",
-              background: curIdx === i && isActive ? "rgba(107,140,90,0.25)" : "rgba(255,255,255,0.06)",
-              border: `1px solid ${curIdx === i && isActive ? "rgba(107,140,90,0.5)" : "rgba(255,255,255,0.08)"}`,
+              background: curIdx === i && isActive ? "rgba(46,139,122,0.25)" : "rgba(255,255,255,0.06)",
+              border: `1px solid ${curIdx === i && isActive ? "rgba(46,139,122,0.5)" : "rgba(255,255,255,0.08)"}`,
               transition: "all 0.15s",
-              "&:hover": { background: "rgba(107,140,90,0.15)", borderColor: "rgba(107,140,90,0.3)" },
+              "&:hover": { background: "rgba(46,139,122,0.15)", borderColor: "rgba(46,139,122,0.3)" },
             }}>
               <Typography sx={{ fontSize: "0.7rem" }}>{segTypeIcon[seg.type] || "🔊"}</Typography>
-              <Typography sx={{ fontSize: "0.68rem", fontWeight: curIdx === i && isActive ? 700 : 400, color: curIdx === i && isActive ? "#a8c298" : "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
+              <Typography sx={{ fontSize: "0.68rem", fontWeight: curIdx === i && isActive ? 700 : 400, color: curIdx === i && isActive ? "#99d6ce" : "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
                 {seg.label}
               </Typography>
             </Box>
@@ -2846,8 +2874,8 @@ const TopRatedPage = ({ API, recipeRatings, savedRecipes, trFilter, setTrFilter,
             <Box key={opt.key} onClick={() => setTrFilter(opt.key)} sx={{
               px: 1.8, py: 0.7, borderRadius: 2, cursor: "pointer",
               background: trFilter === opt.key ? "#f0f4ec" : "#fff",
-              border: `1.5px solid ${trFilter === opt.key ? "#6b8c5a" : "#e5e7eb"}`,
-              color: trFilter === opt.key ? "#5a7a48" : "#6b7280",
+              border: `1.5px solid ${trFilter === opt.key ? "#2e8b7a" : "#e5e7eb"}`,
+              color: trFilter === opt.key ? "#1a6b5e" : "#6b7280",
               fontWeight: 700, fontSize: "0.78rem", transition: "all 0.15s",
             }}>{opt.label}</Box>
           ))}
@@ -2859,7 +2887,7 @@ const TopRatedPage = ({ API, recipeRatings, savedRecipes, trFilter, setTrFilter,
             {[
               { label: "Recipes rated",  val: communityRatings.length, icon: "🍽️", color: "#2e8b7a", bg: "rgba(46,139,122,0.1)" },
               { label: "Total ratings",  val: totalRaters,              icon: "⭐", color: "#c49a3c", bg: "rgba(196,154,60,0.1)" },
-              { label: "Avg community ★", val: communityRatings.length ? (communityRatings.reduce((s,r) => s + r.avgRating, 0) / communityRatings.length).toFixed(1) : "—", icon: "📊", color: "#6b8c5a", bg: "rgba(107,140,90,0.1)" },
+              { label: "Avg community ★", val: communityRatings.length ? (communityRatings.reduce((s,r) => s + r.avgRating, 0) / communityRatings.length).toFixed(1) : "—", icon: "📊", color: "#2e8b7a", bg: "rgba(46,139,122,0.1)" },
               { label: "Top rated",      val: communityRatings[0]?.avgRating ? `${communityRatings[0].avgRating}★` : "—", icon: "🥇", color: "#eab308", bg: "rgba(234,179,8,0.1)" },
             ].map((s, i) => (
               <Grid item xs={6} md={3} key={i}>
@@ -2982,13 +3010,16 @@ const LandingPage = ({ onOpenAuth }) => {
       {/* ── Navbar ── */}
       <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "space-between", px: { xs: 3, md: 6 }, py: 2, background: "rgba(13,15,10,0.85)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
         <Box display="flex" alignItems="center" gap={1.2}>
-          <Box sx={{ width: 36, height: 36, borderRadius: "10px", background: "linear-gradient(145deg, #2e8b7a 0%, #4a9e8e 40%, #3d6b2a 100%)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(46,139,122,0.55)", position: "relative", overflow: "hidden" }}>
+          <Box sx={{ width: 36, height: 36, borderRadius: "10px", background: "linear-gradient(145deg, #1a6b5e 0%, #2e8b7a 50%, #0d9488 100%)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(46,139,122,0.55)", position: "relative", overflow: "hidden" }}>
             <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <ellipse cx="11" cy="6" rx="5" ry="3.6" fill="white" opacity="0.95"/>
-              <ellipse cx="11" cy="6" rx="2.8" ry="2" fill="rgba(46,139,122,0.4)"/>
-              <path d="M11 9.6 C11.5 13 12.5 16 14 20.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.95"/>
-              <circle cx="16.5" cy="3.5" r="1" fill="rgba(255,255,255,0.6)"/>
+              <circle cx="11" cy="11" r="9.5" stroke="rgba(255,255,255,0.25)" strokeWidth="1"/>
+              <ellipse cx="8" cy="6" rx="2.8" ry="2" fill="white" opacity="0.95"/>
+              <path d="M8 8 L8.5 17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+              <path d="M14 4 L14 8.5" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+              <path d="M12.5 4 L12.5 7" stroke="white" strokeWidth="1.4" strokeLinecap="round" opacity="0.75"/>
+              <path d="M15.5 4 L15.5 7" stroke="white" strokeWidth="1.4" strokeLinecap="round" opacity="0.75"/>
+              <path d="M14 8.5 L14 17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
           </Box>
           <Box display="flex" alignItems="baseline">
@@ -3000,7 +3031,7 @@ const LandingPage = ({ onOpenAuth }) => {
           <Box onClick={() => onOpenAuth("login")} sx={{ px: 2.5, py: 0.9, borderRadius: "10px", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.8)", fontSize: "0.88rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s", "&:hover": { background: "rgba(255,255,255,0.07)", borderColor: "rgba(255,255,255,0.3)" } }}>
             Sign in
           </Box>
-          <Box onClick={() => onOpenAuth("signup")} sx={{ px: 2.5, py: 0.9, borderRadius: "10px", background: "linear-gradient(135deg,#5a7c4a,#4a6a3a)", color: "#fff", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(107,140,90,0.4)", transition: "all 0.2s", "&:hover": { transform: "translateY(-1px)", boxShadow: "0 8px 24px rgba(107,140,90,0.5)" } }}>
+          <Box onClick={() => onOpenAuth("signup")} sx={{ px: 2.5, py: 0.9, borderRadius: "10px", background: "linear-gradient(135deg,#2e8b7a,#1a6b5e)", color: "#fff", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(46,139,122,0.4)", transition: "all 0.2s", "&:hover": { transform: "translateY(-1px)", boxShadow: "0 8px 24px rgba(46,139,122,0.5)" } }}>
             Get started free →
           </Box>
         </Box>
@@ -3012,19 +3043,19 @@ const LandingPage = ({ onOpenAuth }) => {
         <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(10,12,8,0.92) 0%, rgba(10,12,8,0.5) 60%, transparent 100%)" }} />
         <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "40%", background: "linear-gradient(to top, #0d0f0a, transparent)" }} />
         {/* Glow accents */}
-        <Box sx={{ position: "absolute", top: "20%", right: "10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(107,140,90,0.12) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none" }} />
+        <Box sx={{ position: "absolute", top: "20%", right: "10%", width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(46,139,122,0.12) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none" }} />
         <Box sx={{ position: "absolute", bottom: "20%", left: "5%", width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(46,139,122,0.08) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none" }} />
 
         <Box sx={{ position: "relative", zIndex: 2, px: { xs: 4, md: 10 }, pt: 14, pb: 8, maxWidth: 820 }}>
           {/* Badge */}
-          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, background: "rgba(107,140,90,0.15)", border: "1px solid rgba(107,140,90,0.4)", borderRadius: "100px", px: 2, py: 0.7, mb: 4, backdropFilter: "blur(8px)" }}>
-            <Box sx={{ width: 7, height: 7, borderRadius: "50%", background: "#6b8c5a", boxShadow: "0 0 8px #6b8c5a", animation: "glow 2s ease-in-out infinite", "@keyframes glow": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.5 } } }} />
-            <Typography sx={{ color: "#a8c298", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>AI-Powered Kitchen Assistant</Typography>
+          <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, background: "rgba(46,139,122,0.15)", border: "1px solid rgba(46,139,122,0.4)", borderRadius: "100px", px: 2, py: 0.7, mb: 4, backdropFilter: "blur(8px)" }}>
+            <Box sx={{ width: 7, height: 7, borderRadius: "50%", background: "#2e8b7a", boxShadow: "0 0 8px #2e8b7a", animation: "glow 2s ease-in-out infinite", "@keyframes glow": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.5 } } }} />
+            <Typography sx={{ color: "#99d6ce", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>AI-Powered Kitchen Assistant</Typography>
           </Box>
 
           <Typography sx={{ fontFamily: "'Georgia', serif", fontWeight: 900, fontSize: { xs: "3rem", md: "5.2rem" }, lineHeight: 1.0, letterSpacing: "-2.5px", color: "#fff", mb: 1.5, textShadow: "0 4px 40px rgba(0,0,0,0.6)" }}>
             What's in your kitchen?
-            <Box component="span" sx={{ display: "block", background: "linear-gradient(90deg, #2e8b7a 0%, #6b8c5a 60%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            <Box component="span" sx={{ display: "block", background: "linear-gradient(90deg, #2e8b7a 0%, #0d9488 60%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               Let's cook it.
             </Box>
           </Typography>
@@ -3035,7 +3066,7 @@ const LandingPage = ({ onOpenAuth }) => {
 
           {/* CTAs */}
           <Box display="flex" gap={2} flexWrap="wrap">
-            <Box onClick={() => onOpenAuth("signup")} sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, px: 4, py: 1.8, borderRadius: "14px", background: "linear-gradient(135deg,#5a7c4a,#4a6a3a)", color: "#fff", fontWeight: 800, fontSize: "1rem", cursor: "pointer", boxShadow: "0 8px 32px rgba(107,140,90,0.5)", transition: "all 0.25s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 16px 48px rgba(107,140,90,0.6)" } }}>
+            <Box onClick={() => onOpenAuth("signup")} sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, px: 4, py: 1.8, borderRadius: "14px", background: "linear-gradient(135deg,#2e8b7a,#1a6b5e)", color: "#fff", fontWeight: 800, fontSize: "1rem", cursor: "pointer", boxShadow: "0 8px 32px rgba(46,139,122,0.5)", transition: "all 0.25s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 16px 48px rgba(46,139,122,0.6)" } }}>
               🚀 Start cooking free
             </Box>
             <Box onClick={() => onOpenAuth("login")} sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, px: 4, py: 1.8, borderRadius: "14px", border: "1.5px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.85)", fontWeight: 700, fontSize: "1rem", cursor: "pointer", backdropFilter: "blur(8px)", transition: "all 0.25s", "&:hover": { background: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.4)" } }}>
@@ -3058,14 +3089,14 @@ const LandingPage = ({ onOpenAuth }) => {
       {/* ── Features Grid ── */}
       <Box sx={{ px: { xs: 4, md: 10 }, py: 10, background: "#0d0f0a" }}>
         <Box textAlign="center" mb={7}>
-          <Typography sx={{ color: "#a8c298", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", mb: 1.5 }}>Everything you need</Typography>
+          <Typography sx={{ color: "#99d6ce", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", mb: 1.5 }}>Everything you need</Typography>
           <Typography sx={{ fontFamily: "'Georgia', serif", fontWeight: 800, fontSize: { xs: "2rem", md: "3rem" }, color: "#fff", letterSpacing: "-1px" }}>Everything your kitchen needs.</Typography>
           <Typography sx={{ color: "rgba(255,255,255,0.4)", mt: 1.5, fontSize: "1rem", maxWidth: 500, mx: "auto" }}>From scanning ingredients to planning your whole week — SpoonFed does the heavy lifting.</Typography>
         </Box>
 
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }, gap: 3, maxWidth: 1100, mx: "auto" }}>
           {features.map((f, i) => (
-            <Box key={i} onClick={() => onOpenAuth("signup")} sx={{ p: 3.5, borderRadius: 3, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer", transition: "all 0.25s", "&:hover": { background: "rgba(107,140,90,0.08)", borderColor: "rgba(107,140,90,0.3)", transform: "translateY(-3px)" } }}>
+            <Box key={i} onClick={() => onOpenAuth("signup")} sx={{ p: 3.5, borderRadius: 3, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", cursor: "pointer", transition: "all 0.25s", "&:hover": { background: "rgba(46,139,122,0.08)", borderColor: "rgba(46,139,122,0.3)", transform: "translateY(-3px)" } }}>
               <Typography sx={{ fontSize: "2.2rem", mb: 2 }}>{f.icon}</Typography>
               <Typography sx={{ fontWeight: 800, color: "#fff", fontSize: "1rem", mb: 1, letterSpacing: "-0.3px" }}>{f.title}</Typography>
               <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", lineHeight: 1.7 }}>{f.desc}</Typography>
@@ -3080,7 +3111,7 @@ const LandingPage = ({ onOpenAuth }) => {
           Stop wondering. Start cooking. 🥄
         </Typography>
         <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "1rem", mb: 5 }}>Free forever. No credit card needed.</Typography>
-        <Box onClick={() => onOpenAuth("signup")} sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, px: 5, py: 2, borderRadius: "14px", background: "linear-gradient(135deg,#5a7c4a,#4a6a3a)", color: "#fff", fontWeight: 800, fontSize: "1.1rem", cursor: "pointer", boxShadow: "0 8px 40px rgba(107,140,90,0.45)", transition: "all 0.25s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 16px 60px rgba(107,140,90,0.6)" } }}>
+        <Box onClick={() => onOpenAuth("signup")} sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, px: 5, py: 2, borderRadius: "14px", background: "linear-gradient(135deg,#2e8b7a,#1a6b5e)", color: "#fff", fontWeight: 800, fontSize: "1.1rem", cursor: "pointer", boxShadow: "0 8px 40px rgba(46,139,122,0.45)", transition: "all 0.25s", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 16px 60px rgba(46,139,122,0.6)" } }}>
           🥬 Get started — it's free
         </Box>
       </Box>
@@ -3149,7 +3180,7 @@ const AccountDialog = ({ open, onClose, currentUser, API, authToken, onUserUpdat
       <DialogTitle sx={{ pb: 0 }}>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box display="flex" alignItems="center" gap={1.5}>
-            <Box sx={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#5a7c4a,#2e8b7a)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: "1rem" }}>
+            <Box sx={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #2e8b7a, #0d9488)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: "1rem" }}>
               {currentUser?.name?.charAt(0).toUpperCase() || "U"}
             </Box>
             <Box>
@@ -3162,7 +3193,7 @@ const AccountDialog = ({ open, onClose, currentUser, API, authToken, onUserUpdat
         {/* Tabs */}
         <Box display="flex" gap={0.5} mt={2.5} mb={0} sx={{ borderBottom: "1px solid rgba(255,255,255,0.08)", pb: 0 }}>
           {["Profile", "Password"].map((t, i) => (
-            <Box key={i} onClick={() => setTab(i)} sx={{ px: 2, py: 1, cursor: "pointer", fontSize: "0.82rem", fontWeight: tab === i ? 700 : 500, color: tab === i ? "#a8c298" : "rgba(255,255,255,0.35)", borderBottom: `2px solid ${tab === i ? "#6b8c5a" : "transparent"}`, mb: "-1px", transition: "all 0.15s" }}>{t}</Box>
+            <Box key={i} onClick={() => setTab(i)} sx={{ px: 2, py: 1, cursor: "pointer", fontSize: "0.82rem", fontWeight: tab === i ? 700 : 500, color: tab === i ? "#99d6ce" : "rgba(255,255,255,0.35)", borderBottom: `2px solid ${tab === i ? "#2e8b7a" : "transparent"}`, mb: "-1px", transition: "all 0.15s" }}>{t}</Box>
           ))}
         </Box>
       </DialogTitle>
@@ -3172,18 +3203,18 @@ const AccountDialog = ({ open, onClose, currentUser, API, authToken, onUserUpdat
           <Box display="flex" flexDirection="column" gap={2.5}>
             <Box>
               <label style={lStyle}>Display name</label>
-              <input value={name} onChange={e => setName(e.target.value)} style={iStyle} placeholder="Your name" onFocus={e => e.target.style.borderColor="#6b8c5a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
+              <input value={name} onChange={e => setName(e.target.value)} style={iStyle} placeholder="Your name" onFocus={e => e.target.style.borderColor="#2e8b7a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
             </Box>
             <Box>
               <label style={lStyle}>Email address</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={iStyle} placeholder="you@example.com" onFocus={e => e.target.style.borderColor="#6b8c5a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} style={iStyle} placeholder="you@example.com" onFocus={e => e.target.style.borderColor="#2e8b7a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
             </Box>
             <Box>
               <label style={lStyle}>Username</label>
               <input value={`@${currentUser?.username || ""}`} disabled style={{ ...iStyle, opacity: 0.4, cursor: "not-allowed" }} />
               <Typography sx={{ color: "rgba(255,255,255,0.25)", fontSize: "0.68rem", mt: 0.5 }}>Username cannot be changed</Typography>
             </Box>
-            <Box onClick={!loading ? saveProfile : undefined} sx={{ py: 1.4, borderRadius: "10px", background: loading ? "rgba(107,140,90,0.3)" : "linear-gradient(135deg,#5a7c4a,#4a6a3a)", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading ? "not-allowed" : "pointer", boxShadow: "0 6px 20px rgba(107,140,90,0.35)", transition: "all 0.2s", "&:hover": !loading ? { transform: "translateY(-1px)" } : {} }}>
+            <Box onClick={!loading ? saveProfile : undefined} sx={{ py: 1.4, borderRadius: "10px", background: loading ? "rgba(46,139,122,0.3)" : "linear-gradient(135deg,#2e8b7a,#1a6b5e)", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading ? "not-allowed" : "pointer", boxShadow: "0 6px 20px rgba(46,139,122,0.35)", transition: "all 0.2s", "&:hover": !loading ? { transform: "translateY(-1px)" } : {} }}>
               {loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "0.88rem" }}>Save changes</Typography>}
             </Box>
           </Box>
@@ -3194,23 +3225,23 @@ const AccountDialog = ({ open, onClose, currentUser, API, authToken, onUserUpdat
             <Box>
               <label style={lStyle}>Current password</label>
               <Box sx={{ position: "relative" }}>
-                <input type={showCur ? "text" : "password"} value={curPw} onChange={e => setCurPw(e.target.value)} style={{ ...iStyle, paddingRight: 50 }} placeholder="Your current password" onFocus={e => e.target.style.borderColor="#6b8c5a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
+                <input type={showCur ? "text" : "password"} value={curPw} onChange={e => setCurPw(e.target.value)} style={{ ...iStyle, paddingRight: 50 }} placeholder="Your current password" onFocus={e => e.target.style.borderColor="#2e8b7a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
                 <Box onClick={() => setShowCur(p=>!p)} sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", cursor: "pointer", "&:hover": { color: "rgba(255,255,255,0.7)" } }}>{showCur?"Hide":"Show"}</Box>
               </Box>
             </Box>
             <Box>
               <label style={lStyle}>New password</label>
               <Box sx={{ position: "relative" }}>
-                <input type={showNew ? "text" : "password"} value={newPw} onChange={e => setNewPw(e.target.value)} style={{ ...iStyle, paddingRight: 50 }} placeholder="Minimum 8 characters" onFocus={e => e.target.style.borderColor="#6b8c5a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
+                <input type={showNew ? "text" : "password"} value={newPw} onChange={e => setNewPw(e.target.value)} style={{ ...iStyle, paddingRight: 50 }} placeholder="Minimum 8 characters" onFocus={e => e.target.style.borderColor="#2e8b7a"} onBlur={e => e.target.style.borderColor="rgba(255,255,255,0.12)"} />
                 <Box onClick={() => setShowNew(p=>!p)} sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", cursor: "pointer", "&:hover": { color: "rgba(255,255,255,0.7)" } }}>{showNew?"Hide":"Show"}</Box>
               </Box>
             </Box>
             <Box>
               <label style={lStyle}>Confirm new password</label>
-              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} style={{ ...iStyle, borderColor: confirmPw && confirmPw !== newPw ? "#ef4444" : "rgba(255,255,255,0.12)" }} placeholder="Type it again" onFocus={e => e.target.style.borderColor="#6b8c5a"} onBlur={e => e.target.style.borderColor= confirmPw && confirmPw!==newPw?"#ef4444":"rgba(255,255,255,0.12)"} />
+              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)} style={{ ...iStyle, borderColor: confirmPw && confirmPw !== newPw ? "#ef4444" : "rgba(255,255,255,0.12)" }} placeholder="Type it again" onFocus={e => e.target.style.borderColor="#2e8b7a"} onBlur={e => e.target.style.borderColor= confirmPw && confirmPw!==newPw?"#ef4444":"rgba(255,255,255,0.12)"} />
               {confirmPw && confirmPw !== newPw && <Typography sx={{ color: "#f87171", fontSize: "0.72rem", mt: 0.5 }}>Passwords don't match</Typography>}
             </Box>
-            <Box onClick={!loading ? changePassword : undefined} sx={{ py: 1.4, borderRadius: "10px", background: loading ? "rgba(107,140,90,0.3)" : "linear-gradient(135deg,#5a7c4a,#4a6a3a)", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading ? "not-allowed" : "pointer", boxShadow: "0 6px 20px rgba(107,140,90,0.35)", transition: "all 0.2s", "&:hover": !loading ? { transform: "translateY(-1px)" } : {} }}>
+            <Box onClick={!loading ? changePassword : undefined} sx={{ py: 1.4, borderRadius: "10px", background: loading ? "rgba(46,139,122,0.3)" : "linear-gradient(135deg,#2e8b7a,#1a6b5e)", display: "flex", alignItems: "center", justifyContent: "center", cursor: loading ? "not-allowed" : "pointer", boxShadow: "0 6px 20px rgba(46,139,122,0.35)", transition: "all 0.2s", "&:hover": !loading ? { transform: "translateY(-1px)" } : {} }}>
               {loading ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "0.88rem" }}>🔐 Update password</Typography>}
             </Box>
           </Box>
@@ -3226,7 +3257,7 @@ function HelpFaqItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
     <Box sx={{ borderBottom: "1px solid rgba(255,255,255,0.06)", py: 0 }}>
-      <Box onClick={() => setOpen(o => !o)} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 1.4, cursor: "pointer", gap: 1, "&:hover .faq-q": { color: "#a8c298" } }}>
+      <Box onClick={() => setOpen(o => !o)} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", py: 1.4, cursor: "pointer", gap: 1, "&:hover .faq-q": { color: "#99d6ce" } }}>
         <Typography className="faq-q" sx={{ color: "#e5e7eb", fontSize: "0.85rem", fontWeight: 600, lineHeight: 1.4, transition: "color 0.15s" }}>{q}</Typography>
         <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", flexShrink: 0, transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</Typography>
       </Box>
@@ -3346,8 +3377,8 @@ const AuthScreen = ({ onAuth, initialMode }) => {
       px: 2,
     }}>
       {/* Background accents */}
-      <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", opacity: 0.04, backgroundImage: "radial-gradient(circle, #6b8c5a 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
-      <Box sx={{ position: "fixed", top: "20%", right: "15%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(107,140,90,0.12) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none" }} />
+      <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", opacity: 0.04, backgroundImage: "radial-gradient(circle, #2e8b7a 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+      <Box sx={{ position: "fixed", top: "20%", right: "15%", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle, rgba(46,139,122,0.12) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none" }} />
 
       <Box sx={{
         width: "100%", maxWidth: 440,
@@ -3362,7 +3393,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
       }}>
         {/* Logo */}
         <Box display="flex" alignItems="center" gap={1.5} mb={4}>
-          <Box sx={{ width: 44, height: 44, borderRadius: 2.5, background: "linear-gradient(145deg, #4a7a3a, #5a7c4a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 20px rgba(107,140,90,0.5)" }}>
+          <Box sx={{ width: 44, height: 44, borderRadius: 2.5, background: "linear-gradient(145deg, #1a6b5e, #2e8b7a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 20px rgba(46,139,122,0.5)" }}>
             <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
               <ellipse cx="10" cy="5.5" rx="4.5" ry="3.2" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.4)" strokeWidth="0.4"/>
               <ellipse cx="10" cy="5.5" rx="2.2" ry="1.6" fill="rgba(255,255,255,0.35)"/>
@@ -3371,7 +3402,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
           </Box>
           <Box>
             <Typography sx={{ fontWeight: 900, fontSize: "1.3rem", color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1 }}>SpoonFed</Typography>
-            <Typography sx={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.35)", lineHeight: 1 }}>Your pantry, your recipes.</Typography>
+            <Typography sx={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.35)", lineHeight: 1 }}>Your pantry, our recipes.</Typography>
           </Box>
         </Box>
 
@@ -3382,11 +3413,11 @@ const AuthScreen = ({ onAuth, initialMode }) => {
               <Typography sx={{ fontSize: "3rem", mb: 2 }}>📬</Typography>
               <Typography sx={{ fontWeight: 800, fontSize: "1.3rem", color: "#fff", mb: 1 }}>Check your inbox</Typography>
               <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.87rem", lineHeight: 1.7 }}>
-                If an account exists for <strong style={{ color: "#a8c298" }}>{email}</strong>, you'll receive a password reset link shortly. The link expires in 1 hour.
+                If an account exists for <strong style={{ color: "#99d6ce" }}>{email}</strong>, you'll receive a password reset link shortly. The link expires in 1 hour.
               </Typography>
             </Box>
             <Box textAlign="center" mt={3}>
-              <Box component="span" onClick={() => switchMode("login")} sx={{ color: "#a8c298", fontWeight: 700, cursor: "pointer", fontSize: "0.88rem", "&:hover": { color: "#6b8c5a" } }}>
+              <Box component="span" onClick={() => switchMode("login")} sx={{ color: "#99d6ce", fontWeight: 700, cursor: "pointer", fontSize: "0.88rem", "&:hover": { color: "#2e8b7a" } }}>
                 ← Back to sign in
               </Box>
             </Box>
@@ -3408,7 +3439,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
                 placeholder="you@example.com"
                 onKeyDown={e => e.key === "Enter" && submit()}
                 style={inputStyle}
-                onFocus={e => e.target.style.borderColor = "#6b8c5a"}
+                onFocus={e => e.target.style.borderColor = "#2e8b7a"}
                 onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
               />
             </Box>
@@ -3419,12 +3450,12 @@ const AuthScreen = ({ onAuth, initialMode }) => {
               </Box>
             )}
 
-            <Box onClick={!loading ? submit : undefined} sx={{ width: "100%", py: 1.6, borderRadius: "12px", cursor: loading ? "not-allowed" : "pointer", background: loading ? "rgba(107,140,90,0.4)" : "linear-gradient(135deg, #5a7c4a, #4a6a3a)", boxShadow: loading ? "none" : "0 8px 28px rgba(107,140,90,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5, mb: 3 }}>
+            <Box onClick={!loading ? submit : undefined} sx={{ width: "100%", py: 1.6, borderRadius: "12px", cursor: loading ? "not-allowed" : "pointer", background: loading ? "rgba(46,139,122,0.4)" : "linear-gradient(135deg, #2e8b7a, #1a6b5e)", boxShadow: loading ? "none" : "0 8px 28px rgba(46,139,122,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5, mb: 3 }}>
               {loading ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem" }}>Send reset link →</Typography>}
             </Box>
 
             <Box textAlign="center">
-              <Box component="span" onClick={() => switchMode("login")} sx={{ color: "#a8c298", fontWeight: 700, cursor: "pointer", fontSize: "0.84rem", "&:hover": { color: "#6b8c5a" } }}>
+              <Box component="span" onClick={() => switchMode("login")} sx={{ color: "#99d6ce", fontWeight: 700, cursor: "pointer", fontSize: "0.84rem", "&:hover": { color: "#2e8b7a" } }}>
                 ← Back to sign in
               </Box>
             </Box>
@@ -3438,7 +3469,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
               {mode === "login" ? "Welcome back 👋" : "Create your account"}
             </Typography>
             <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", mb: 3.5 }}>
-              {mode === "login" ? "Sign in to your SpoonFed account." : "Your pantry, your recipes — all in one place."}
+              {mode === "login" ? "Sign in to your SpoonFed account." : "Your pantry, our recipes — all in one place."}
             </Typography>
 
             {/* First Name + Last Name (signup only) */}
@@ -3447,12 +3478,12 @@ const AuthScreen = ({ onAuth, initialMode }) => {
                 <Box flex={1}>
                   <label style={labelStyle}>First name</label>
                   <input value={firstName} onChange={e => setFirstName(e.target.value)} placeholder="e.g. Alex" onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"} />
+                    onFocus={e => e.target.style.borderColor = "#2e8b7a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"} />
                 </Box>
                 <Box flex={1}>
                   <label style={labelStyle}>Last name</label>
                   <input value={lastName} onChange={e => setLastName(e.target.value)} placeholder="e.g. Johnson" onKeyDown={e => e.key === "Enter" && submit()} style={inputStyle}
-                    onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"} />
+                    onFocus={e => e.target.style.borderColor = "#2e8b7a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"} />
                 </Box>
               </Box>
             )}
@@ -3468,7 +3499,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
                     placeholder="e.g. alex_j42"
                     onKeyDown={e => e.key === "Enter" && submit()}
                     style={{ ...inputStyle, paddingRight: 38 }}
-                    onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
+                    onFocus={e => e.target.style.borderColor = "#2e8b7a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
                   />
                   {/* Status indicator */}
                   <Box sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", fontSize: "0.78rem", fontWeight: 700 }}>
@@ -3494,7 +3525,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
                 placeholder={mode === "login" ? "you@example.com or your_username" : "you@example.com"}
                 onKeyDown={e => e.key === "Enter" && submit()}
                 style={inputStyle}
-                onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
+                onFocus={e => e.target.style.borderColor = "#2e8b7a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
               />
             </Box>
 
@@ -3503,7 +3534,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.8}>
                 <label style={{ ...labelStyle, marginBottom: 0 }}>Password</label>
                 {mode === "login" && (
-                  <Box component="span" onClick={() => switchMode("forgot")} sx={{ color: "#a8c298", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", "&:hover": { color: "#6b8c5a" } }}>
+                  <Box component="span" onClick={() => switchMode("forgot")} sx={{ color: "#99d6ce", fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", "&:hover": { color: "#2e8b7a" } }}>
                     Forgot password?
                   </Box>
                 )}
@@ -3514,7 +3545,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
                   placeholder={mode === "signup" ? "Create a strong password" : "Your password"}
                   onKeyDown={e => e.key === "Enter" && submit()}
                   style={{ ...inputStyle, paddingRight: 54 }}
-                  onFocus={e => e.target.style.borderColor = "#6b8c5a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
+                  onFocus={e => e.target.style.borderColor = "#2e8b7a"} onBlur={e => e.target.style.borderColor = "rgba(255,255,255,0.12)"}
                 />
                 <Box onClick={() => setShowPass(p => !p)} sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "rgba(255,255,255,0.3)", fontSize: "0.78rem", "&:hover": { color: "rgba(255,255,255,0.7)" } }}>
                   {showPass ? "Hide" : "Show"}
@@ -3546,7 +3577,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
             )}
 
             {/* Submit */}
-            <Box onClick={!loading ? submit : undefined} sx={{ width: "100%", py: 1.6, borderRadius: "12px", cursor: loading ? "not-allowed" : "pointer", background: loading ? "rgba(107,140,90,0.4)" : "linear-gradient(135deg, #5a7c4a, #4a6a3a)", boxShadow: loading ? "none" : "0 8px 28px rgba(107,140,90,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5, transition: "all 0.2s", "&:hover": !loading ? { transform: "translateY(-1px)", boxShadow: "0 12px 36px rgba(107,140,90,0.5)" } : {}, mb: 3 }}>
+            <Box onClick={!loading ? submit : undefined} sx={{ width: "100%", py: 1.6, borderRadius: "12px", cursor: loading ? "not-allowed" : "pointer", background: loading ? "rgba(46,139,122,0.4)" : "linear-gradient(135deg, #2e8b7a, #1a6b5e)", boxShadow: loading ? "none" : "0 8px 28px rgba(46,139,122,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5, transition: "all 0.2s", "&:hover": !loading ? { transform: "translateY(-1px)", boxShadow: "0 12px 36px rgba(46,139,122,0.5)" } : {}, mb: 3 }}>
               {loading ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem" }}>{mode === "login" ? "Sign in →" : "Create account →"}</Typography>}
             </Box>
 
@@ -3554,7 +3585,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
             <Box textAlign="center">
               <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem" }}>
                 {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-                <Box component="span" onClick={() => switchMode(mode === "login" ? "signup" : "login")} sx={{ color: "#a8c298", fontWeight: 700, cursor: "pointer", "&:hover": { color: "#6b8c5a" } }}>
+                <Box component="span" onClick={() => switchMode(mode === "login" ? "signup" : "login")} sx={{ color: "#99d6ce", fontWeight: 700, cursor: "pointer", "&:hover": { color: "#2e8b7a" } }}>
                   {mode === "login" ? "Sign up free" : "Sign in"}
                 </Box>
               </Typography>
@@ -3565,6 +3596,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
     </Box>
   );
 };
+
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
@@ -4205,7 +4237,7 @@ const exportMealPlanPDF = (plan, title = "Weekly Meal Plan") => {
   doc.text("SpoonFed", 27, 10);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.text("Your pantry, your recipes.", 27, 16);
+  doc.text("Your pantry, our recipes.", 27, 16);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.text(title, pageW - 12, 10, { align: "right" });
@@ -4365,7 +4397,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
   doc.text("SpoonFed", margin + 20, 12);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
-  doc.text("Your pantry, your recipes.", margin + 20, 19);
+  doc.text("Your pantry, our recipes.", margin + 20, 19);
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   doc.setFontSize(7.5);
   doc.text(today, pageW - margin, 15, { align: "right" });
@@ -4642,12 +4674,11 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
     showToast(added > 0 ? `${added} missing ingredient${added !== 1 ? "s" : ""} added to grocery list 🛒` : "All missing items already in grocery list", added > 0 ? "success" : "info");
   };
 
-  // ── Shared card styles ──
   const cardSx = {
     cursor: "pointer", borderRadius: 3, overflow: "hidden",
     border: "1px solid #f3f4f6", boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
     transition: "all 0.22s ease",
-    "&:hover": { transform: "translateY(-4px)", boxShadow: "0 8px 24px rgba(107,140,90,0.14)", borderColor: "#a8c298" },
+    "&:hover": { transform: "translateY(-4px)", boxShadow: "0 8px 24px rgba(46,139,122,0.14)", borderColor: "#99d6ce" },
   };
 
   const badgeSx = (color) => ({
@@ -4660,10 +4691,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
     <Button variant="contained" fullWidth size="large" onClick={onClick}
       disabled={loading || disabled}
       sx={{
-        background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)",
+        background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)",
         borderRadius: 3, py: 1.6, fontSize: "1rem", fontWeight: 800,
-        boxShadow: "0 4px 20px rgba(107,140,90,0.25)",
-        "&:hover": { boxShadow: "0 6px 28px rgba(107,140,90,0.38)" },
+        boxShadow: "0 4px 20px rgba(46,139,122,0.25)",
+        "&:hover": { boxShadow: "0 6px 28px rgba(46,139,122,0.38)" },
       }}>
       {loading
         ? <Box display="flex" alignItems="center" gap={1.5}>
@@ -4687,11 +4718,15 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
   // ── Auth gate ──
   if (authLoading) return (
     <Box sx={{ minHeight: "100vh", background: "#141210", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ width: 44, height: 44, borderRadius: 2.5, background: "linear-gradient(145deg, #4a7a3a, #5a7c4a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 20px rgba(107,140,90,0.5)", animation: "pulse 1.5s ease-in-out infinite", "@keyframes pulse": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.5 } } }}>
-        <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
-          <ellipse cx="10" cy="5.5" rx="4.5" ry="3.2" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.4)" strokeWidth="0.4"/>
-          <ellipse cx="10" cy="5.5" rx="2.2" ry="1.6" fill="rgba(255,255,255,0.35)"/>
-          <path d="M10 8.7 Q10.8 12 13 18" stroke="rgba(255,255,255,0.85)" strokeWidth="2.4" strokeLinecap="round" fill="none"/>
+      <Box sx={{ width: 44, height: 44, borderRadius: 2.5, background: "linear-gradient(145deg, #1a6b5e, #2e8b7a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 20px rgba(46,139,122,0.5)", animation: "pulse 1.5s ease-in-out infinite", "@keyframes pulse": { "0%,100%": { opacity: 1 }, "50%": { opacity: 0.5 } } }}>
+        <svg width="24" height="24" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="11" r="9.5" stroke="rgba(255,255,255,0.25)" strokeWidth="1"/>
+          <ellipse cx="8" cy="6" rx="2.8" ry="2" fill="white" opacity="0.95"/>
+          <path d="M8 8 L8.5 17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+          <path d="M14 4 L14 8.5" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+          <path d="M12.5 4 L12.5 7" stroke="white" strokeWidth="1.4" strokeLinecap="round" opacity="0.75"/>
+          <path d="M15.5 4 L15.5 7" stroke="white" strokeWidth="1.4" strokeLinecap="round" opacity="0.75"/>
+          <path d="M14 8.5 L14 17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
         </svg>
       </Box>
       <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" }}>Loading SpoonFed…</Typography>
@@ -4742,7 +4777,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         <DialogTitle sx={{ pb: 0 }}>
           <Box display="flex" alignItems="center" justifyContent="space-between">
             <Box display="flex" alignItems="center" gap={1.5}>
-              <Box sx={{ width: 38, height: 38, borderRadius: "10px", background: "linear-gradient(135deg,#5a7c4a,#4a6a3a)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem" }}>❓</Box>
+              <Box sx={{ width: 38, height: 38, borderRadius: "10px", background: "linear-gradient(135deg,#2e8b7a,#1a6b5e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem" }}>❓</Box>
               <Box>
                 <Typography sx={{ fontWeight: 800, color: "#fff", fontSize: "1rem" }}>Help & Support</Typography>
                 <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem" }}>SpoonFed — FAQ & Guide</Typography>
@@ -4759,7 +4794,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
               { icon: "🐛", label: "Report a bug", sub: "via feedback form" },
               { icon: "💡", label: "Request feature", sub: "suggest an idea" },
             ].map((l, i) => (
-              <Box key={i} sx={{ flex: "1 1 120px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 2, p: 1.5, textAlign: "center", cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(107,140,90,0.1)", borderColor: "rgba(107,140,90,0.3)" } }}>
+              <Box key={i} sx={{ flex: "1 1 120px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 2, p: 1.5, textAlign: "center", cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(46,139,122,0.1)", borderColor: "rgba(46,139,122,0.3)" } }}>
                 <Typography sx={{ fontSize: "1.2rem", mb: 0.4 }}>{l.icon}</Typography>
                 <Typography sx={{ color: "#fff", fontSize: "0.78rem", fontWeight: 700 }}>{l.label}</Typography>
                 <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.65rem" }}>{l.sub}</Typography>
@@ -4803,9 +4838,9 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           ))}
 
           {/* Footer note */}
-          <Box mt={3} p={2} sx={{ background: "rgba(107,140,90,0.08)", border: "1px solid rgba(107,140,90,0.2)", borderRadius: 2 }}>
+          <Box mt={3} p={2} sx={{ background: "rgba(46,139,122,0.08)", border: "1px solid rgba(46,139,122,0.2)", borderRadius: 2 }}>
             <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", lineHeight: 1.6 }}>
-              <Box component="span" sx={{ color: "#a8c298", fontWeight: 700 }}>SpoonFed v1.0 </Box>
+              <Box component="span" sx={{ color: "#99d6ce", fontWeight: 700 }}>SpoonFed v1.0 </Box>
               — Built with ❤️ to cut food waste and make cooking feel effortless. All recipe content is AI-generated and customizable. Have feedback? We'd love to hear it.
             </Typography>
           </Box>
@@ -4877,7 +4912,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                           </Tooltip>
                           <Tooltip title="Remove from list">
                             <IconButton size="small" onClick={() => removeFromGroceryList(item.name)}
-                              sx={{ color: "#d1d5db", "&:hover": { color: "#6b8c5a" }, p: 0.4 }}>
+                              sx={{ color: "#d1d5db", "&:hover": { color: "#2e8b7a" }, p: 0.4 }}>
                               <CloseIcon sx={{ fontSize: 15 }} />
                             </IconButton>
                           </Tooltip>
@@ -5027,7 +5062,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           <Box sx={{
             width: 360, height: 520,
             background: "#141210",
-            border: "1px solid rgba(107,140,90,0.3)",
+            border: "1px solid rgba(46,139,122,0.3)",
             borderRadius: 3,
             boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
             display: "flex", flexDirection: "column",
@@ -5042,17 +5077,17 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
             <Box sx={{
               px: 2, py: 1.5,
               background: "linear-gradient(135deg, #1a1612, #1e2b1a)",
-              borderBottom: "1px solid rgba(107,140,90,0.2)",
+              borderBottom: "1px solid rgba(46,139,122,0.2)",
               display: "flex", alignItems: "center", justifyContent: "space-between",
               flexShrink: 0,
             }}>
               <Box display="flex" alignItems="center" gap={1.2}>
                 <Box sx={{
                   width: 34, height: 34, borderRadius: "50%",
-                  background: "linear-gradient(135deg, #6b8c5a, #2e8b7a)",
+                  background: "linear-gradient(135deg, #2e8b7a, #0d9488)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: "1rem", flexShrink: 0,
-                  boxShadow: "0 0 12px rgba(107,140,90,0.4)",
+                  boxShadow: "0 0 12px rgba(46,139,122,0.4)",
                 }}>🧑‍🍳</Box>
                 <Box>
                   <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.88rem", lineHeight: 1.2 }}>SpoonFed AI</Typography>
@@ -5084,7 +5119,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
             <Box sx={{ flex: 1, overflowY: "auto", px: 2, py: 1.5, display: "flex", flexDirection: "column", gap: 1,
               "&::-webkit-scrollbar": { width: 4 },
               "&::-webkit-scrollbar-track": { background: "transparent" },
-              "&::-webkit-scrollbar-thumb": { background: "rgba(107,140,90,0.3)", borderRadius: 2 },
+              "&::-webkit-scrollbar-thumb": { background: "rgba(46,139,122,0.3)", borderRadius: 2 },
             }}>
               {chatMessages.map((msg, i) => (
                 <Box key={i} sx={{
@@ -5093,14 +5128,14 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   alignItems: "flex-end", gap: 0.8,
                 }}>
                   {msg.role === "assistant" && (
-                    <Box sx={{ width: 24, height: 24, borderRadius: "50%", background: "linear-gradient(135deg, #6b8c5a, #2e8b7a)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", flexShrink: 0, mb: 0.2 }}>🧑‍🍳</Box>
+                    <Box sx={{ width: 24, height: 24, borderRadius: "50%", background: "linear-gradient(135deg, #2e8b7a, #0d9488)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", flexShrink: 0, mb: 0.2 }}>🧑‍🍳</Box>
                   )}
                   <Box sx={{
                     maxWidth: "78%",
                     px: 1.5, py: 1,
                     borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
                     background: msg.role === "user"
-                      ? "linear-gradient(135deg, #5a7c4a, #4a6a3a)"
+                      ? "linear-gradient(135deg, #2e8b7a, #1a6b5e)"
                       : "rgba(255,255,255,0.07)",
                     border: msg.role === "user" ? "none" : "1px solid rgba(255,255,255,0.08)",
                   }}>
@@ -5115,12 +5150,12 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
               ))}
               {chatLoading && (
                 <Box display="flex" alignItems="flex-end" gap={0.8}>
-                  <Box sx={{ width: 24, height: 24, borderRadius: "50%", background: "linear-gradient(135deg, #6b8c5a, #2e8b7a)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", flexShrink: 0 }}>🧑‍🍳</Box>
+                  <Box sx={{ width: 24, height: 24, borderRadius: "50%", background: "linear-gradient(135deg, #2e8b7a, #0d9488)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", flexShrink: 0 }}>🧑‍🍳</Box>
                   <Box sx={{ px: 1.5, py: 1, borderRadius: "16px 16px 16px 4px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)" }}>
                     <Box display="flex" gap={0.4} alignItems="center" height={18}>
                       {[0,1,2].map(i => (
                         <Box key={i} sx={{
-                          width: 6, height: 6, borderRadius: "50%", background: "#6b8c5a",
+                          width: 6, height: 6, borderRadius: "50%", background: "#2e8b7a",
                           animation: "typingDot 1.2s ease-in-out infinite",
                           animationDelay: `${i * 0.2}s`,
                           "@keyframes typingDot": {
@@ -5148,10 +5183,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   <Box key={s} onClick={() => { setChatInput(s); }}
                     sx={{
                       px: 1.2, py: 0.5, borderRadius: "12px", cursor: "pointer",
-                      background: "rgba(107,140,90,0.1)", border: "1px solid rgba(107,140,90,0.25)",
-                      fontSize: "0.7rem", color: "#a8c298", fontWeight: 600,
+                      background: "rgba(46,139,122,0.1)", border: "1px solid rgba(46,139,122,0.25)",
+                      fontSize: "0.7rem", color: "#99d6ce", fontWeight: 600,
                       transition: "all 0.15s",
-                      "&:hover": { background: "rgba(107,140,90,0.2)", borderColor: "rgba(107,140,90,0.5)" },
+                      "&:hover": { background: "rgba(46,139,122,0.2)", borderColor: "rgba(46,139,122,0.5)" },
                     }}
                   >{s}</Box>
                 ))}
@@ -5180,8 +5215,8 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                     color: "#fff",
                     fontSize: "0.82rem",
                     "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
-                    "&:hover fieldset": { borderColor: "rgba(107,140,90,0.4)" },
-                    "&.Mui-focused fieldset": { borderColor: "#6b8c5a" },
+                    "&:hover fieldset": { borderColor: "rgba(46,139,122,0.4)" },
+                    "&.Mui-focused fieldset": { borderColor: "#2e8b7a" },
                   },
                   "& .MuiInputBase-input::placeholder": { color: "rgba(255,255,255,0.25)", opacity: 1 },
                 }}
@@ -5191,16 +5226,16 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                 disabled={!chatInput.trim() || chatLoading}
                 sx={{
                   width: 36, height: 36, flexShrink: 0,
-                  background: chatInput.trim() ? "linear-gradient(135deg, #5a7c4a, #4a6a3a)" : "rgba(255,255,255,0.06)",
+                  background: chatInput.trim() ? "linear-gradient(135deg, #2e8b7a, #1a6b5e)" : "rgba(255,255,255,0.06)",
                   color: chatInput.trim() ? "#fff" : "rgba(255,255,255,0.2)",
                   borderRadius: 2,
                   transition: "all 0.2s",
-                  "&:hover": { background: "linear-gradient(135deg, #6b8c5a, #5a7a4a)" },
+                  "&:hover": { background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)" },
                   "&:disabled": { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.15)" },
                 }}
               >
                 {chatLoading
-                  ? <CircularProgress size={14} sx={{ color: "#6b8c5a" }} />
+                  ? <CircularProgress size={14} sx={{ color: "#2e8b7a" }} />
                   : <PlayArrowIcon sx={{ fontSize: 18 }} />
                 }
               </IconButton>
@@ -5219,10 +5254,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
             userSelect: "none",
             background: chatOpen
               ? "linear-gradient(135deg, #1f2937, #374151)"
-              : "linear-gradient(135deg, #5a7c4a 0%, #3d5c2e 100%)",
+              : "linear-gradient(135deg, #2e8b7a 0%, #1a6b5e 100%)",
             boxShadow: chatOpen
               ? "0 6px 20px rgba(0,0,0,0.4)"
-              : "0 6px 24px rgba(107,140,90,0.55)",
+              : "0 6px 24px rgba(46,139,122,0.55)",
             border: chatOpen
               ? "1px solid rgba(255,255,255,0.08)"
               : "1.5px solid rgba(255,255,255,0.15)",
@@ -5231,7 +5266,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
               transform: "translateY(-2px)",
               boxShadow: chatOpen
                 ? "0 10px 28px rgba(0,0,0,0.5)"
-                : "0 10px 32px rgba(107,140,90,0.65)",
+                : "0 10px 32px rgba(46,139,122,0.65)",
             },
           }}
         >
@@ -5271,7 +5306,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         transition: "width 0.28s cubic-bezier(0.4,0,0.2,1)",
         background: "linear-gradient(180deg, #141210 0%, #1e1b16 50%, #141210 100%)",
         boxShadow: "4px 0 24px rgba(0,0,0,0.22)",
-        borderRight: "1px solid rgba(107,140,90,0.15)",
+        borderRight: "1px solid rgba(46,139,122,0.15)",
         display: "flex", flexDirection: "column", overflow: "hidden",
         // PWA / notch safe area
         paddingTop: "env(safe-area-inset-top, 0px)",
@@ -5288,21 +5323,20 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
               {/* Logo mark — spoon in a pill */}
               <Box sx={{
                 width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
-                background: "linear-gradient(145deg, #2e8b7a 0%, #4a9e8e 40%, #3d6b2a 100%)",
+                background: "linear-gradient(145deg, #1a6b5e 0%, #2e8b7a 50%, #0d9488 100%)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 boxShadow: "0 4px 16px rgba(46,139,122,0.55), inset 0 1px 0 rgba(255,255,255,0.2)",
                 position: "relative", overflow: "hidden",
               }}>
-                {/* shimmer overlay */}
                 <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%)", borderRadius: "10px" }} />
                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                  {/* spoon bowl */}
-                  <ellipse cx="11" cy="6" rx="5" ry="3.6" fill="white" opacity="0.95"/>
-                  <ellipse cx="11" cy="6" rx="2.8" ry="2" fill="rgba(46,139,122,0.4)"/>
-                  {/* spoon handle with slight curve */}
-                  <path d="M11 9.6 C11.5 13 12.5 16 14 20.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.95"/>
-                  {/* tiny star sparkle top right */}
-                  <circle cx="16.5" cy="3.5" r="1" fill="rgba(255,255,255,0.6)"/>
+                  <circle cx="11" cy="11" r="9.5" stroke="rgba(255,255,255,0.25)" strokeWidth="1"/>
+                  <ellipse cx="8" cy="6" rx="2.8" ry="2" fill="white" opacity="0.95"/>
+                  <path d="M8 8 L8.5 17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+                  <path d="M14 4 L14 8.5" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+                  <path d="M12.5 4 L12.5 7" stroke="white" strokeWidth="1.4" strokeLinecap="round" opacity="0.75"/>
+                  <path d="M15.5 4 L15.5 7" stroke="white" strokeWidth="1.4" strokeLinecap="round" opacity="0.75"/>
+                  <path d="M14 8.5 L14 17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
                 </svg>
               </Box>
               {/* Two-tone wordmark */}
@@ -5316,7 +5350,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   </Typography>
                 </Box>
                 <Typography sx={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.28)", lineHeight: 1, letterSpacing: "0.03em" }}>
-                  Your pantry, your recipes.
+                  Your pantry, our recipes.
                 </Typography>
               </Box>
             </Box>
@@ -5324,23 +5358,26 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           {!sidebarOpen && (
             <Box sx={{
               width: 36, height: 36, borderRadius: "10px",
-              background: "linear-gradient(145deg, #2e8b7a 0%, #4a9e8e 40%, #3d6b2a 100%)",
+              background: "linear-gradient(145deg, #1a6b5e 0%, #2e8b7a 50%, #0d9488 100%)",
               display: "flex", alignItems: "center", justifyContent: "center",
               boxShadow: "0 4px 16px rgba(46,139,122,0.55), inset 0 1px 0 rgba(255,255,255,0.2)",
               position: "relative", overflow: "hidden",
             }}>
               <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
               <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-                <ellipse cx="11" cy="6" rx="5" ry="3.6" fill="white" opacity="0.95"/>
-                <ellipse cx="11" cy="6" rx="2.8" ry="2" fill="rgba(46,139,122,0.4)"/>
-                <path d="M11 9.6 C11.5 13 12.5 16 14 20.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.95"/>
-                <circle cx="16.5" cy="3.5" r="1" fill="rgba(255,255,255,0.6)"/>
+                <circle cx="11" cy="11" r="9.5" stroke="rgba(255,255,255,0.25)" strokeWidth="1"/>
+                <ellipse cx="8" cy="6" rx="2.8" ry="2" fill="white" opacity="0.95"/>
+                <path d="M8 8 L8.5 17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M14 4 L14 8.5" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+                <path d="M12.5 4 L12.5 7" stroke="white" strokeWidth="1.4" strokeLinecap="round" opacity="0.75"/>
+                <path d="M15.5 4 L15.5 7" stroke="white" strokeWidth="1.4" strokeLinecap="round" opacity="0.75"/>
+                <path d="M14 8.5 L14 17" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
               </svg>
             </Box>
           )}
           {sidebarOpen && (
             <IconButton onClick={() => setSidebarOpen(false)} size="small"
-              sx={{ color: "rgba(255,255,255,0.4)", ml: 0.5, "&:hover": { background: "rgba(107,140,90,0.15)", color: "#a8c298" } }}>
+              sx={{ color: "rgba(255,255,255,0.4)", ml: 0.5, "&:hover": { background: "rgba(46,139,122,0.15)", color: "#99d6ce" } }}>
               <ChevronLeftIcon sx={{ fontSize: 20 }} />
             </IconButton>
           )}
@@ -5349,7 +5386,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         {!sidebarOpen && (
           <Box sx={{ display: "flex", justifyContent: "center", mt: 1, mb: 0.5 }}>
             <IconButton onClick={() => setSidebarOpen(true)} size="small"
-              sx={{ color: "rgba(255,255,255,0.4)", "&:hover": { background: "rgba(107,140,90,0.15)", color: "#a8c298" } }}>
+              sx={{ color: "rgba(255,255,255,0.4)", "&:hover": { background: "rgba(46,139,122,0.15)", color: "#99d6ce" } }}>
               <ChevronRightIcon sx={{ fontSize: 20 }} />
             </IconButton>
           </Box>
@@ -5370,11 +5407,11 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                 justifyContent: sidebarOpen ? "flex-start" : "center",
                 px: sidebarOpen ? 1.5 : 0, py: 1.1, borderRadius: 2, mb: 0.5,
                 cursor: "pointer",
-                background: isActive ? "rgba(107,140,90,0.2)" : "transparent",
-                border: isActive ? "1px solid rgba(107,140,90,0.38)" : "1px solid transparent",
-                color: isActive ? "#a8c298" : "rgba(255,255,255,0.45)",
+                background: isActive ? "rgba(46,139,122,0.2)" : "transparent",
+                border: isActive ? "1px solid rgba(46,139,122,0.38)" : "1px solid transparent",
+                color: isActive ? "#99d6ce" : "rgba(255,255,255,0.45)",
                 transition: "all 0.18s ease",
-                "&:hover": { background: "rgba(107,140,90,0.12)", color: "#a8c298", borderColor: "rgba(107,140,90,0.22)" },
+                "&:hover": { background: "rgba(46,139,122,0.12)", color: "#99d6ce", borderColor: "rgba(46,139,122,0.22)" },
                 overflow: "hidden", whiteSpace: "nowrap", minHeight: 42,
               }}>
                 <Box sx={{ display: "flex", alignItems: "center", flexShrink: 0, color: "inherit" }}>
@@ -5436,9 +5473,9 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           height: "calc(52px + env(safe-area-inset-top, 0px))",
           paddingTop: "env(safe-area-inset-top, 0px)",
           zIndex: 900,
-          background: "rgba(20,18,16,0.92)",
-          backdropFilter: "blur(16px)",
-          borderBottom: "1px solid rgba(255,255,255,0.07)",
+          background: "rgba(16,20,18,0.97)",
+          backdropFilter: "blur(20px)",
+          borderBottom: "1px solid rgba(46,139,122,0.2)",
           display: "flex", alignItems: "center", justifyContent: "flex-end",
           px: 3, gap: 1.5,
           transition: "left 0.28s cubic-bezier(0.4,0,0.2,1)",
@@ -5446,14 +5483,14 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           {currentUser ? (
             <>
               {/* ── Global Language Selector ── */}
-              <LanguagePill value={language} onChange={setLanguage} accentColor="#6b8c5a" accentBg="rgba(107,140,90,0.12)" dark />
+              <LanguagePill value={language} onChange={setLanguage} accentColor="#2e8b7a" accentBg="rgba(46,139,122,0.12)" dark />
 
               {/* ── Bell icon ── */}
               <Tooltip title={lowStockItems.length > 0 ? `${lowStockItems.length} pantry alert${lowStockItems.length !== 1 ? "s" : ""}` : "Pantry alerts"} arrow placement="bottom">
                 <Box onClick={() => setNotifPanelOpen(true)} sx={{
                   width: 36, height: 36, borderRadius: "10px", cursor: "pointer",
-                  background: lowStockItems.length > 0 ? "rgba(234,179,8,0.12)" : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${lowStockItems.length > 0 ? "rgba(234,179,8,0.45)" : "rgba(255,255,255,0.1)"}`,
+                  background: lowStockItems.length > 0 ? "rgba(234,179,8,0.18)" : "rgba(255,255,255,0.1)",
+                  border: `1.5px solid ${lowStockItems.length > 0 ? "rgba(234,179,8,0.55)" : "rgba(255,255,255,0.2)"}`,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   transition: "all 0.18s",
                   animation: lowStockItems.length > 0 ? "bellShake 4s ease-in-out infinite" : "none",
@@ -5462,43 +5499,44 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                     "92%": { transform: "rotate(-8deg)" }, "94%": { transform: "rotate(8deg)" },
                     "96%": { transform: "rotate(-5deg)" }, "98%": { transform: "rotate(5deg)" },
                   },
-                  "&:hover": { background: lowStockItems.length > 0 ? "rgba(234,179,8,0.22)" : "rgba(255,255,255,0.1)", transform: "scale(1.06)" },
+                  "&:hover": { background: lowStockItems.length > 0 ? "rgba(234,179,8,0.28)" : "rgba(255,255,255,0.18)", transform: "scale(1.06)" },
                 }}>
                   <Badge badgeContent={lowStockItems.length} invisible={lowStockItems.length === 0}
                     sx={{ "& .MuiBadge-badge": { fontSize: "0.52rem", fontWeight: 900, minWidth: 15, height: 15, padding: "0 3px", background: "linear-gradient(135deg,#f59e0b,#eab308)", color: "#1a1200", top: -2, right: -2 } }}>
                     {lowStockItems.length > 0
-                      ? <NotificationsActiveIcon sx={{ fontSize: 17, color: "#eab308" }} />
-                      : <NotificationsNoneIcon sx={{ fontSize: 17, color: "rgba(255,255,255,0.4)" }} />}
+                      ? <NotificationsActiveIcon sx={{ fontSize: 18, color: "#fbbf24" }} />
+                      : <NotificationsNoneIcon sx={{ fontSize: 18, color: "rgba(255,255,255,0.75)" }} />}
                   </Badge>
                 </Box>
               </Tooltip>
               <Box onClick={e => setUserMenuEl(e.currentTarget)} sx={{
                 display: "flex", alignItems: "center", gap: 1.2,
-                px: 1.2, py: 0.6,
+                px: 1.4, py: 0.7,
                 borderRadius: "100px",
-                border: "1px solid rgba(255,255,255,0.1)",
-                background: "rgba(255,255,255,0.04)",
+                border: "1.5px solid rgba(255,255,255,0.22)",
+                background: "rgba(255,255,255,0.1)",
                 cursor: "pointer", transition: "all 0.18s",
-                "&:hover": { background: "rgba(107,140,90,0.12)", borderColor: "rgba(107,140,90,0.35)" },
+                boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+                "&:hover": { background: "rgba(46,139,122,0.2)", borderColor: "rgba(46,139,122,0.6)" },
               }}>
                 <Box sx={{
                   width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-                  background: "linear-gradient(135deg, #5a7c4a, #2e8b7a)",
+                  background: "linear-gradient(135deg, #2e8b7a, #0d9488)",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: "0.72rem", fontWeight: 900, color: "#fff",
-                  boxShadow: "0 2px 8px rgba(107,140,90,0.4)",
+                  fontSize: "0.75rem", fontWeight: 900, color: "#fff",
+                  boxShadow: "0 2px 8px rgba(46,139,122,0.5)",
                 }}>
                   {currentUser.name?.charAt(0).toUpperCase() || "U"}
                 </Box>
                 <Box sx={{ display: { xs: "none", sm: "block" } }}>
-                  <Typography sx={{ color: "#fff", fontSize: "0.78rem", fontWeight: 700, lineHeight: 1.2, maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <Typography sx={{ color: "#fff", fontSize: "0.8rem", fontWeight: 700, lineHeight: 1.2, maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {currentUser.name}
                   </Typography>
-                  <Typography sx={{ color: "rgba(255,255,255,0.3)", fontSize: "0.62rem", lineHeight: 1 }}>
+                  <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.63rem", lineHeight: 1 }}>
                     @{currentUser.username}
                   </Typography>
                 </Box>
-                <Typography sx={{ color: "rgba(255,255,255,0.25)", fontSize: "0.6rem", ml: 0.3 }}>▾</Typography>
+                <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.6rem", ml: 0.3 }}>▾</Typography>
               </Box>
 
               {/* Dropdown Menu */}
@@ -5523,7 +5561,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                 {/* User info header */}
                 <Box sx={{ px: 2, py: 1.8, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                   <Box display="flex" alignItems="center" gap={1.5}>
-                    <Box sx={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg,#5a7c4a,#2e8b7a)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: "1rem", flexShrink: 0 }}>
+                    <Box sx={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #2e8b7a, #0d9488)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#fff", fontSize: "1rem", flexShrink: 0 }}>
                       {currentUser.name?.charAt(0).toUpperCase() || "U"}
                     </Box>
                     <Box overflow="hidden">
@@ -5539,8 +5577,8 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   { icon: "🔖", label: "Saved recipes",        sub: "Your bookmarked recipes",          action: () => { setUserMenuEl(null); setPage("saved"); } },
                   { icon: "📦", label: "My pantry",            sub: "Manage your ingredients",          action: () => { setUserMenuEl(null); setPage("pantry"); } },
                 ].map((item, i) => (
-                  <Box key={i} onClick={item.action} sx={{ px: 2, py: 1.2, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(107,140,90,0.12)" } }}>
-                    <Box sx={{ width: 30, height: 30, borderRadius: "8px", background: "rgba(107,140,90,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.88rem", flexShrink: 0 }}>{item.icon}</Box>
+                  <Box key={i} onClick={item.action} sx={{ px: 2, py: 1.2, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(46,139,122,0.12)" } }}>
+                    <Box sx={{ width: 30, height: 30, borderRadius: "8px", background: "rgba(46,139,122,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.88rem", flexShrink: 0 }}>{item.icon}</Box>
                     <Box>
                       <Typography sx={{ color: "#fff", fontSize: "0.84rem", fontWeight: 600 }}>{item.label}</Typography>
                       <Typography sx={{ color: "rgba(255,255,255,0.28)", fontSize: "0.67rem" }}>{item.sub}</Typography>
@@ -5555,7 +5593,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   { icon: "🌐", label: "Language",    sub: language || "English",   action: () => { setUserMenuEl(null); } },
                   { icon: "❓", label: "Help & support", sub: "Tips, FAQ & feedback", action: () => { setUserMenuEl(null); setHelpOpen(true); } },
                 ].map((item, i) => (
-                  <Box key={i} onClick={item.action} sx={{ px: 2, py: 1.2, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(107,140,90,0.12)" } }}>
+                  <Box key={i} onClick={item.action} sx={{ px: 2, py: 1.2, display: "flex", alignItems: "center", gap: 1.5, cursor: "pointer", transition: "all 0.15s", "&:hover": { background: "rgba(46,139,122,0.12)" } }}>
                     <Box sx={{ width: 30, height: 30, borderRadius: "8px", background: "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.88rem", flexShrink: 0 }}>{item.icon}</Box>
                     <Box>
                       <Typography sx={{ color: "#fff", fontSize: "0.84rem", fontWeight: 600 }}>{item.label}</Typography>
@@ -5581,7 +5619,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
               <Box onClick={() => { setAuthModalMode("login"); setAuthModalOpen(true); }} sx={{ px: 2.5, py: 0.8, borderRadius: "100px", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.75)", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer", "&:hover": { borderColor: "rgba(255,255,255,0.4)", color: "#fff" }, transition: "all 0.15s" }}>
                 Sign in
               </Box>
-              <Box onClick={() => { setAuthModalMode("signup"); setAuthModalOpen(true); }} sx={{ px: 2.5, py: 0.8, borderRadius: "100px", background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", color: "#fff", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(107,140,90,0.4)", "&:hover": { boxShadow: "0 6px 20px rgba(107,140,90,0.55)", transform: "translateY(-1px)" }, transition: "all 0.15s" }}>
+              <Box onClick={() => { setAuthModalMode("signup"); setAuthModalOpen(true); }} sx={{ px: 2.5, py: 0.8, borderRadius: "100px", background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)", color: "#fff", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 14px rgba(46,139,122,0.4)", "&:hover": { boxShadow: "0 6px 20px rgba(46,139,122,0.55)", transform: "translateY(-1px)" }, transition: "all 0.15s" }}>
                 Sign up free
               </Box>
             </Box>
@@ -5602,13 +5640,13 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
               <Box sx={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "38%", background: "linear-gradient(to top, #141210 0%, transparent 100%)" }} />
 
               <Box sx={{ position: "relative", zIndex: 2, px: { xs: 4, md: 8 }, maxWidth: 780 }}>
-                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, background: "rgba(107,140,90,0.18)", border: "1px solid rgba(107,140,90,0.4)", borderRadius: "100px", px: 2, py: 0.6, mb: 3, backdropFilter: "blur(8px)" }}>
-                  <Box sx={{ width: 7, height: 7, borderRadius: "50%", background: "#6b8c5a", boxShadow: "0 0 8px #6b8c5a" }} />
-                  <Typography sx={{ color: "#a8c298", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Your pantry, your recipes.</Typography>
+                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1, background: "rgba(46,139,122,0.18)", border: "1px solid rgba(46,139,122,0.4)", borderRadius: "100px", px: 2, py: 0.6, mb: 3, backdropFilter: "blur(8px)" }}>
+                  <Box sx={{ width: 7, height: 7, borderRadius: "50%", background: "#2e8b7a", boxShadow: "0 0 8px #2e8b7a" }} />
+                  <Typography sx={{ color: "#99d6ce", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Your pantry, our recipes.</Typography>
                 </Box>
                 <Typography sx={{ fontFamily: "'Georgia', serif", fontWeight: 900, fontSize: { xs: "3.2rem", md: "5rem" }, lineHeight: 1.02, letterSpacing: "-2px", color: "#fff", mb: 1, textShadow: "0 4px 32px rgba(0,0,0,0.5)" }}>
                   Open your pantry.
-                  <Box component="span" sx={{ background: "linear-gradient(90deg, #2e8b7a, #6b8c5a)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                  <Box component="span" sx={{ background: "linear-gradient(90deg, #2e8b7a, #0d9488)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                     {" "}Let's cook it.
                   </Box>
                 </Typography>
@@ -5617,7 +5655,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                 </Typography>
                 <Box display="flex" gap={2} flexWrap="wrap">
                   <Button variant="contained" size="large" onClick={() => setPage("recipes")}
-                    sx={{ background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", borderRadius: "12px", px: 4, py: 1.6, fontSize: "1rem", fontWeight: 700, boxShadow: "0 8px 32px rgba(107,140,90,0.45)", "&:hover": { boxShadow: "0 12px 40px rgba(107,140,90,0.55)", transform: "translateY(-2px)" }, transition: "all 0.2s ease" }}>
+                    sx={{ background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)", borderRadius: "12px", px: 4, py: 1.6, fontSize: "1rem", fontWeight: 700, boxShadow: "0 8px 32px rgba(46,139,122,0.45)", "&:hover": { boxShadow: "0 12px 40px rgba(46,139,122,0.55)", transform: "translateY(-2px)" }, transition: "all 0.2s ease" }}>
                     What can I cook? →
                   </Button>
                   <Button variant="outlined" size="large" onClick={() => setPage("planner")}
@@ -5628,7 +5666,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                 <Box display="flex" gap={4} mt={5} flexWrap="wrap">
                   {[{ num: "Any", label: "Ingredients work" }, { num: "5", label: "Day meal plans" }, { num: "12", label: "Cuisine styles" }].map((s, i) => (
                     <Box key={i}>
-                      <Typography sx={{ color: "#2e8b7a", fontWeight: 900, fontSize: "1.8rem", lineHeight: 1, fontFamily: "'Georgia', serif" }}>{s.num}</Typography>
+                      <Typography sx={{ background: "linear-gradient(135deg, #2e8b7a, #0d9488)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 900, fontSize: "1.8rem", lineHeight: 1, fontFamily: "'Georgia', serif" }}>{s.num}</Typography>
                       <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: 500, mt: 0.3 }}>{s.label}</Typography>
                     </Box>
                   ))}
@@ -5747,7 +5785,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
               }}>
                 {[
                   { icon: "🔒", title: "Zero assumptions", desc: "SpoonFed only uses what you actually have. No phantom ingredients, no 'just pick up X at the store'.", accent: "#2e8b7a", page: "recipes" },
-                  { icon: "⚡", title: "Smart stretches", desc: "See how one or two extra items could open up a completely different dish — you decide if it's worth it.", accent: "#6b8c5a", page: "recipes" },
+                  { icon: "⚡", title: "Smart stretches", desc: "See how one or two extra items could open up a completely different dish — you decide if it's worth it.", accent: "#2e8b7a", page: "recipes" },
                   { icon: "📅", title: "A whole week, sorted", desc: "SpoonFed maps 5 days of breakfasts, lunches, dinners and snacks from your existing kitchen stock.", accent: "#c49a3c", page: "planner" },
                   { icon: "🌍", title: "Any cuisine you crave", desc: "Italian, Japanese, Indian, Mexican and 9 more — your ingredients, their flavours.", accent: "#22c55e", page: "recipes" },
                 ].map((feat, i) => (
@@ -5772,7 +5810,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   <Typography sx={{ fontFamily: "'Georgia', serif", color: "#fff", fontWeight: 900, fontSize: { xs: "1.6rem", md: "2.4rem" }, textAlign: "center", textShadow: "0 4px 24px rgba(0,0,0,0.6)", letterSpacing: "-0.5px" }}>
                     Your kitchen has more in it than you think.
                   </Typography>
-                  <Button variant="contained" onClick={() => setPage("recipes")} sx={{ background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", borderRadius: "10px", px: 4, py: 1.3, fontWeight: 700, fontSize: "0.95rem", boxShadow: "0 8px 24px rgba(107,140,90,0.4)", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 12px 32px rgba(107,140,90,0.5)" }, transition: "all 0.2s ease" }}>
+                  <Button variant="contained" onClick={() => setPage("recipes")} sx={{ background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)", borderRadius: "10px", px: 4, py: 1.3, fontWeight: 700, fontSize: "0.95rem", boxShadow: "0 8px 24px rgba(46,139,122,0.4)", "&:hover": { transform: "translateY(-2px)", boxShadow: "0 12px 32px rgba(46,139,122,0.5)" }, transition: "all 0.2s ease" }}>
                     Show me what I've got →
                   </Button>
                 </Box>
@@ -5785,7 +5823,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
         {page === "recipes" && (
           <Box sx={{ minHeight: "100vh", background: "linear-gradient(160deg, #f5f2ec 0%, #eef2e8 45%, #f5f2ec 100%)", position: "relative", overflow: "hidden", pt: "calc(52px + env(safe-area-inset-top, 0px))" }}>
             <Box sx={{ position: "fixed", top: 60, right: -80, width: 500, height: 500, borderRadius: "50%", background: "radial-gradient(circle, rgba(46,139,122,0.12) 0%, transparent 70%)", filter: "blur(40px)", pointerEvents: "none", zIndex: 0 }} />
-            <Box sx={{ position: "fixed", bottom: 100, left: 100, width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(107,140,90,0.09) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none", zIndex: 0 }} />
+            <Box sx={{ position: "fixed", bottom: 100, left: 100, width: 350, height: 350, borderRadius: "50%", background: "radial-gradient(circle, rgba(46,139,122,0.09) 0%, transparent 70%)", filter: "blur(50px)", pointerEvents: "none", zIndex: 0 }} />
             <Box sx={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.45, backgroundImage: "radial-gradient(circle, #8faa7c 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
 
             {/* Page banner */}
@@ -5820,10 +5858,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   px={3} py={2} sx={{ cursor: "pointer", "&:hover": { background: "#fafafa" } }}
                   onClick={() => setFiltersOpen(!filtersOpen)}>
                   <Box display="flex" alignItems="center" gap={1.2}>
-                    <TuneIcon sx={{ color: "#6b8c5a", fontSize: 20 }} />
+                    <TuneIcon sx={{ color: "#2e8b7a", fontSize: 20 }} />
                     <Typography fontWeight={700} color="#374151">Filters</Typography>
                     {totalFilters > 0 && (
-                      <Box sx={{ background: "#6b8c5a", color: "#fff", borderRadius: "12px", px: 1, py: 0.1, fontSize: "0.7rem", fontWeight: 800, minWidth: 22, textAlign: "center" }}>{totalFilters}</Box>
+                      <Box sx={{ background: "#2e8b7a", color: "#fff", borderRadius: "12px", px: 1, py: 0.1, fontSize: "0.7rem", fontWeight: 800, minWidth: 22, textAlign: "center" }}>{totalFilters}</Box>
                     )}
                   </Box>
                   <Typography variant="caption" color="text.secondary">
@@ -5871,7 +5909,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   <Box px={3} pb={2} display="flex" flexWrap="wrap" gap={0.8} alignItems="center">
                     <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>Active filters:</Typography>
                     {[...activeCuisine, ...activeFoodTypes, ...activeDiet, ...(activeDifficulty ? [activeDifficulty] : [])].map(f => (
-                      <Chip key={f} label={f} size="small" sx={{ background: "#f0f3ec", color: "#6b8c5a", border: "1px solid #a8c298", fontWeight: 600, fontSize: "0.72rem", height: 22 }} />
+                      <Chip key={f} label={f} size="small" sx={{ background: "#f0f3ec", color: "#2e8b7a", border: "1px solid #99d6ce", fontWeight: 600, fontSize: "0.72rem", height: 22 }} />
                     ))}
                   </Box>
                 )}
@@ -5888,8 +5926,8 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   border: "1px solid #f3f4f6",
                   boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
                   "& .MuiTab-root": { fontWeight: 700, fontSize: "0.85rem", textTransform: "none", py: 2, px: 3 },
-                  "& .MuiTabs-indicator": { background: "linear-gradient(90deg, #6b8c5a, #2e8b7a)", height: 3, borderRadius: "3px 3px 0 0" },
-                  "& .Mui-selected": { color: "#6b8c5a !important" },
+                  "& .MuiTabs-indicator": { background: "linear-gradient(90deg, #2e8b7a, #0d9488)", height: 3, borderRadius: "3px 3px 0 0" },
+                  "& .Mui-selected": { color: "#2e8b7a !important" },
                 }}
               >
                 <Tab label="🥦 By Ingredients" />
@@ -5925,7 +5963,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                         </Select>
                       </FormControl>
                       <Button variant="contained" onClick={addIngredient} startIcon={<AddCircleOutlineIcon />}
-                        sx={{ background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", borderRadius: 2, fontWeight: 700, height: 40, boxShadow: "none", "&:hover": { boxShadow: "0 2px 12px rgba(107,140,90,0.3)" } }}>
+                        sx={{ background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)", borderRadius: 2, fontWeight: 700, height: 40, boxShadow: "none", "&:hover": { boxShadow: "0 2px 12px rgba(46,139,122,0.3)" } }}>
                         Add
                       </Button>
                     </Box>
@@ -5948,7 +5986,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                             label={[ing.qty, ing.unit, ing.name].filter(Boolean).join(" ")}
                             onDelete={() => setIngredients(ingredients.filter((_, i) => i !== idx))}
                             deleteIcon={<CloseIcon sx={{ fontSize: "0.85rem !important" }} />}
-                            sx={{ background: "#f0f4ec", color: "#6b8c5a", border: "1px solid #a8c298", fontWeight: 600, fontSize: "0.8rem", "& .MuiChip-deleteIcon": { color: "#8aaa7a" } }}
+                            sx={{ background: "#f0f4ec", color: "#2e8b7a", border: "1px solid #99d6ce", fontWeight: 600, fontSize: "0.8rem", "& .MuiChip-deleteIcon": { color: "#8aaa7a" } }}
                           />
                         ))}
                       </Box>
@@ -6012,7 +6050,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                                       <Box display="flex" flexWrap="wrap" gap={0.5} mt={0.5}>
                                         {r.missing_ingredients.map((m, idx) => (
                                           <Chip key={idx} label={[m.qty, m.unit, m.name].filter(Boolean).join(" ")} size="small"
-                                            sx={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #86efac", fontWeight: 600, fontSize: "0.71rem", height: 22 }} />
+                                            sx={{ background: "#f0fdf4", color: "#0d9488", border: "1px solid #86efac", fontWeight: 600, fontSize: "0.71rem", height: 22 }} />
                                         ))}
                                       </Box>
                                     </Box>
@@ -6023,7 +6061,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                                 <Box px={2} pb={1}>
                                   <Button size="small" startIcon={<ShoppingCartIcon sx={{ fontSize: 14 }} />}
                                     onClick={() => openFlexibleShoppingList(r)}
-                                    sx={{ color: "#15803d", fontSize: "0.75rem", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 1.5, py: 0.3 }}>
+                                    sx={{ color: "#0d9488", fontSize: "0.75rem", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 1.5, py: 0.3 }}>
                                     Shopping List
                                   </Button>
                                 </Box>
@@ -6044,7 +6082,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
               {/* ══ TAB 1: By Name ══ */}
               {recipeTab === 1 && (
                 <Box>
-                  <Box sx={{ background: "linear-gradient(135deg, #f0f4ec 0%, #fff 60%)", borderRadius: 4, border: "1.5px solid #b8cead", boxShadow: "0 4px 24px rgba(46,139,122,0.08)", overflow: "hidden", mb: 3 }}>
+                  <Box sx={{ background: "linear-gradient(135deg, #f0f4ec 0%, #fff 60%)", borderRadius: 4, border: "1.5px solid #99d6ce", boxShadow: "0 4px 24px rgba(46,139,122,0.08)", overflow: "hidden", mb: 3 }}>
                     <Box sx={{ background: "linear-gradient(135deg, #161410, #1e2b1a)", px: 3, py: 2.5, display: "flex", alignItems: "center", gap: 2 }}>
                       <Box sx={{ width: 38, height: 38, borderRadius: 2, background: "rgba(46,139,122,0.25)", border: "1px solid rgba(46,139,122,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", flexShrink: 0 }}>🔎</Box>
                       <Box>
@@ -6054,10 +6092,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                     </Box>
                     <Box p={3}>
                       {totalFilters > 0 && (
-                        <Box mb={2.5} px={2} py={1.2} sx={{ background: "#f0f3ec", borderRadius: 2, border: "1px solid #a8c298", display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: "#6b8c5a", mr: 0.5 }}>🎯 Active filters will be applied:</Typography>
+                        <Box mb={2.5} px={2} py={1.2} sx={{ background: "#f0f3ec", borderRadius: 2, border: "1px solid #99d6ce", display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: "#2e8b7a", mr: 0.5 }}>🎯 Active filters will be applied:</Typography>
                           {[...activeCuisine, ...activeFoodTypes, ...activeDiet, ...(activeDifficulty ? [activeDifficulty] : [])].map(f => (
-                            <Chip key={f} label={f} size="small" sx={{ background: "#f0f4ec", color: "#6b8c5a", border: "1px solid #a8c298", fontWeight: 600, fontSize: "0.7rem", height: 20 }} />
+                            <Chip key={f} label={f} size="small" sx={{ background: "#f0f4ec", color: "#2e8b7a", border: "1px solid #99d6ce", fontWeight: 600, fontSize: "0.7rem", height: 20 }} />
                           ))}
                         </Box>
                       )}
@@ -6070,7 +6108,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                             endAdornment: recipeNameInput ? (<IconButton size="small" onClick={() => { setRecipeNameInput(""); setRecipeByName(null); }} sx={{ p: 0.3 }}><CloseIcon sx={{ fontSize: 15, color: "#9ca3af" }} /></IconButton>) : null,
                           }} />
                         <Button variant="contained" onClick={generateByName} disabled={recipeByNameLoading || !recipeNameInput.trim()}
-                          sx={{ background: "linear-gradient(135deg, #2e8b7a, #6b8c5a)", borderRadius: 2, fontWeight: 700, height: 40, boxShadow: "0 4px 14px rgba(107,140,90,0.3)", whiteSpace: "nowrap" }}>
+                          sx={{ background: "linear-gradient(135deg, #2e8b7a, #0d9488)", borderRadius: 2, fontWeight: 700, height: 40, boxShadow: "0 4px 14px rgba(46,139,122,0.3)", whiteSpace: "nowrap" }}>
                           {recipeByNameLoading ? <Box display="flex" alignItems="center" gap={1}><CircularProgress size={16} sx={{ color: "#fff" }} /><span>Generating…</span></Box> : "✨ Generate Recipe"}
                         </Button>
                       </Box>
@@ -6080,9 +6118,9 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                             px: 1.4, py: 0.4, borderRadius: "20px", cursor: "pointer",
                             background: recipeNameInput === s ? "#f0f4ec" : "#f9fafb",
                             border: `1px solid ${recipeNameInput === s ? "#2e8b7a" : "#e5e7eb"}`,
-                            color: recipeNameInput === s ? "#5a7a48" : "#6b7280",
+                            color: recipeNameInput === s ? "#1a6b5e" : "#6b7280",
                             fontSize: "0.75rem", fontWeight: 600, transition: "all 0.15s",
-                            "&:hover": { borderColor: "#2e8b7a", color: "#5a7a48", background: "#f0f4ec" },
+                            "&:hover": { borderColor: "#2e8b7a", color: "#2e8b7a", background: "#f0f4ec" },
                           }}>{s}</Box>
                         ))}
                       </Box>
@@ -6093,19 +6131,19 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
                   {/* Loading skeleton — shown when nothing yet (before partial data arrives) */}
                   {recipeByNameLoading && !recipeByName && (
-                    <Box sx={{ background: "#fff", borderRadius: 4, border: "1.5px solid #b8cead", overflow: "hidden", mb: 4 }}>
+                    <Box sx={{ background: "#fff", borderRadius: 4, border: "1.5px solid #99d6ce", overflow: "hidden", mb: 4 }}>
                       <Box sx={{ height: 220, ...shimmerSx }} />
                       <Box p={3}><Box sx={{ height: 20, width: "60%", borderRadius: 1, mb: 2, ...shimmerSx }} /><Box sx={{ height: 14, width: "90%", borderRadius: 1, mb: 1, ...shimmerSx }} /></Box>
                     </Box>
                   )}
 
                   {recipeByName && (
-                    <Box sx={{ background: "#fff", borderRadius: 4, border: "1.5px solid #b8cead", boxShadow: "0 8px 32px rgba(46,139,122,0.12)", overflow: "hidden", mb: 4 }}>
+                    <Box sx={{ background: "#fff", borderRadius: 4, border: "1.5px solid #99d6ce", boxShadow: "0 8px 32px rgba(46,139,122,0.12)", overflow: "hidden", mb: 4 }}>
                       <Box sx={{ position: "relative", height: 220, overflow: "hidden" }}>
                         <RecipeImage title={recipeByName._title} height={220} />
                         <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)" }} />
                         {recipeByName.filter_notes && (
-                          <Box sx={{ position: "absolute", top: 12, left: 12, background: "rgba(107,140,90,0.9)", backdropFilter: "blur(8px)", borderRadius: "8px", px: 1.5, py: 0.5 }}>
+                          <Box sx={{ position: "absolute", top: 12, left: 12, background: "rgba(46,139,122,0.9)", backdropFilter: "blur(8px)", borderRadius: "8px", px: 1.5, py: 0.5 }}>
                             <Typography sx={{ color: "#fff", fontSize: "0.7rem", fontWeight: 700 }}>🎯 {recipeByName.filter_notes}</Typography>
                           </Box>
                         )}
@@ -6124,7 +6162,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                         <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={2} mb={3}>
                           <Box display="flex" gap={1.5} flexWrap="wrap">
                             {[{ icon: "🍽️", val: recipeByName.servings, label: "Servings" }, { icon: "⏱️", val: recipeByName.prep_time, label: "Prep" }, { icon: "🔥", val: recipeByName.cook_time, label: "Cook" }].filter(m => m.val).map((m, i) => (
-                              <Box key={i} sx={{ background: "#f0f4ec", borderRadius: 2, px: 2, py: 1, border: "1px solid #b8cead", textAlign: "center" }}>
+                              <Box key={i} sx={{ background: "#f0f4ec", borderRadius: 2, px: 2, py: 1, border: "1px solid #99d6ce", textAlign: "center" }}>
                                 <Typography fontSize="1.1rem">{m.icon}</Typography>
                                 <Typography fontWeight={700} fontSize="0.85rem">{m.val}</Typography>
                                 <Typography variant="caption" color="text.secondary">{m.label}</Typography>
@@ -6146,7 +6184,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                               </Button>
                               <Button variant="outlined" startIcon={<DownloadIcon />}
                                 onClick={() => exportRecipePDF(recipeByName)}
-                                sx={{ borderColor: "#22c55e", color: "#15803d", borderRadius: 2, fontWeight: 700, "&:hover": { background: "#f0fdf4" } }}>
+                                sx={{ borderColor: "#22c55e", color: "#0d9488", borderRadius: 2, fontWeight: 700, "&:hover": { background: "#f0fdf4" } }}>
                                 Download PDF
                               </Button>
                               <Box display="flex" alignItems="center" gap={1} onClick={e => e.stopPropagation()}>
@@ -6159,17 +6197,17 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
 
                         {/* Overview — shown as soon as it streams in */}
                         {recipeByName.overview && (
-                          <Box mb={3} p={2} sx={{ background: "#f0f4ec", borderRadius: 2, border: "1px solid #b8cead" }}>
-                            <Typography fontWeight={800} fontSize="0.8rem" color="#5a7a48" mb={0.5} sx={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Overview</Typography>
+                          <Box mb={3} p={2} sx={{ background: "#f0f4ec", borderRadius: 2, border: "1px solid #99d6ce" }}>
+                            <Typography fontWeight={800} fontSize="0.8rem" color="#1a6b5e" mb={0.5} sx={{ textTransform: "uppercase", letterSpacing: "0.06em" }}>Overview</Typography>
                             <Typography color="#374151" fontSize="0.92rem" lineHeight={1.6}>{recipeByName.overview}</Typography>
                           </Box>
                         )}
 
                         {/* Streaming indicator while partial */}
                         {recipeByName._partial && (
-                          <Box display="flex" alignItems="center" gap={1.5} py={2} px={2.5} sx={{ background: "rgba(107,140,90,0.06)", borderRadius: 2, border: "1px dashed #b8cead", mb: 2 }}>
-                            <CircularProgress size={16} sx={{ color: "#6b8c5a" }} />
-                            <Typography fontSize="0.85rem" color="#5a7a48" fontWeight={600}>Loading ingredients & steps…</Typography>
+                          <Box display="flex" alignItems="center" gap={1.5} py={2} px={2.5} sx={{ background: "rgba(46,139,122,0.06)", borderRadius: 2, border: "1px dashed #99d6ce", mb: 2 }}>
+                            <CircularProgress size={16} sx={{ color: "#2e8b7a" }} />
+                            <Typography fontSize="0.85rem" color="#1a6b5e" fontWeight={600}>Loading ingredients & steps…</Typography>
                           </Box>
                         )}
 
@@ -6190,7 +6228,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                                       <Chip
                                         label={`● ${inPantryCount}/${ings.length} in pantry`}
                                         size="small"
-                                        sx={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #86efac", fontWeight: 700, fontSize: "0.72rem" }}
+                                        sx={{ background: "#f0fdf4", color: "#0d9488", border: "1px solid #86efac", fontWeight: 700, fontSize: "0.72rem" }}
                                       />
                                       {missing.length > 0 && (
                                         <Chip
@@ -6234,13 +6272,13 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                                     {/* Badges + actions */}
                                     <Box display="flex" alignItems="center" gap={0.8} flexShrink={0}>
                                       {inPantry ? (
-                                        <Chip label="✓ In pantry" size="small" sx={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", fontWeight: 700, fontSize: "0.65rem", height: 20 }} />
+                                        <Chip label="✓ In pantry" size="small" sx={{ background: "#dcfce7", color: "#0d9488", border: "1px solid #86efac", fontWeight: 700, fontSize: "0.65rem", height: 20 }} />
                                       ) : inGrocery ? (
                                         <>
                                           <Chip label="🛒 In grocery list" size="small" sx={{ background: "#dbeafe", color: "#1d4ed8", border: "1px solid #93c5fd", fontWeight: 700, fontSize: "0.65rem", height: 20 }} />
                                           <Tooltip title="Remove from grocery list">
                                             <IconButton size="small" onClick={() => removeFromGroceryList(ing.name)}
-                                              sx={{ color: "#93c5fd", "&:hover": { color: "#6b8c5a" }, p: 0.3 }}>
+                                              sx={{ color: "#93c5fd", "&:hover": { color: "#2e8b7a" }, p: 0.3 }}>
                                               <RemoveShoppingCartIcon sx={{ fontSize: 13 }} />
                                             </IconButton>
                                           </Tooltip>
@@ -6278,7 +6316,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                             <Box>
                               {recipeByName.steps?.map((s, idx) => (
                                 <Box key={idx} display="flex" gap={1.5} mb={1.5}>
-                                  <Box sx={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg, #2e8b7a, #6b8c5a)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "0.72rem", fontWeight: 800, mt: 0.1 }}>{idx + 1}</Box>
+                                  <Box sx={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "linear-gradient(135deg, #2e8b7a, #0d9488)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "0.72rem", fontWeight: 800, mt: 0.1 }}>{idx + 1}</Box>
                                   <Typography fontSize="0.9rem" color="#374151" lineHeight={1.6}>{typeof s === "string" ? s : s.text}</Typography>
                                 </Box>
                               ))}
@@ -6290,8 +6328,8 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                             <Typography fontWeight={800} mb={1.5} color="#1a1a1a">📊 Nutrition (per serving)</Typography>
                             <Box display="flex" gap={1.5} flexWrap="wrap">
                               {[
-                                { label: "Calories", val: recipeByName.nutrition.calories, bg: "#f0f4ec", border: "#b8cead", color: "#5a7a48" },
-                                { label: "Protein",  val: recipeByName.nutrition.protein,  bg: "#f0fdf4", border: "#86efac", color: "#15803d" },
+                                { label: "Calories", val: recipeByName.nutrition.calories, bg: "#f0f4ec", border: "#99d6ce", color: "#2e8b7a" },
+                                { label: "Protein",  val: recipeByName.nutrition.protein,  bg: "#f0fdf4", border: "#86efac", color: "#0d9488" },
                                 { label: "Carbs",    val: recipeByName.nutrition.carbs,    bg: "#eff6ff", border: "#93c5fd", color: "#1d4ed8" },
                                 { label: "Fat",      val: recipeByName.nutrition.fat,      bg: "#fdf4ff", border: "#d8b4fe", color: "#7e22ce" },
                               ].filter(n => n.val).map((n, i) => (
@@ -6327,9 +6365,9 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                     <Box p={3}>
                       {totalFilters > 0 && (
                         <Box mb={2.5} px={2} py={1.2} sx={{ background: "#f0fdf4", borderRadius: 2, border: "1px solid #86efac", display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: "#15803d", mr: 0.5 }}>🎯 Active filters will be applied:</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 700, color: "#0d9488", mr: 0.5 }}>🎯 Active filters will be applied:</Typography>
                           {[...activeCuisine, ...activeFoodTypes, ...activeDiet, ...(activeDifficulty ? [activeDifficulty] : [])].map(f => (
-                            <Chip key={f} label={f} size="small" sx={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", fontWeight: 600, fontSize: "0.7rem", height: 20 }} />
+                            <Chip key={f} label={f} size="small" sx={{ background: "#dcfce7", color: "#0d9488", border: "1px solid #86efac", fontWeight: 600, fontSize: "0.7rem", height: 20 }} />
                           ))}
                         </Box>
                       )}
@@ -6337,8 +6375,8 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                       {/* Nutrition target inputs */}
                       <Grid container spacing={2} mb={3}>
                         {[
-                          { key: "calories", label: "Calories", unit: "kcal", icon: "🔥", color: "#5a7a48", bg: "#f0f4ec", border: "#b8cead", placeholder: "e.g. 500" },
-                          { key: "protein",  label: "Protein",  unit: "g",    icon: "💪", color: "#15803d", bg: "#f0fdf4", border: "#86efac", placeholder: "e.g. 30" },
+                          { key: "calories", label: "Calories", unit: "kcal", icon: "🔥", color: "#2e8b7a", bg: "#f0f4ec", border: "#99d6ce", placeholder: "e.g. 500" },
+                          { key: "protein",  label: "Protein",  unit: "g",    icon: "💪", color: "#0d9488", bg: "#f0fdf4", border: "#86efac", placeholder: "e.g. 30" },
                           { key: "carbs",    label: "Carbs",    unit: "g",    icon: "🌾", color: "#1d4ed8", bg: "#eff6ff", border: "#93c5fd", placeholder: "e.g. 60" },
                           { key: "fat",      label: "Fat",      unit: "g",    icon: "🥑", color: "#7e22ce", bg: "#fdf4ff", border: "#d8b4fe", placeholder: "e.g. 15" },
                           { key: "fiber",    label: "Fiber",    unit: "g",    icon: "🥦", color: "#0f766e", bg: "#f0fdfa", border: "#99f6e4", placeholder: "e.g. 8"  },
@@ -6380,7 +6418,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                               border: `1px solid ${JSON.stringify(nutritionTargets) === JSON.stringify(preset.values) ? "#22c55e" : "#e5e7eb"}`,
                               color: JSON.stringify(nutritionTargets) === JSON.stringify(preset.values) ? "#15803d" : "#6b7280",
                               fontSize: "0.78rem", fontWeight: 600, transition: "all 0.15s",
-                              "&:hover": { borderColor: "#22c55e", color: "#15803d", background: "#f0fdf4" },
+                              "&:hover": { borderColor: "#22c55e", color: "#0d9488", background: "#f0fdf4" },
                             }}>{preset.label}</Box>
                           ))}
                         </Box>
@@ -6424,8 +6462,8 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                                   <Typography variant="body2" color="text.secondary" fontSize="0.82rem" mb={1.5}>{r.preview}</Typography>
                                   {/* Macro chips */}
                                   <Box display="flex" flexWrap="wrap" gap={0.7} mb={1}>
-                                    {r.calories && <Chip label={`🔥 ${r.calories} kcal`} size="small" sx={{ background: "#f0f4ec", color: "#5a7a48", border: "1px solid #b8cead", fontWeight: 700, fontSize: "0.7rem", height: 22 }} />}
-                                    {r.protein_g && <Chip label={`💪 ${r.protein_g}g protein`} size="small" sx={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #86efac", fontWeight: 700, fontSize: "0.7rem", height: 22 }} />}
+                                    {r.calories && <Chip label={`🔥 ${r.calories} kcal`} size="small" sx={{ background: "#f0f4ec", color: "#2e8b7a", border: "1px solid #99d6ce", fontWeight: 700, fontSize: "0.7rem", height: 22 }} />}
+                                    {r.protein_g && <Chip label={`💪 ${r.protein_g}g protein`} size="small" sx={{ background: "#f0fdf4", color: "#0d9488", border: "1px solid #86efac", fontWeight: 700, fontSize: "0.7rem", height: 22 }} />}
                                     {r.carbs_g && <Chip label={`🌾 ${r.carbs_g}g carbs`} size="small" sx={{ background: "#eff6ff", color: "#1d4ed8", border: "1px solid #93c5fd", fontWeight: 700, fontSize: "0.7rem", height: 22 }} />}
                                     {r.fat_g && <Chip label={`🥑 ${r.fat_g}g fat`} size="small" sx={{ background: "#fdf4ff", color: "#7e22ce", border: "1px solid #d8b4fe", fontWeight: 700, fontSize: "0.7rem", height: 22 }} />}
                                     {r.fiber_g && <Chip label={`🥦 ${r.fiber_g}g fiber`} size="small" sx={{ background: "#f0fdfa", color: "#0f766e", border: "1px solid #99f6e4", fontWeight: 700, fontSize: "0.7rem", height: 22 }} />}
@@ -6583,7 +6621,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                         <Chip key={idx}
                           label={[pantryItems[idx]?.qty, pantryItems[idx]?.unit, pantryItems[idx]?.name].filter(Boolean).join(" ")}
                           size="small"
-                          sx={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", fontWeight: 600, fontSize: "0.72rem", height: 22 }} />
+                          sx={{ background: "#dcfce7", color: "#0d9488", border: "1px solid #86efac", fontWeight: 600, fontSize: "0.72rem", height: 22 }} />
                       ))}
                     </Box>
                   )}
@@ -6639,8 +6677,8 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                               px: 1.2, py: 0.4, borderRadius: "20px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 700,
                               background: calorieBudget === String(cal) ? "#f0f4ec" : "#f9fafb",
                               border: `1px solid ${calorieBudget === String(cal) ? "#2e8b7a" : "#e5e7eb"}`,
-                              color: calorieBudget === String(cal) ? "#5a7a48" : "#9ca3af",
-                              "&:hover": { borderColor: "#2e8b7a", color: "#5a7a48" },
+                              color: calorieBudget === String(cal) ? "#1a6b5e" : "#9ca3af",
+                              "&:hover": { borderColor: "#2e8b7a", color: "#2e8b7a" },
                             }}>{cal}</Box>
                           ))}
                         </Box>
@@ -6680,7 +6718,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
   </Button>
   <Button startIcon={<DownloadIcon />} variant="outlined"
     onClick={() => exportMealPlanPDF(mpPantryPlan, "Pantry Selection Meal Plan")}
-    sx={{ borderColor: "#22c55e", color: "#15803d", borderRadius: 2, fontWeight: 700, "&:hover": { background: "#f0fdf4" } }}>
+    sx={{ borderColor: "#22c55e", color: "#0d9488", borderRadius: 2, fontWeight: 700, "&:hover": { background: "#f0fdf4" } }}>
     Download PDF
   </Button>
 </Box>
@@ -6694,10 +6732,10 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
               {mpTab === 1 && (
                 <Box>
                   {/* Explain */}
-                  <Box sx={{ background: "#f0f4ec", border: "1px solid #b8cead", borderRadius: 3, px: 3, py: 2, mb: 3, display: "flex", gap: 2, alignItems: "flex-start" }}>
+                  <Box sx={{ background: "#f0f4ec", border: "1px solid #99d6ce", borderRadius: 3, px: 3, py: 2, mb: 3, display: "flex", gap: 2, alignItems: "flex-start" }}>
                     <Typography fontSize="1.3rem" flexShrink={0}>🗄️</Typography>
                     <Box flex={1}>
-                      <Typography fontWeight={700} color="#5a7a48" fontSize="0.92rem">Full Pantry Plan</Typography>
+                      <Typography fontWeight={700} color="#1a6b5e" fontSize="0.92rem">Full Pantry Plan</Typography>
                       <Typography color="#a06040" fontSize="0.82rem" mt={0.3}>
                         Uses <strong>everything currently in stock</strong> in your pantry to generate the most comprehensive 5-day meal plan. Keep your pantry updated and regenerate anytime.
                       </Typography>
@@ -6735,7 +6773,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                         {pantryItems.filter(i => i.inStock).map((item, idx) => (
                           <Chip key={idx}
                             label={[item.qty, item.unit, item.name].filter(Boolean).join(" ")}
-                            sx={{ background: "#f0f4ec", color: "#5a7a48", border: "1px solid #b8cead", fontWeight: 600, fontSize: "0.78rem" }}
+                            sx={{ background: "#f0f4ec", color: "#2e8b7a", border: "1px solid #99d6ce", fontWeight: 600, fontSize: "0.78rem" }}
                           />
                         ))}
                       </Box>
@@ -6768,7 +6806,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
   </Button>
   <Button startIcon={<DownloadIcon />} variant="outlined"
     onClick={() => exportMealPlanPDF(mpGroceryPlan, "Full Pantry Meal Plan")}
-    sx={{ borderColor: "#22c55e", color: "#15803d", borderRadius: 2, fontWeight: 700, "&:hover": { background: "#f0fdf4" } }}>
+    sx={{ borderColor: "#22c55e", color: "#0d9488", borderRadius: 2, fontWeight: 700, "&:hover": { background: "#f0fdf4" } }}>
     Download PDF
   </Button>
 </Box>
@@ -6800,7 +6838,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                 <Box display="flex" alignItems="flex-end" gap={2} flexWrap="wrap">
                   {pantryItems.some(i => i.inStock) && (
                     <Button variant="contained" onClick={importPantryToGenerator}
-                      sx={{ background: "linear-gradient(135deg, #2e8b7a, #6b8c5a)", borderRadius: 2, fontWeight: 700, boxShadow: "0 4px 16px rgba(107,140,90,0.3)" }}>
+                      sx={{ background: "linear-gradient(135deg, #2e8b7a, #0d9488)", borderRadius: 2, fontWeight: 700, boxShadow: "0 4px 16px rgba(46,139,122,0.3)" }}>
                       🍳 Use in Recipe Generator
                     </Button>
                   )}
@@ -6872,7 +6910,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                         </Box>
                       )}
                     </Box>
-                    <Button size="small" onClick={() => setPantryItems([])} sx={{ color: "#6b8c5a", fontSize: "0.75rem" }}>Clear all</Button>
+                    <Button size="small" onClick={() => setPantryItems([])} sx={{ color: "#2e8b7a", fontSize: "0.75rem" }}>Clear all</Button>
                   </Box>
 
                   {/* In stock */}
@@ -6932,7 +6970,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                               <IconButton
                                 size="small"
                                 onClick={() => updatePantryQty(idx, -1)}
-                                sx={{ width: 26, height: 26, borderRadius: 1.5, background: "#f0f3ec", color: "#6b8c5a", fontWeight: 800, fontSize: "1rem", "&:hover": { background: "#e4ede0" } }}
+                                sx={{ width: 26, height: 26, borderRadius: 1.5, background: "#f0f3ec", color: "#2e8b7a", fontWeight: 800, fontSize: "1rem", "&:hover": { background: "#e4ede0" } }}
                               >−</IconButton>
                               <TextField
                                 value={item.qty || "0"}
@@ -6972,7 +7010,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                               </Tooltip>
                             )}
 
-                            <IconButton size="small" onClick={() => removePantryItem(idx)} sx={{ color: "#d1d5db", flexShrink: 0, "&:hover": { color: "#6b8c5a" } }}>
+                            <IconButton size="small" onClick={() => removePantryItem(idx)} sx={{ color: "#d1d5db", flexShrink: 0, "&:hover": { color: "#2e8b7a" } }}>
                               <DeleteIcon sx={{ fontSize: 18 }} />
                             </IconButton>
                           </Box>
@@ -6985,7 +7023,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   {pantryItems.filter(i => !i.inStock).length > 0 && (
                     <Box>
                       <Box px={3} py={1} sx={{ background: "#f0f3ec", borderBottom: "1px solid #e4ede0", borderTop: "1px solid #f3f4f6" }}>
-                        <Typography variant="caption" fontWeight={800} color="#6b8c5a" sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "0.65rem" }}>❌ Used Up / Out of Stock</Typography>
+                        <Typography variant="caption" fontWeight={800} color="#2e8b7a" sx={{ textTransform: "uppercase", letterSpacing: "0.08em", fontSize: "0.65rem" }}>❌ Used Up / Out of Stock</Typography>
                       </Box>
                       {pantryItems.map((item, idx) => item.inStock ? null : (
                         <Box key={idx} sx={{ px: 3, py: 1.5, display: "flex", alignItems: "center", gap: 2, borderBottom: "1px solid #f9fafb", opacity: 0.5, "&:hover": { background: "#fafafa", opacity: 0.7 } }}>
@@ -6995,7 +7033,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                           <Typography fontSize="0.9rem" color="#9ca3af" flex={1} sx={{ textDecoration: "line-through" }}>
                             {[item.qty, item.unit, item.name].filter(Boolean).join(" ")}
                           </Typography>
-                          <IconButton size="small" onClick={() => removePantryItem(idx)} sx={{ color: "#d1d5db", "&:hover": { color: "#6b8c5a" } }}>
+                          <IconButton size="small" onClick={() => removePantryItem(idx)} sx={{ color: "#d1d5db", "&:hover": { color: "#2e8b7a" } }}>
                             <DeleteIcon sx={{ fontSize: 18 }} />
                           </IconButton>
                         </Box>
@@ -7115,7 +7153,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                             <IconButton onClick={() => deleteRecipe(originalIdx)} size="small" sx={{
                               position: "absolute", right: 8, top: 8, zIndex: 1,
                               background: "rgba(255,255,255,0.9)", backdropFilter: "blur(4px)",
-                              "&:hover": { background: "#e4ede0", color: "#6b8c5a" },
+                              "&:hover": { background: "#e4ede0", color: "#2e8b7a" },
                             }}>
                               <DeleteIcon fontSize="small" />
                             </IconButton>
@@ -7137,7 +7175,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                                 </Typography>
                                 {(r.servings || r.cook_time) && (
                                   <Box display="flex" gap={0.8} mt={1} flexWrap="wrap">
-                                    {r.servings && <Box sx={{ background: "#f0f4ec", border: "1px solid #b8cead", borderRadius: 1.5, px: 1, py: 0.2 }}><Typography variant="caption" color="#5a7a48" fontWeight={700} fontSize="0.7rem">🍽️ {r.servings}</Typography></Box>}
+                                    {r.servings && <Box sx={{ background: "#f0f4ec", border: "1px solid #99d6ce", borderRadius: 1.5, px: 1, py: 0.2 }}><Typography variant="caption" color="#1a6b5e" fontWeight={700} fontSize="0.7rem">🍽️ {r.servings}</Typography></Box>}
                                     {r.cook_time && <Box sx={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 1.5, px: 1, py: 0.2 }}><Typography variant="caption" color="#1d4ed8" fontWeight={700} fontSize="0.7rem">⏱️ {r.cook_time}</Typography></Box>}
                                   </Box>
                                 )}
@@ -7178,7 +7216,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                               <Button
                                 fullWidth size="small" variant="outlined" startIcon={<DownloadIcon sx={{ fontSize: 14 }} />}
                                 onClick={(e) => { e.stopPropagation(); exportRecipePDF(r); }}
-                                sx={{ mt: 1.2, borderColor: "#22c55e", color: "#15803d", borderRadius: 2, fontWeight: 700, fontSize: "0.75rem", "&:hover": { background: "#f0fdf4" } }}>
+                                sx={{ mt: 1.2, borderColor: "#22c55e", color: "#0d9488", borderRadius: 2, fontWeight: 700, fontSize: "0.75rem", "&:hover": { background: "#f0fdf4" } }}>
                                 Download PDF
                               </Button>
                             </Box>
@@ -7207,6 +7245,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
             cardSx={cardSx}
           />
         )}
+
 
         {/* ── RECIPE HISTORY PAGE ── */}
         {page === "history" && (() => {
@@ -7285,7 +7324,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                     <Typography fontWeight={700} color="#6b7280" fontSize="1rem" mb={1}>Nothing cooked up yet</Typography>
                     <Typography variant="body2" color="#4b5563" mb={3}>Every recipe you open gets tracked here — with how often you come back to it</Typography>
                     <Button variant="contained" onClick={() => setPage("recipes")}
-                      sx={{ background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", borderRadius: 2, fontWeight: 700 }}>
+                      sx={{ background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)", borderRadius: 2, fontWeight: 700 }}>
                       Generate Recipes →
                     </Button>
                   </Box>
@@ -7495,7 +7534,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                 {/* Action bar */}
                 <Box display="flex" gap={1.5} flexWrap="wrap" mb={3} alignItems="center">
                   <Button variant="contained" startIcon={<BookmarkBorderIcon />} onClick={saveRecipe}
-                    sx={{ background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", borderRadius: 2, fontWeight: 700, boxShadow: "none" }}>
+                    sx={{ background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)", borderRadius: 2, fontWeight: 700, boxShadow: "none" }}>
                     Save Recipe
                   </Button>
                   <Button variant="outlined" size="small" startIcon={<FullscreenIcon />}
@@ -7505,7 +7544,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                   </Button>
                   <Button variant="outlined" size="small" startIcon={<DownloadIcon />}
                     onClick={() => exportRecipePDF(details, servingMultiplier)}
-                    sx={{ borderColor: "#22c55e", color: "#15803d", borderRadius: 2, fontWeight: 600, "&:hover": { background: "#f0fdf4" } }}>
+                    sx={{ borderColor: "#22c55e", color: "#0d9488", borderRadius: 2, fontWeight: 600, "&:hover": { background: "#f0fdf4" } }}>
                     Download PDF
                   </Button>
                 </Box>
@@ -7517,7 +7556,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                     { icon: "⏱️", val: details.prep_time, label: "Prep" },
                     { icon: "🔥", val: details.cook_time, label: "Cook" },
                   ].filter(m => m.val).map((m, i) => (
-                    <Box key={i} sx={{ background: "#f0f4ec", borderRadius: 2, px: 2, py: 1, border: "1px solid #b8cead", textAlign: "center" }}>
+                    <Box key={i} sx={{ background: "#f0f4ec", borderRadius: 2, px: 2, py: 1, border: "1px solid #99d6ce", textAlign: "center" }}>
                       <Typography fontSize="1.2rem">{m.icon}</Typography>
                       <Typography fontWeight={700} fontSize="0.85rem">{m.val}</Typography>
                       <Typography variant="caption" color="text.secondary">{m.label}</Typography>
@@ -7561,7 +7600,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                     <Box display="flex" alignItems="center" gap={1.5} mb={2} flexWrap="wrap">
                       <Box sx={{ display: "flex", alignItems: "center", gap: 0.8, background: "#f0fdf4", border: "1px solid #86efac", borderRadius: "100px", px: 1.5, py: 0.4 }}>
                         <Box sx={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} />
-                        <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#15803d" }}>
+                        <Typography sx={{ fontSize: "0.72rem", fontWeight: 700, color: "#0d9488" }}>
                           {inPantryCount}/{details.ingredients.main.length} in pantry
                         </Typography>
                       </Box>
@@ -7599,13 +7638,13 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                         {/* Status badge or action buttons */}
                         <Box display="flex" alignItems="center" gap={0.8} flexShrink={0}>
                           {inPantry ? (
-                            <Chip label="✓ In pantry" size="small" sx={{ background: "#dcfce7", color: "#15803d", border: "1px solid #86efac", fontWeight: 700, fontSize: "0.65rem", height: 20 }} />
+                            <Chip label="✓ In pantry" size="small" sx={{ background: "#dcfce7", color: "#0d9488", border: "1px solid #86efac", fontWeight: 700, fontSize: "0.65rem", height: 20 }} />
                           ) : inGrocery ? (
                             <>
                               <Chip label="🛒 In grocery list" size="small" sx={{ background: "#dbeafe", color: "#1d4ed8", border: "1px solid #93c5fd", fontWeight: 700, fontSize: "0.65rem", height: 20 }} />
                               <Tooltip title="Remove from grocery list">
                                 <IconButton size="small" onClick={() => removeFromGroceryList(ing.name)}
-                                  sx={{ color: "#93c5fd", "&:hover": { color: "#6b8c5a" }, p: 0.3 }}>
+                                  sx={{ color: "#93c5fd", "&:hover": { color: "#2e8b7a" }, p: 0.3 }}>
                                   <RemoveShoppingCartIcon sx={{ fontSize: 13 }} />
                                 </IconButton>
                               </Tooltip>
@@ -7663,8 +7702,8 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
                     <Typography variant="h6" fontWeight={800} mb={1.5}>Nutrition (per serving{servingMultiplier > 1 ? ` × ${servingMultiplier}` : ""})</Typography>
                     <Box display="flex" gap={1.5} flexWrap="wrap">
                       {[
-                        { label: "Calories", val: details.nutrition.calories, bg: "#f0f4ec", border: "#b8cead", color: "#5a7a48" },
-                        { label: "Protein", val: details.nutrition.protein, bg: "#f0fdf4", border: "#86efac", color: "#15803d" },
+                        { label: "Calories", val: details.nutrition.calories, bg: "#f0f4ec", border: "#99d6ce", color: "#2e8b7a" },
+                        { label: "Protein", val: details.nutrition.protein, bg: "#f0fdf4", border: "#86efac", color: "#0d9488" },
                         { label: "Carbs", val: details.nutrition.carbs, bg: "#eff6ff", border: "#93c5fd", color: "#1d4ed8" },
                         { label: "Fat", val: details.nutrition.fat, bg: "#fdf4ff", border: "#d8b4fe", color: "#7e22ce" },
                       ].filter(n => n.val).map((n, i) => (
@@ -7710,7 +7749,7 @@ function IngredientInput({ onAdd, label = "Ingredient" }) {
         </Select>
       </FormControl>
       <Button variant="contained" onClick={add} startIcon={<AddCircleOutlineIcon />}
-        sx={{ background: "linear-gradient(135deg, #5a7c4a, #4a6a3a)", borderRadius: 2, fontWeight: 700, height: 40, boxShadow: "none", "&:hover": { boxShadow: "0 2px 12px rgba(107,140,90,0.3)" } }}>Add</Button>
+        sx={{ background: "linear-gradient(135deg, #2e8b7a, #1a6b5e)", borderRadius: 2, fontWeight: 700, height: 40, boxShadow: "none", "&:hover": { boxShadow: "0 2px 12px rgba(46,139,122,0.3)" } }}>Add</Button>
     </Box>
   );
 }
