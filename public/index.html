@@ -2,66 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-
-    <!-- ── PWA Core ── -->
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#141210" />
+    <meta name="description" content="SpoonFed — Your pantry, your recipes. AI-powered cooking from whatever's in your kitchen." />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <meta name="theme-color" content="#4a7a3a" />
-
-    <!-- ── Viewport ── -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
-    <!-- ── SEO ── -->
-    <title>Fridgely — Cook what you've got</title>
-    <meta name="description" content="AI-powered kitchen assistant. Tell Fridgely what's in your fridge and get real recipes instantly. No grocery run. No wasted food." />
-    <meta name="keywords" content="recipe generator, fridge recipes, meal planner, pantry tracker, AI cooking" />
-    <meta name="author" content="Fridgely" />
-
-    <!-- ── Open Graph (link previews) ── -->
-    <meta property="og:title" content="Fridgely — Cook what you've got" />
-    <meta property="og:description" content="Tell Fridgely what's in your fridge. Get real recipes instantly." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="%PUBLIC_URL%/icons/icon-512.png" />
-
-    <!-- ── Twitter Card ── -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Fridgely — Cook what you've got" />
-    <meta name="twitter:description" content="AI recipe generator from what's in your fridge." />
-    <meta name="twitter:image" content="%PUBLIC_URL%/icons/icon-512.png" />
-
-    <!-- ── iOS PWA ── -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Fridgely" />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/icons/icon-192.png" />
-    <link rel="apple-touch-icon" sizes="152x152" href="%PUBLIC_URL%/icons/icon-152.png" />
-    <link rel="apple-touch-icon" sizes="144x144" href="%PUBLIC_URL%/icons/icon-144.png" />
-
-    <!-- ── Favicon ── -->
-    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/icons/icon-96.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/icons/icon-72.png" />
-
-    <!-- ── Splash screen color on Android ── -->
-    <meta name="msapplication-TileColor" content="#4a7a3a" />
-    <meta name="msapplication-TileImage" content="%PUBLIC_URL%/icons/icon-144.png" />
+    <title>SpoonFed — Your pantry, your recipes.</title>
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run Fridgely.</noscript>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-
-    <!-- ── Register Service Worker ── -->
-    <script>
-      if ("serviceWorker" in navigator) {
-        window.addEventListener("load", function () {
-          navigator.serviceWorker
-            .register("/sw.js")
-            .then(function (reg) {
-              console.log("[Fridgely] Service Worker registered:", reg.scope);
-            })
-            .catch(function (err) {
-              console.warn("[Fridgely] Service Worker failed:", err);
-            });
-        });
-      }
-    </script>
   </body>
 </html>
