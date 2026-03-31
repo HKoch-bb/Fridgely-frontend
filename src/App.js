@@ -1360,19 +1360,29 @@ const MealPlanGrid = ({ plan, onViewRecipe, recipeRatings = {}, onRate, onSwap, 
               <CalendarMonthIcon sx={{ color: "#fff", fontSize: 20 }} />
               <Typography fontWeight={800} color="#fff" fontSize="1rem">{dayObj.day}</Typography>
             </Box>
-            <Grid container spacing={0}>
+            <Box sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr" },
+            }}>
               {MEALS.map((meal, mi) => {
                 const entry = dayObj.meals?.[meal];
                 const rating = entry?.name ? (recipeRatings[entry.name] || 0) : 0;
                 const swapKey = `${dayObj.day}-${meal}`;
                 const isSwapping = swapping[swapKey];
                 return (
-                  <Grid item xs={12} sm={6} md={3} key={meal}>
-                    <Box sx={{
-                      p: 2,
-                      borderRight: mi < 3 ? `1px solid ${colors.border}` : "none",
-                      borderBottom: { xs: `1px solid ${colors.border}`, md: "none" },
-                      minHeight: 130,
+                  <Box key={meal} sx={{
+                      p: 2.5,
+                      borderRight: {
+                        xs: "none",
+                        sm: mi % 2 === 0 ? `1px solid ${colors.border}` : "none",
+                        md: mi < 3 ? `1px solid ${colors.border}` : "none",
+                      },
+                      borderBottom: {
+                        xs: mi < 3 ? `1px solid ${colors.border}` : "none",
+                        sm: mi < 2 ? `1px solid ${colors.border}` : "none",
+                        md: "none",
+                      },
+                      minHeight: 160,
                       display: "flex", flexDirection: "column",
                     }}>
                       <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.3}>
@@ -1420,11 +1430,10 @@ const MealPlanGrid = ({ plan, onViewRecipe, recipeRatings = {}, onRate, onSwap, 
                       ) : (
                         <Typography color="text.disabled" fontSize="0.8rem" mt={0.5}>—</Typography>
                       )}
-                    </Box>
-                  </Grid>
+                  </Box>
                 );
               })}
-            </Grid>
+            </Box>
           </Box>
         );
       })}
@@ -2972,15 +2981,20 @@ const LandingPage = ({ onOpenAuth }) => {
     <Box sx={{ minHeight: "100vh", background: "#0d0f0a", overflowX: "hidden" }}>
       {/* ── Navbar ── */}
       <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "space-between", px: { xs: 3, md: 6 }, py: 2, background: "rgba(13,15,10,0.85)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <Box sx={{ width: 36, height: 36, borderRadius: 2, background: "linear-gradient(145deg,#4a7a3a,#5a7c4a)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px rgba(107,140,90,0.5)" }}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <ellipse cx="10" cy="5.5" rx="4.5" ry="3.2" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.4)" strokeWidth="0.4"/>
-              <ellipse cx="10" cy="5.5" rx="2.2" ry="1.6" fill="rgba(255,255,255,0.35)"/>
-              <path d="M10 8.7 Q10.8 12 13 18" stroke="rgba(255,255,255,0.85)" strokeWidth="2.4" strokeLinecap="round" fill="none"/>
+        <Box display="flex" alignItems="center" gap={1.2}>
+          <Box sx={{ width: 36, height: 36, borderRadius: "10px", background: "linear-gradient(145deg, #2e8b7a 0%, #4a9e8e 40%, #3d6b2a 100%)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 16px rgba(46,139,122,0.55)", position: "relative", overflow: "hidden" }}>
+            <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <ellipse cx="11" cy="6" rx="5" ry="3.6" fill="white" opacity="0.95"/>
+              <ellipse cx="11" cy="6" rx="2.8" ry="2" fill="rgba(46,139,122,0.4)"/>
+              <path d="M11 9.6 C11.5 13 12.5 16 14 20.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.95"/>
+              <circle cx="16.5" cy="3.5" r="1" fill="rgba(255,255,255,0.6)"/>
             </svg>
           </Box>
-          <Typography sx={{ fontWeight: 900, fontSize: "1.2rem", color: "#fff", letterSpacing: "-0.5px" }}>SpoonFed</Typography>
+          <Box display="flex" alignItems="baseline">
+            <Typography sx={{ fontWeight: 900, fontSize: "1.2rem", color: "#fff", letterSpacing: "-0.5px", fontFamily: "'Georgia', serif" }}>Spoon</Typography>
+            <Typography sx={{ fontWeight: 900, fontSize: "1.2rem", color: "#2e8b7a", letterSpacing: "-0.5px", fontFamily: "'Georgia', serif" }}>Fed</Typography>
+          </Box>
         </Box>
         <Box display="flex" gap={1.5} alignItems="center">
           <Box onClick={() => onOpenAuth("login")} sx={{ px: 2.5, py: 0.9, borderRadius: "10px", border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.8)", fontSize: "0.88rem", fontWeight: 600, cursor: "pointer", transition: "all 0.2s", "&:hover": { background: "rgba(255,255,255,0.07)", borderColor: "rgba(255,255,255,0.3)" } }}>
@@ -5270,25 +5284,38 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           minHeight: 56, flexShrink: 0,
         }}>
           {sidebarOpen && (
-            <Box display="flex" alignItems="center" gap={1}>
+            <Box display="flex" alignItems="center" gap={1.2}>
+              {/* Logo mark — spoon in a pill */}
               <Box sx={{
-                width: 34, height: 34, borderRadius: 2, flexShrink: 0,
-                background: "linear-gradient(145deg, #4a7a3a 0%, #5a7c4a 50%, #3d6b2a 100%)",
+                width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
+                background: "linear-gradient(145deg, #2e8b7a 0%, #4a9e8e 40%, #3d6b2a 100%)",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: "0 4px 14px rgba(107,140,90,0.45), inset 0 1px 0 rgba(255,255,255,0.15)",
-                overflow: "hidden",
+                boxShadow: "0 4px 16px rgba(46,139,122,0.55), inset 0 1px 0 rgba(255,255,255,0.2)",
+                position: "relative", overflow: "hidden",
               }}>
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <ellipse cx="10" cy="5.5" rx="4.5" ry="3.2" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.4)" strokeWidth="0.4"/>
-                  <ellipse cx="10" cy="5.5" rx="2.2" ry="1.6" fill="rgba(255,255,255,0.35)"/>
-                  <path d="M10 8.7 Q10.8 12 13 18" stroke="rgba(255,255,255,0.85)" strokeWidth="2.4" strokeLinecap="round" fill="none"/>
+                {/* shimmer overlay */}
+                <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%)", borderRadius: "10px" }} />
+                <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                  {/* spoon bowl */}
+                  <ellipse cx="11" cy="6" rx="5" ry="3.6" fill="white" opacity="0.95"/>
+                  <ellipse cx="11" cy="6" rx="2.8" ry="2" fill="rgba(46,139,122,0.4)"/>
+                  {/* spoon handle with slight curve */}
+                  <path d="M11 9.6 C11.5 13 12.5 16 14 20.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.95"/>
+                  {/* tiny star sparkle top right */}
+                  <circle cx="16.5" cy="3.5" r="1" fill="rgba(255,255,255,0.6)"/>
                 </svg>
               </Box>
+              {/* Two-tone wordmark */}
               <Box>
-                <Typography sx={{ fontWeight: 900, fontSize: "1.1rem", color: "#fff", letterSpacing: "-0.5px", lineHeight: 1.1 }}>
-                  SpoonFed
-                </Typography>
-                <Typography sx={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.3)", lineHeight: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "baseline", lineHeight: 1.1 }}>
+                  <Typography sx={{ fontWeight: 900, fontSize: "1.15rem", color: "#fff", letterSpacing: "-0.6px", lineHeight: 1.1, fontFamily: "'Georgia', serif" }}>
+                    Spoon
+                  </Typography>
+                  <Typography sx={{ fontWeight: 900, fontSize: "1.15rem", color: "#2e8b7a", letterSpacing: "-0.6px", lineHeight: 1.1, fontFamily: "'Georgia', serif" }}>
+                    Fed
+                  </Typography>
+                </Box>
+                <Typography sx={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.28)", lineHeight: 1, letterSpacing: "0.03em" }}>
                   Your pantry, your recipes.
                 </Typography>
               </Box>
@@ -5296,16 +5323,18 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
           )}
           {!sidebarOpen && (
             <Box sx={{
-              width: 34, height: 34, borderRadius: 2,
-              background: "linear-gradient(145deg, #4a7a3a 0%, #5a7c4a 50%, #3d6b2a 100%)",
+              width: 36, height: 36, borderRadius: "10px",
+              background: "linear-gradient(145deg, #2e8b7a 0%, #4a9e8e 40%, #3d6b2a 100%)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 4px 14px rgba(107,140,90,0.45), inset 0 1px 0 rgba(255,255,255,0.15)",
-              overflow: "hidden",
+              boxShadow: "0 4px 16px rgba(46,139,122,0.55), inset 0 1px 0 rgba(255,255,255,0.2)",
+              position: "relative", overflow: "hidden",
             }}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <ellipse cx="10" cy="5.5" rx="4.5" ry="3.2" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.4)" strokeWidth="0.4"/>
-                <ellipse cx="10" cy="5.5" rx="2.2" ry="1.6" fill="rgba(255,255,255,0.35)"/>
-                <path d="M10 8.7 Q10.8 12 13 18" stroke="rgba(255,255,255,0.85)" strokeWidth="2.4" strokeLinecap="round" fill="none"/>
+              <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%)" }} />
+              <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                <ellipse cx="11" cy="6" rx="5" ry="3.6" fill="white" opacity="0.95"/>
+                <ellipse cx="11" cy="6" rx="2.8" ry="2" fill="rgba(46,139,122,0.4)"/>
+                <path d="M11 9.6 C11.5 13 12.5 16 14 20.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" opacity="0.95"/>
+                <circle cx="16.5" cy="3.5" r="1" fill="rgba(255,255,255,0.6)"/>
               </svg>
             </Box>
           )}
@@ -5711,26 +5740,30 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
               <Typography sx={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", mb: 4 }}>
                 How SpoonFed works
               </Typography>
-              <Grid container spacing={3}>
+              <Box sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr 1fr" },
+                gap: 3,
+              }}>
                 {[
                   { icon: "🔒", title: "Zero assumptions", desc: "SpoonFed only uses what you actually have. No phantom ingredients, no 'just pick up X at the store'.", accent: "#2e8b7a", page: "recipes" },
                   { icon: "⚡", title: "Smart stretches", desc: "See how one or two extra items could open up a completely different dish — you decide if it's worth it.", accent: "#6b8c5a", page: "recipes" },
                   { icon: "📅", title: "A whole week, sorted", desc: "SpoonFed maps 5 days of breakfasts, lunches, dinners and snacks from your existing kitchen stock.", accent: "#c49a3c", page: "planner" },
                   { icon: "🌍", title: "Any cuisine you crave", desc: "Italian, Japanese, Indian, Mexican and 9 more — your ingredients, their flavours.", accent: "#22c55e", page: "recipes" },
                 ].map((feat, i) => (
-                  <Grid item xs={12} sm={6} md={3} key={i}>
-                    <Box onClick={() => setPage(feat.page)} sx={{
-                      background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", p: 3, cursor: "pointer",
-                      transition: "all 0.22s ease",
-                      "&:hover": { background: "rgba(255,255,255,0.08)", borderColor: `${feat.accent}55`, transform: "translateY(-4px)", boxShadow: "0 16px 40px rgba(0,0,0,0.3)" },
-                    }}>
-                      <Box sx={{ width: 48, height: 48, borderRadius: "12px", background: `${feat.accent}22`, border: `1px solid ${feat.accent}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", mb: 2 }}>{feat.icon}</Box>
-                      <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "0.95rem", mb: 0.8 }}>{feat.title}</Typography>
-                      <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.82rem", lineHeight: 1.6 }}>{feat.desc}</Typography>
-                    </Box>
-                  </Grid>
+                  <Box key={i} onClick={() => setPage(feat.page)} sx={{
+                    background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: "16px", p: 3, cursor: "pointer",
+                    display: "flex", flexDirection: "column",
+                    transition: "all 0.22s ease",
+                    "&:hover": { background: "rgba(255,255,255,0.08)", borderColor: `${feat.accent}55`, transform: "translateY(-4px)", boxShadow: "0 16px 40px rgba(0,0,0,0.3)" },
+                  }}>
+                    <Box sx={{ width: 52, height: 52, borderRadius: "14px", background: `${feat.accent}22`, border: `1px solid ${feat.accent}44`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", mb: 2.5, flexShrink: 0 }}>{feat.icon}</Box>
+                    <Typography sx={{ color: "#fff", fontWeight: 700, fontSize: "0.95rem", mb: 1, lineHeight: 1.3 }}>{feat.title}</Typography>
+                    <Typography sx={{ color: "rgba(255,255,255,0.45)", fontSize: "0.82rem", lineHeight: 1.65, flex: 1 }}>{feat.desc}</Typography>
+                  </Box>
                 ))}
-              </Grid>
+              </Box>
 
               <Box mt={8} sx={{ borderRadius: "20px", overflow: "hidden", height: 260, position: "relative", boxShadow: "0 24px 64px rgba(0,0,0,0.5)" }}>
                 <Box component="img" src="https://images.unsplash.com/photo-1543353071-873f17a7a088?w=1600&q=80" alt="food spread"
