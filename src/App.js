@@ -3352,7 +3352,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       localStorage.setItem("spoonfed_token", data.token);
-      onAuth(data.token, data.user, mode === "signup");
+      onAuth(data.token, data.user);
     } catch (err) { setError(err.message); }
     setLoading(false);
   };
@@ -3598,10 +3598,107 @@ const AuthScreen = ({ onAuth, initialMode }) => {
 };
 
 
+// ─── Reset Password Dialog ────────────────────────────────────────────────────
+const ResetPasswordDialog = ({ token, onDone }) => {
+  const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
+  const [password, setPassword]     = useState("");
+  const [confirm, setConfirm]       = useState("");
+  const [showPass, setShowPass]     = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState("");
+  const [success, setSuccess]       = useState(false);
+
+  const submit = async () => {
+    if (!password) return setError("Please enter a new password");
+    if (password !== confirm) return setError("Passwords don't match");
+    if (password.length < 8) return setError("Password must be at least 8 characters");
+    setLoading(true); setError("");
+    try {
+      const res = await fetch(`${API}/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Reset failed");
+      setSuccess(true);
+      // Clear token from URL without reload
+      window.history.replaceState({}, "", "/");
+      setTimeout(() => onDone(), 2200);
+    } catch (err) { setError(err.message); }
+    setLoading(false);
+  };
+
+  return (
+    <Dialog open maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3, background: "linear-gradient(145deg, #0d0f0a, #141210)", border: "1px solid rgba(255,255,255,0.1)" } }}>
+      <DialogContent sx={{ p: 4 }}>
+        {success ? (
+          <Box textAlign="center" py={2}>
+            <Typography fontSize="2.5rem" mb={1.5}>✅</Typography>
+            <Typography fontWeight={800} fontSize="1.2rem" color="#fff" mb={1}>Password updated!</Typography>
+            <Typography fontSize="0.88rem" sx={{ color: "rgba(255,255,255,0.45)" }}>Redirecting you to sign in…</Typography>
+          </Box>
+        ) : (
+          <>
+            <Box textAlign="center" mb={3}>
+              <Typography fontSize="2rem" mb={1}>🔐</Typography>
+              <Typography fontWeight={800} fontSize="1.2rem" color="#fff" mb={0.5}>Set a new password</Typography>
+              <Typography fontSize="0.82rem" sx={{ color: "rgba(255,255,255,0.4)" }}>Must be at least 8 characters</Typography>
+            </Box>
+
+            {error && (
+              <Box mb={2} px={2} py={1} sx={{ background: "rgba(239,68,68,0.15)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 2 }}>
+                <Typography sx={{ color: "#fca5a5", fontSize: "0.82rem", fontWeight: 600 }}>⚠ {error}</Typography>
+              </Box>
+            )}
+
+            <Box mb={2} sx={{ position: "relative" }}>
+              <input
+                type={showPass ? "text" : "password"}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && submit()}
+                placeholder="New password"
+                style={{ width: "100%", padding: "12px 44px 12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }}
+              />
+              <Box onClick={() => setShowPass(p => !p)} sx={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "rgba(255,255,255,0.3)", fontSize: "0.78rem" }}>
+                {showPass ? "Hide" : "Show"}
+              </Box>
+            </Box>
+
+            <Box mb={3}>
+              <input
+                type={showPass ? "text" : "password"}
+                value={confirm}
+                onChange={e => setConfirm(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && submit()}
+                placeholder="Confirm new password"
+                style={{ width: "100%", padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", fontFamily: "inherit" }}
+              />
+            </Box>
+
+            <Box onClick={!loading ? submit : undefined} sx={{ width: "100%", py: 1.6, borderRadius: "12px", cursor: loading ? "not-allowed" : "pointer", background: loading ? "rgba(107,140,90,0.4)" : "linear-gradient(135deg,#5a7c4a,#4a6a3a)", display: "flex", alignItems: "center", justifyContent: "center", gap: 1.5 }}>
+              {loading
+                ? <CircularProgress size={18} sx={{ color: "#fff" }} />
+                : <Typography sx={{ color: "#fff", fontWeight: 800, fontSize: "0.95rem" }}>Update password →</Typography>}
+            </Box>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const API = process.env.REACT_APP_API_URL || "http://localhost:5000";
   const [page, setPage] = useState("home");
+
+  // ── Detect reset-password token in URL ──
+  const [resetToken, setResetToken] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("token") || null;
+  });
 
   // ── Auth modal (for landing page) ──
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -4726,6 +4823,18 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
     { muiIcon: <HistoryIcon sx={{ fontSize: 20 }} />, label: "Recipe History", key: "history" },
   ];
 
+  // ── Reset password via email link ──
+  if (resetToken) return (
+    <ResetPasswordDialog
+      token={resetToken}
+      onDone={() => {
+        setResetToken(null);
+        setAuthModalMode("login");
+        setAuthModalOpen(true);
+      }}
+    />
+  );
+
   // ── Auth gate ──
   if (authLoading) return (
     <Box sx={{ minHeight: "100vh", background: "#141210", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 2 }}>
@@ -4749,14 +4858,7 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
       <LandingPage onOpenAuth={(mode) => { setAuthModalMode(mode); setAuthModalOpen(true); }} />
       <Dialog open={authModalOpen} onClose={() => setAuthModalOpen(false)} maxWidth="sm" fullWidth
         PaperProps={{ sx: { background: "transparent", boxShadow: "none" } }}>
-        <AuthScreen onAuth={(token, user, isNewUser) => {
-          handleAuth(token, user);
-          setAuthModalOpen(false);
-          if (isNewUser) {
-            localStorage.removeItem("onboardingDone");
-            setShowOnboarding(true);
-          }
-        }} initialMode={authModalMode} />
+        <AuthScreen onAuth={(token, user) => { handleAuth(token, user); setAuthModalOpen(false); }} initialMode={authModalMode} />
       </Dialog>
     </>
   );
