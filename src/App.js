@@ -3352,7 +3352,7 @@ const AuthScreen = ({ onAuth, initialMode }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
       localStorage.setItem("spoonfed_token", data.token);
-      onAuth(data.token, data.user);
+      onAuth(data.token, data.user, mode === "signup");
     } catch (err) { setError(err.message); }
     setLoading(false);
   };
@@ -4749,7 +4749,14 @@ const exportRecipePDF = (recipe, servingMult = 1) => {
       <LandingPage onOpenAuth={(mode) => { setAuthModalMode(mode); setAuthModalOpen(true); }} />
       <Dialog open={authModalOpen} onClose={() => setAuthModalOpen(false)} maxWidth="sm" fullWidth
         PaperProps={{ sx: { background: "transparent", boxShadow: "none" } }}>
-        <AuthScreen onAuth={(token, user) => { handleAuth(token, user); setAuthModalOpen(false); }} initialMode={authModalMode} />
+        <AuthScreen onAuth={(token, user, isNewUser) => {
+          handleAuth(token, user);
+          setAuthModalOpen(false);
+          if (isNewUser) {
+            localStorage.removeItem("onboardingDone");
+            setShowOnboarding(true);
+          }
+        }} initialMode={authModalMode} />
       </Dialog>
     </>
   );
